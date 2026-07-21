@@ -1,0 +1,32 @@
+# Spectral analysis pipeline
+#
+# Computes HVSR for site characterisation, fits Brune source models,
+# and estimates stress drops for a set of events.
+#
+# Run with:
+#   swe run examples/spectral_analysis.yml
+
+steps:
+  - name: load_catalog
+    function: swe.io.read_quakeml
+    params:
+      path: "data/catalog.xml"
+
+  - name: compute_hvsr
+    function: swe.spectral.compute_hvsr
+    params:
+      stream: ${load_ambient_noise.stream}
+      window_length: 40.0
+      smoothing_bandwidth: 40.0
+      freq_min: 0.1
+      freq_max: 25.0
+
+  - name: fit_spectra
+    function: swe.spectral.spectral_fit_batch
+    params:
+      traces: ${load_waveforms.traces}
+      magnitudes: ${load_catalog.magnitudes}
+      freq_min: 0.5
+      freq_max: 40.0
+      velocity_m_s: 3500.0
+      source_model: "madariaga"

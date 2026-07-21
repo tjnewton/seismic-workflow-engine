@@ -1,0 +1,37 @@
+# Magnitude estimation pipeline
+#
+# Computes local (ML) and duration (Md) magnitudes for a catalog of
+# located events, then attaches them to ObsPy Event objects.
+#
+# Run with:
+#   swe run examples/magnitude_estimation.yml
+
+steps:
+  - name: load_catalog
+    function: swe.io.read_quakeml
+    params:
+      path: "data/catalog.xml"
+
+  - name: compute_ml
+    function: swe.magnitude.attach_local_magnitudes
+    params:
+      catalog: ${load_catalog}
+      stream_dir: "data/waveforms/"
+      correction_a: 1.0
+      correction_b: 0.00301
+      correction_c: 3.0
+
+  - name: compute_md
+    function: swe.magnitude.attach_duration_magnitudes
+    params:
+      catalog: ${compute_ml}
+      stream_dir: "data/waveforms/"
+      a: -0.87
+      b: 2.0
+      c: 0.0035
+
+  - name: save_catalog
+    function: swe.io.write_quakeml
+    params:
+      catalog: ${compute_md}
+      path: "output/catalog_with_magnitudes.xml"

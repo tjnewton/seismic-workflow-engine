@@ -1,0 +1,48 @@
+# Stress analysis pipeline
+#
+# Measures P-wave polarities, computes focal mechanisms,
+# and inverts for the regional stress tensor.
+#
+# Run with:
+#   swe run examples/stress_analysis.yml
+
+steps:
+  - name: load_catalog
+    function: swe.io.read_quakeml
+    params:
+      path: "data/located_catalog.xml"
+
+  - name: measure_polarities
+    function: swe.focal.measure_polarities
+    params:
+      catalog: ${load_catalog}
+      stream_dir: "data/waveforms/"
+      window_before: 0.05
+      window_after: 0.15
+
+  - name: compute_takeoffs
+    function: swe.focal.compute_takeoff_angles_1d
+    params:
+      catalog: ${load_catalog}
+      velocity_model_path: "config/velocity_1d.csv"
+
+  - name: solve_focal_mechanisms
+    function: swe.focal.focal_mechanisms_batch
+    params:
+      polarities: ${measure_polarities}
+      takeoff_angles: ${compute_takeoffs}
+      min_observations: 8
+      grid_spacing: 5.0
+
+  - name: cluster_mechanisms
+    function: swe.stress.cluster_focal_mechanisms
+    params:
+      mechanisms: ${solve_focal_mechanisms.mechanisms}
+      n_clusters: 3
+
+  - name: invert_stress
+    function: swe.stress.stress_inversion
+    params:
+      focal_data: ${cluster_mechanisms}
+      n_iterations: 2000
+      damping: 0.5

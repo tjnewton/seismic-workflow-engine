@@ -1,0 +1,54 @@
+# Detection-to-Location pipeline
+#
+# Starts from existing templates and runs matched-filter detection,
+# then locates the detected events.
+#
+# Run with:
+#   swe run examples/detection_to_location.yml
+
+steps:
+  - name: build_templates
+    function: swe.detection.markers_to_template
+    params:
+      marker_file: "data/picks.mrkr"
+      prepick: 2.0
+
+  - name: run_detection
+    function: swe.detection.detect_signals
+    params:
+      templates: ${build_templates.templates}
+      filepaths: "data/templates/"
+      station_dict: ${build_templates.station_dict}
+      template_length: 16.0
+      prepick: 2.0
+      data_dir: "data/continuous/"
+      start_date: "2019-07-04"
+      end_date: "2019-07-06"
+      thresh_type: "MAD"
+      detect_thresh: 8.0
+      trig_int: 8.0
+      lowcut: 1.0
+      highcut: 15.0
+      samp_rate: 100.0
+
+  - name: write_detections
+    function: swe.io.party_to_markers
+    params:
+      party: ${run_detection}
+      output_path: "output/detections.mrkr"
+
+  - name: prepare_nll_obs
+    function: swe.location.catalog_to_obs
+    params:
+      catalog: ${run_detection}
+      output_path: "output/nll_obs.txt"
+
+  - name: locate_events
+    function: swe.location.run_nonlinloc
+    params:
+      control_file: "config/nlloc.conf"
+
+  - name: extract_locations
+    function: swe.location.extract_nll_locations
+    params:
+      hyp_dir: "output/nll/"

@@ -1,0 +1,39 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+*.pkl
+*.ms
+*.mseed
+*.mrkr
+*.tif
+*.laz
+*.mat
+*.nc
+.env
+.venv/
+env/
+venv/
+.ipynb_checkpoints/
+.idea/
+explore_progress.json
+
+# Local-only: AI-agent config, internal planning docs, redacted
+# directions, and the notebooks/data that contain them. Kept on disk locally,
+# never committed to the public repo.
+.claude/
+CLAUDE.md
+/PLAN.md
+/PLAN_redacted.md
+/papers/
+/data/
+/docs/notebooks/data/
+/notebooks/redacted.ipynb
+/docs/notebooks/redacted.ipynb

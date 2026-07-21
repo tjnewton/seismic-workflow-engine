@@ -1,0 +1,36 @@
+# Example SWE pipeline configuration - Ridgecrest workflow
+#
+# Run with:
+#   swe run examples/pipeline_config.yml
+#
+# Each step has:
+#   name:     unique identifier (used for ${ref} in later steps)
+#   function: dotted import path of the callable
+#   params:   keyword arguments passed to the function
+#
+# Parameter references:
+#   ${step_name.attribute} resolves to the return value
+#   of a prior step (dict key or namedtuple field).
+
+steps:
+  - name: download_waveforms
+    function: swe.io.fdsn.get_waveforms
+    params:
+      network: "CI"
+      stations: ["WBS", "WRC2", "WCS2"]
+      channels: ["BHZ", "BHN", "BHE"]
+      start_time: "2019-07-04T17:30:00"
+      end_time: "2019-07-04T18:30:00"
+      output_dir: "data/waveforms"
+      client: "SCEDC"
+
+  - name: download_responses
+    function: swe.io.fdsn.get_response_files
+    params:
+      network: "CI"
+      stations: ["WBS", "WRC2", "WCS2"]
+      channel: "BHZ"
+      start_time: "2019-07-04T17:30:00"
+      end_time: "2019-07-04T18:30:00"
+      output_dir: "data/responses"
+      client: "SCEDC"

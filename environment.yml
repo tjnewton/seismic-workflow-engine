@@ -1,0 +1,21 @@
+name: swe
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.10,<3.13
+  - obspy>=1.4
+  - numpy>=1.24
+  - scipy>=1.10
+  - matplotlib>=3.7
+  - eqcorrscan>=0.5
+  - scikit-learn>=1.2
+  - pandas>=2.0
+  - geopy>=2.0
+  - tqdm>=4.60
+  - click>=8.0
+  - pyyaml>=6.0
+  - setuptools>=68.0,<81  # ObsPy requires pkg_resources, removed in setuptools 82
+  - pytest>=7.0
+  - pytest-cov>=4.0
+  - pip

@@ -22,11 +22,9 @@ from swe.utils.helpers import snr
 logger = logging.getLogger(__name__)
 
 try:
-    from eqcorrscan import Family, Party, Template
+    from eqcorrscan import Family, Party
 except ImportError as exc:  # pragma: no cover
-    raise ImportError(
-        "eqcorrscan is required for swe.detection.catalog"
-    ) from exc
+    raise ImportError("eqcorrscan is required for swe.detection.catalog") from exc
 
 
 class LFEResult(NamedTuple):
@@ -84,11 +82,7 @@ def party_snrs(
         found = False
         for pick in event.picks:
             wf = pick.waveform_id
-            if (
-                wf.station_code == sta
-                and wf.network_code == net
-                and wf.channel_code == cha
-            ):
+            if wf.station_code == sta and wf.network_code == net and wf.channel_code == cha:
                 pick_times.append(pick.time)
                 found = True
                 break
@@ -98,21 +92,24 @@ def party_snrs(
     snrs: list[float] = []
     for pick_time in pick_times:
         day_fname = filename_pattern.format(
-            net=net, sta=sta, cha=cha,
+            net=net,
+            sta=sta,
+            cha=cha,
             year=pick_time.year,
             month=pick_time.month,
             day=pick_time.day,
         )
-        day_files = sorted(
-            glob.glob(str(streams_path / day_fname))
-        )
+        day_files = sorted(glob.glob(str(streams_path / day_fname)))
         if day_files:
             day_st = read(day_files[0])
             day_st.filter("bandpass", freqmin=lowcut, freqmax=highcut)
             day_st.interpolate(sampling_rate=samp_rate)
             day_st.trim(
-                pick_time - 20, pick_time + 40, pad=True,
-                fill_value=np.nan, nearest_sample=True,
+                pick_time - 20,
+                pick_time + 40,
+                pad=True,
+                fill_value=np.nan,
+                nearest_sample=True,
             )
             snrs.append(snr(day_st)[0])
         else:
@@ -153,23 +150,30 @@ def sort_party(
 
     data = []
     for idx, detection in enumerate(party.families[0].detections):
-        data.append([
-            idx,
-            detection.detect_time,
-            abs(detection.detect_val),
-            detection.threshold,
-            detection.threshold_type,
-            detection.threshold_input,
-            detection.template_name,
-            snrs_list[idx],
-        ])
+        data.append(
+            [
+                idx,
+                detection.detect_time,
+                abs(detection.detect_val),
+                detection.threshold,
+                detection.threshold_type,
+                detection.threshold_input,
+                detection.template_name,
+                snrs_list[idx],
+            ]
+        )
 
     df = pd.DataFrame(
         data,
         columns=[
-            "index", "time", "abs_correlation_sum",
-            "correlation_sum_threshold", "threshold_metric",
-            "metric_input", "template", "snr",
+            "index",
+            "time",
+            "abs_correlation_sum",
+            "correlation_sum_threshold",
+            "threshold_metric",
+            "metric_input",
+            "template",
+            "snr",
         ],
     )
 
@@ -391,7 +395,10 @@ def find_lfes(
     # Step 3: Sort by correlation amplitude
     if top_n is not None:
         party = sort_party(
-            party, top_n, detection_files_path, main_trace,
+            party,
+            top_n,
+            detection_files_path,
+            main_trace,
         )
         n_det = sum(len(f) for f in party.families)
         logger.info("After top-%d sort: %d detections", top_n, n_det)
@@ -405,10 +412,7 @@ def find_lfes(
         family = sorted(party.families, key=lambda f: len(f))[-1]
         template_times: dict[str, list] = {}
         for trace in family.template.st:
-            tid = (
-                f"{trace.stats.network}.{trace.stats.station}."
-                f"{trace.stats.channel}"
-            )
+            tid = f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
             template_times[tid] = [
                 trace.stats.starttime - template_prepick,
                 trace.stats.endtime,

@@ -12,11 +12,14 @@ import logging
 import shutil
 import subprocess
 from pathlib import Path
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 import pandas as pd
-from obspy import Catalog, Stream, UTCDateTime, read
+from obspy import Catalog, UTCDateTime, read
+
+if TYPE_CHECKING:
+    from obspy.core.event import Origin
 
 logger = logging.getLogger(__name__)
 
@@ -151,10 +154,7 @@ def picks_to_nonlinloc(
                 event_ids.append(event_id)
                 phases_dict[event_id] = []
                 if first_event:
-                    wf.write(
-                        "# EQEVENT:  Label: EQ001  Loc:  X 10.0  "
-                        "Y 100.0  Z 0.07  OT 0.00\n"
-                    )
+                    wf.write("# EQEVENT:  Label: EQ001  Loc:  X 10.0  Y 100.0  Z 0.07  OT 0.00\n")
                     first_event = False
                 else:
                     wf.write("#\n# EQEVENT:\n")
@@ -171,16 +171,22 @@ def picks_to_nonlinloc(
             pick_time = start_time + one_sigma
 
             ptp_amp, ptp_period = _measure_amplitude(
-                waveform_files_path, pick_station, pick_channel,
-                start_time, end_time, pick_time,
+                waveform_files_path,
+                pick_station,
+                pick_channel,
+                start_time,
+                end_time,
+                pick_time,
                 sampling_rate=sampling_rate,
-                lowcut=lowcut, highcut=highcut,
+                lowcut=lowcut,
+                highcut=highcut,
             )
 
             if np.isnan(ptp_amp):
                 logger.debug(
                     "Amplitude measurement returned NaN for %s.%s, using 0.0",
-                    pick_station, pick_channel,
+                    pick_station,
+                    pick_channel,
                 )
                 ptp_amp = 0.0
             if np.isnan(ptp_period):
@@ -232,7 +238,7 @@ def extract_nll_locations(
     scatter_flag = False
     hypocenter: list[float] = []
 
-    with open(file_path, "r") as fh:
+    with open(file_path) as fh:
         for line in fh:
             if line[:5] == "NLLOC" and "Location completed" in line:
                 save_flag = True
@@ -254,12 +260,14 @@ def extract_nll_locations(
 
             elif line.startswith(" ") and scatter_flag and save_flag:
                 parts = line.split()
-                pdfs.append([
-                    float(parts[0]),
-                    float(parts[1]),
-                    round(float(parts[2]) * 1000, 4),
-                    float(parts[3]),
-                ])
+                pdfs.append(
+                    [
+                        float(parts[0]),
+                        float(parts[1]),
+                        round(float(parts[2]) * 1000, 4),
+                        float(parts[3]),
+                    ]
+                )
 
             elif line[:9] == "END_NLLOC":
                 if save_flag and scatter_flag:
@@ -272,7 +280,9 @@ def extract_nll_locations(
 
     logger.info(
         "Extracted %d events, %d scatter points from %s",
-        len(hypocenters), len(pdfs), file_path,
+        len(hypocenters),
+        len(pdfs),
+        file_path,
     )
     return NLLLocationResult(pdfs_df, hypocenters_arr)
 
@@ -302,7 +312,7 @@ def process_nll_hypocenters(
     _depth_unc = 0.0
     _rms = 0.0
 
-    with open(file_path, "r") as fh:
+    with open(file_path) as fh:
         for line in fh:
             if line[:5] == "NLLOC" and "Location completed" in line:
                 save_flag = True
@@ -336,7 +346,10 @@ def process_nll_hypocenters(
                 if save_flag:
                     hypocenters.append(
                         HypocenterResult(
-                            _x_km, _y_km, _z_m, _horiz,
+                            _x_km,
+                            _y_km,
+                            _z_m,
+                            _horiz,
                             depth_uncertainty_m=_depth_unc,
                             rms=_rms,
                         )
@@ -382,10 +395,7 @@ def catalog_to_obs(
                 continue
 
             if n_events == 0:
-                fh.write(
-                    "# EQEVENT:  Label: EQ001  Loc:  X 0.0  "
-                    "Y 0.0  Z 0.0  OT 0.00\n"
-                )
+                fh.write("# EQEVENT:  Label: EQ001  Loc:  X 0.0  Y 0.0  Z 0.0  OT 0.00\n")
             else:
                 fh.write("#\n# EQEVENT:\n")
             n_events += 1
@@ -404,10 +414,7 @@ def catalog_to_obs(
                 seen.add(key)
 
                 t = pick.time
-                if (
-                    pick.time_errors is not None
-                    and pick.time_errors.uncertainty is not None
-                ):
+                if pick.time_errors is not None and pick.time_errors.uncertainty is not None:
                     sigma = pick.time_errors.uncertainty
                 else:
                     sigma = default_uncertainty
@@ -478,7 +485,7 @@ def hypocenter_to_obspy_origin(
     *,
     reference_lat: float,
     reference_lon: float,
-) -> "Origin":
+) -> Origin:
     """Convert a :class:`HypocenterResult` to an ObsPy Origin with uncertainties.
 
     Parameters
@@ -609,8 +616,7 @@ def _measure_amplitude(
         day_files = sorted(
             glob.glob(
                 str(
-                    waveform_dir
-                    / f"*.{station}..{channel}"
+                    waveform_dir / f"*.{station}..{channel}"
                     f".{pick_time.year}-{pick_time.month:02}"
                     f"-{pick_time.day:02}*.ms"
                 )

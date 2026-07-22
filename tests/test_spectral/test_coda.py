@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from obspy import Trace, UTCDateTime
 
 from swe.spectral.coda import (
@@ -110,9 +109,7 @@ class TestCodaQFrequencyBands:
     def test_custom_bands(self, coda_trace):
         origin = coda_trace.stats.starttime + 5.0
         bands = [(1.0, 2.0), (2.0, 4.0), (4.0, 8.0)]
-        result = coda_q_frequency_bands(
-            coda_trace, origin, frequency_bands=bands
-        )
+        result = coda_q_frequency_bands(coda_trace, origin, frequency_bands=bands)
         assert len(result.frequencies) == 3
 
     def test_power_law_fit(self, coda_trace):

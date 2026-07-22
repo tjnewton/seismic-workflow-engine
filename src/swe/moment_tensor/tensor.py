@@ -194,7 +194,7 @@ def moment_magnitude(m0: float) -> float:
     """
     if m0 <= 0:
         return -999.0
-    return (2.0 / 3.0) * np.log10(m0) - 10.7
+    return float((2.0 / 3.0) * np.log10(m0) - 10.7)
 
 
 def decompose_moment_tensor(mt: MomentTensor) -> MomentTensorDecomposition:

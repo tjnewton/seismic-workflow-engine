@@ -12,7 +12,7 @@ Hutton, L.K. & Boore, D.M. (1987). The ML scale in Southern
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
@@ -21,12 +21,14 @@ if TYPE_CHECKING:
     from obspy import Stream
     from obspy.core.trace import Trace
 
+    from swe.uncertainty.types import LocationUncertainty, MagnitudeUncertainty
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
     "LocalMagnitudeResult",
-    "wood_anderson_amplitude",
     "local_magnitude",
+    "wood_anderson_amplitude",
 ]
 
 
@@ -47,7 +49,7 @@ class LocalMagnitudeResult(NamedTuple):
     """Standard error of the mean: ``ml_std / sqrt(n_valid)``."""
     n_valid_stations: int = 0
     """Number of stations with non-NaN ML values."""
-    magnitude_uncertainty: object | None = None
+    magnitude_uncertainty: MagnitudeUncertainty | None = None
     """Optional :class:`~swe.uncertainty.types.MagnitudeUncertainty`."""
 
 
@@ -119,7 +121,7 @@ def local_magnitude(
     b: float = 0.00189,
     c: float = -2.09,
     water_level: float = 10.0,
-    location_uncertainty: object | None = None,
+    location_uncertainty: LocationUncertainty | None = None,
 ) -> LocalMagnitudeResult:
     """Compute local magnitude (ML) from Wood-Anderson amplitudes.
 
@@ -161,8 +163,7 @@ def local_magnitude(
     distances = np.asarray(distances_km, dtype=np.float64)
     if len(distances) != len(stream):
         raise ValueError(
-            f"distances_km length ({len(distances)}) must match "
-            f"stream length ({len(stream)})"
+            f"distances_km length ({len(distances)}) must match stream length ({len(stream)})"
         )
 
     mls: list[float] = []
@@ -175,18 +176,10 @@ def local_magnitude(
         if np.isnan(amp) or amp <= 0 or dist <= 0:
             mls.append(float("nan"))
         else:
-            ml_i = (
-                np.log10(amp)
-                + a * np.log10(dist / 100.0)
-                + b * (dist - 100.0)
-                + c
-                + 3.0
-            )
+            ml_i = np.log10(amp) + a * np.log10(dist / 100.0) + b * (dist - 100.0) + c + 3.0
             mls.append(float(ml_i))
 
-        names.append(
-            f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
-        )
+        names.append(f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}")
 
     ml_arr = np.asarray(mls, dtype=np.float64)
     mean_ml = float(np.nanmean(ml_arr))

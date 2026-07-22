@@ -4,10 +4,7 @@ import numpy as np
 import pytest
 
 from swe.stress.inversion import (
-    _build_design_matrix,
     _invert,
-    _principal_stresses,
-    _stress_from_params,
     _strike_dip_rake_to_fault_slip,
     _vector_to_azimuth_plunge,
     cluster_focal_mechanisms,
@@ -53,12 +50,8 @@ class TestClusterFocalMechanisms:
         rng = np.random.default_rng(42)
         data = rng.normal(size=(40, 3))
 
-        labels1, centers1 = cluster_focal_mechanisms(
-            data, n_clusters=3, random_state=42
-        )
-        labels2, centers2 = cluster_focal_mechanisms(
-            data, n_clusters=3, random_state=42
-        )
+        labels1, centers1 = cluster_focal_mechanisms(data, n_clusters=3, random_state=42)
+        labels2, centers2 = cluster_focal_mechanisms(data, n_clusters=3, random_state=42)
 
         np.testing.assert_array_equal(labels1, labels2)
         np.testing.assert_array_almost_equal(centers1, centers2)
@@ -68,7 +61,7 @@ class TestClusterFocalMechanisms:
         rng = np.random.default_rng(99)
         data = rng.normal(size=(50, 4))
 
-        labels, centers = cluster_focal_mechanisms(data, n_clusters=5)
+        labels, _centers = cluster_focal_mechanisms(data, n_clusters=5)
 
         for i in range(5):
             count = np.sum(labels == i)
@@ -79,9 +72,7 @@ class TestClusterFocalMechanisms:
         rng = np.random.default_rng(42)
         data = rng.normal(size=(30, 2))
 
-        labels, centers = cluster_focal_mechanisms(
-            data, n_clusters=2, n_init=5, max_iter=100
-        )
+        labels, _centers = cluster_focal_mechanisms(data, n_clusters=2, n_init=5, max_iter=100)
 
         assert len(labels) == 30
 
@@ -103,12 +94,12 @@ class TestStrikeDipRakeConversion:
 
     def test_vertical_dip(self):
         """Vertical fault (dip=90) should still produce valid vectors."""
-        n1, d1, n2, d2 = _strike_dip_rake_to_fault_slip(0.0, 90.0, 0.0)
+        n1, d1, _n2, _d2 = _strike_dip_rake_to_fault_slip(0.0, 90.0, 0.0)
         assert abs(np.dot(n1, d1)) < 1e-10
 
     def test_pure_normal_fault(self):
         """Pure normal fault (rake=-90): slip has a z-component (vertical motion)."""
-        n1, d1, _, _ = _strike_dip_rake_to_fault_slip(0.0, 45.0, -90.0)
+        _n1, d1, _, _ = _strike_dip_rake_to_fault_slip(0.0, 45.0, -90.0)
         # z=Down convention: slip vector should have significant vertical component
         assert abs(d1[2]) > 0.5
 
@@ -130,12 +121,12 @@ class TestVectorToAzimuthPlunge:
 
     def test_vertical_down(self):
         """Pointing straight down: plunge=90."""
-        az, pl = _vector_to_azimuth_plunge(np.array([0.0, 0.0, 1.0]))
+        _az, pl = _vector_to_azimuth_plunge(np.array([0.0, 0.0, 1.0]))
         assert abs(pl - 90.0) < 1e-6
 
     def test_plunge_always_positive(self):
         """Plunge should always be in [0, 90]."""
-        az, pl = _vector_to_azimuth_plunge(np.array([0.0, 0.0, -1.0]))
+        _az, pl = _vector_to_azimuth_plunge(np.array([0.0, 0.0, -1.0]))
         assert 0.0 <= pl <= 90.0
 
 
@@ -172,8 +163,7 @@ class TestInvert:
         ]
         max_plunge = max(plunges)
         assert max_plunge > 60.0, (
-            f"Expected one near-vertical axis for normal faulting, "
-            f"max plunge was {max_plunge}"
+            f"Expected one near-vertical axis for normal faulting, max plunge was {max_plunge}"
         )
 
         # Stress ratio should be between 0 and 1
@@ -189,7 +179,7 @@ class TestInvert:
         rakes = rng.uniform(-20, 20, n_mechs)
 
         focal_mechs = np.column_stack([strikes, dips, rakes])
-        results, axes = _invert(focal_mechs)
+        results, _axes = _invert(focal_mechs)
 
         # For strike-slip, sigma_1 and sigma_3 should be near-horizontal
         sigma1_plunge = results["sigma_1"]["plunge"]
@@ -224,11 +214,13 @@ class TestInvert:
     def test_stress_inversion_runs(self):
         """stress_inversion should now run without NotImplementedError."""
         rng = np.random.default_rng(42)
-        data = np.column_stack([
-            rng.uniform(0, 360, 15),    # strike
-            rng.uniform(20, 70, 15),    # dip
-            rng.uniform(-180, 180, 15), # rake
-        ])
+        data = np.column_stack(
+            [
+                rng.uniform(0, 360, 15),  # strike
+                rng.uniform(20, 70, 15),  # dip
+                rng.uniform(-180, 180, 15),  # rake
+            ]
+        )
         labels = np.array([0] * 8 + [1] * 7)
 
         inv_result = stress_inversion(data, labels)
@@ -260,43 +252,51 @@ class TestInvertEdgeCases:
 
     def test_two_mechanisms(self):
         """Minimum viable count (2 mechanisms) should produce a result."""
-        focal_mechs = np.array([
-            [30.0, 60.0, -90.0],
-            [210.0, 45.0, 90.0],
-        ])
-        results, axes = _invert(focal_mechs)
+        focal_mechs = np.array(
+            [
+                [30.0, 60.0, -90.0],
+                [210.0, 45.0, 90.0],
+            ]
+        )
+        results, _axes = _invert(focal_mechs)
         assert "sigma_1" in results
 
     def test_high_noise_mechanisms(self):
         """Random strike/dip/rake should not crash."""
         rng = np.random.default_rng(42)
-        focal_mechs = np.column_stack([
-            rng.uniform(0, 360, 30),
-            rng.uniform(5, 85, 30),
-            rng.uniform(-180, 180, 30),
-        ])
-        results, axes = _invert(focal_mechs)
+        focal_mechs = np.column_stack(
+            [
+                rng.uniform(0, 360, 30),
+                rng.uniform(5, 85, 30),
+                rng.uniform(-180, 180, 30),
+            ]
+        )
+        results, _axes = _invert(focal_mechs)
         assert "sigma_1" in results
 
     def test_convergence_reported(self):
         """n_iterations should be between 1 and 20."""
         rng = np.random.default_rng(42)
-        focal_mechs = np.column_stack([
-            rng.uniform(0, 360, 15),
-            rng.uniform(30, 70, 15),
-            rng.uniform(-110, -70, 15),
-        ])
+        focal_mechs = np.column_stack(
+            [
+                rng.uniform(0, 360, 15),
+                rng.uniform(30, 70, 15),
+                rng.uniform(-110, -70, 15),
+            ]
+        )
         _, axes = _invert(focal_mechs)
         assert 1 <= axes["n_iterations"] <= 20
 
     def test_stress_tensor_is_deviatoric(self):
         """The reconstructed stress tensor should have trace approx 0."""
         rng = np.random.default_rng(42)
-        focal_mechs = np.column_stack([
-            rng.uniform(0, 360, 20),
-            rng.uniform(30, 70, 20),
-            rng.uniform(-110, -70, 20),
-        ])
+        focal_mechs = np.column_stack(
+            [
+                rng.uniform(0, 360, 20),
+                rng.uniform(30, 70, 20),
+                rng.uniform(-110, -70, 20),
+            ]
+        )
         _, axes = _invert(focal_mechs)
         eigenvalues = np.array(axes["eigenvalues"])
         # Sum of eigenvalues of a deviatoric tensor should be ~0
@@ -314,11 +314,13 @@ class TestStressInversionPublicAPI:
     def test_three_clusters(self):
         """Three clusters should produce 3 result dicts."""
         rng = np.random.default_rng(42)
-        data = np.column_stack([
-            rng.uniform(0, 360, 30),
-            rng.uniform(20, 70, 30),
-            rng.uniform(-180, 180, 30),
-        ])
+        data = np.column_stack(
+            [
+                rng.uniform(0, 360, 30),
+                rng.uniform(20, 70, 30),
+                rng.uniform(-180, 180, 30),
+            ]
+        )
         labels = np.array([0] * 10 + [1] * 10 + [2] * 10)
         inv_result = stress_inversion(data, labels)
         assert len(inv_result.results) == 3
@@ -327,11 +329,13 @@ class TestStressInversionPublicAPI:
     def test_single_cluster(self):
         """All labels=0 should produce exactly 1 result."""
         rng = np.random.default_rng(42)
-        data = np.column_stack([
-            rng.uniform(0, 360, 10),
-            rng.uniform(20, 70, 10),
-            rng.uniform(-180, 180, 10),
-        ])
+        data = np.column_stack(
+            [
+                rng.uniform(0, 360, 10),
+                rng.uniform(20, 70, 10),
+                rng.uniform(-180, 180, 10),
+            ]
+        )
         labels = np.zeros(10, dtype=int)
         inv_result = stress_inversion(data, labels)
         assert len(inv_result.results) == 1
@@ -340,11 +344,13 @@ class TestStressInversionPublicAPI:
     def test_mismatched_labels(self):
         """Non-contiguous labels should still work (one result per unique label)."""
         rng = np.random.default_rng(42)
-        data = np.column_stack([
-            rng.uniform(0, 360, 12),
-            rng.uniform(20, 70, 12),
-            rng.uniform(-180, 180, 12),
-        ])
+        data = np.column_stack(
+            [
+                rng.uniform(0, 360, 12),
+                rng.uniform(20, 70, 12),
+                rng.uniform(-180, 180, 12),
+            ]
+        )
         labels = np.array([0, 0, 0, 5, 5, 5, 10, 10, 10, 99, 99, 99])
         inv_result = stress_inversion(data, labels)
         assert len(inv_result.results) == 4
@@ -360,11 +366,13 @@ class TestSplitFocalData:
 
     def test_splits_by_label(self, tmp_path):
         """Two clusters should produce two output files."""
-        events = np.array([
-            [1.0, 2.0, 3.0, 30.0, 60.0, -90.0],
-            [1.1, 2.1, 3.1, 35.0, 55.0, -85.0],
-            [4.0, 5.0, 6.0, 120.0, 45.0, 90.0],
-        ])
+        events = np.array(
+            [
+                [1.0, 2.0, 3.0, 30.0, 60.0, -90.0],
+                [1.1, 2.1, 3.1, 35.0, 55.0, -85.0],
+                [4.0, 5.0, 6.0, 120.0, 45.0, 90.0],
+            ]
+        )
         labels = np.array([0, 0, 1])
         split_focal_data(events, labels, output_dir=tmp_path)
         assert (tmp_path / "events_0.txt").exists()
@@ -397,15 +405,20 @@ class TestStressInversionWithBootstrap:
     def test_bootstrap_produces_axes(self):
         """bootstrap_axes should be populated."""
         rng = np.random.default_rng(42)
-        data = np.column_stack([
-            rng.uniform(0, 360, 15),
-            rng.uniform(30, 70, 15),
-            rng.uniform(-110, -70, 15),
-        ])
+        data = np.column_stack(
+            [
+                rng.uniform(0, 360, 15),
+                rng.uniform(30, 70, 15),
+                rng.uniform(-110, -70, 15),
+            ]
+        )
         labels = np.zeros(15, dtype=int)
 
         result = stress_inversion_with_bootstrap(
-            data, labels, n_bootstrap=10, random_state=42,
+            data,
+            labels,
+            n_bootstrap=10,
+            random_state=42,
         )
 
         assert result.bootstrap_axes is not None
@@ -417,11 +430,13 @@ class TestStressInversionWithBootstrap:
     def test_backward_compat_without_bootstrap(self):
         """stress_inversion should return bootstrap_axes=None."""
         rng = np.random.default_rng(42)
-        data = np.column_stack([
-            rng.uniform(0, 360, 10),
-            rng.uniform(20, 70, 10),
-            rng.uniform(-180, 180, 10),
-        ])
+        data = np.column_stack(
+            [
+                rng.uniform(0, 360, 10),
+                rng.uniform(20, 70, 10),
+                rng.uniform(-180, 180, 10),
+            ]
+        )
         labels = np.zeros(10, dtype=int)
 
         result = stress_inversion(data, labels)

@@ -18,8 +18,14 @@ def pure_dc_mt() -> MomentTensor:
 def isotropic_mt() -> MomentTensor:
     """A pure isotropic (explosive) moment tensor."""
     return MomentTensor(
-        mxx=1.0, myy=1.0, mzz=1.0, mxy=0.0, mxz=0.0, myz=0.0,
-        scalar_moment=np.sqrt(3.0 / 2.0), moment_magnitude=0.0,
+        mxx=1.0,
+        myy=1.0,
+        mzz=1.0,
+        mxy=0.0,
+        mxz=0.0,
+        myz=0.0,
+        scalar_moment=np.sqrt(3.0 / 2.0),
+        moment_magnitude=0.0,
     )
 
 
@@ -28,8 +34,14 @@ def clvd_mt() -> MomentTensor:
     """A deviatoric tensor with significant CLVD component."""
     # Eigenvalues: 2, -1, -1 -> ε = 0.5
     return MomentTensor(
-        mxx=2.0, myy=-1.0, mzz=-1.0, mxy=0.0, mxz=0.0, myz=0.0,
-        scalar_moment=0.0, moment_magnitude=0.0,
+        mxx=2.0,
+        myy=-1.0,
+        mzz=-1.0,
+        mxy=0.0,
+        mxz=0.0,
+        myz=0.0,
+        scalar_moment=0.0,
+        moment_magnitude=0.0,
     )
 
 

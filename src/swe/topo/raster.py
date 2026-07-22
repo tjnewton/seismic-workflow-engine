@@ -92,23 +92,15 @@ def elevations_from_raster(
                     "Install it with: conda install -c conda-forge pyproj"
                 ) from exc
 
-            transformer = Transformer.from_crs(
-                target_crs, str(src.crs), always_xy=True
-            )
-            xs, ys = transformer.transform(
-                coordinates[:, 0], coordinates[:, 1]
-            )
-            xy_coords = list(zip(xs, ys))
+            transformer = Transformer.from_crs(target_crs, str(src.crs), always_xy=True)
+            xs, ys = transformer.transform(coordinates[:, 0], coordinates[:, 1])
+            xy_coords = list(zip(xs, ys, strict=False))
         else:
-            xy_coords = list(zip(coordinates[:, 0], coordinates[:, 1]))
+            xy_coords = list(zip(coordinates[:, 0], coordinates[:, 1], strict=False))
 
-        elevations = np.array(
-            [val[0] for val in src.sample(xy_coords)]
-        )
+        elevations = np.array([val[0] for val in src.sample(xy_coords)])
 
-    logger.info(
-        "Sampled %d elevations from %s", len(elevations), raster_path
-    )
+    logger.info("Sampled %d elevations from %s", len(elevations), raster_path)
     return elevations
 
 
@@ -173,9 +165,7 @@ def grid_from_raster(
                         "pyproj is required for CRS reprojection. "
                         "Install it with: conda install -c conda-forge pyproj"
                     ) from exc
-                transformer = Transformer.from_crs(
-                    target_crs, crs_str, always_xy=True
-                )
+                transformer = Transformer.from_crs(target_crs, crs_str, always_xy=True)
                 left, bottom = transformer.transform(bounds[0], bounds[1])
                 right, top = transformer.transform(bounds[2], bounds[3])
                 bounds = (left, bottom, right, top)
@@ -196,12 +186,8 @@ def grid_from_raster(
 
         # Build coordinate axes from the window transform.
         nrows, ncols = data.shape
-        x = np.array(
-            [win_transform.c + (col + 0.5) * win_transform.a for col in range(ncols)]
-        )
-        y = np.array(
-            [win_transform.f + (row + 0.5) * win_transform.e for row in range(nrows)]
-        )
+        x = np.array([win_transform.c + (col + 0.5) * win_transform.a for col in range(ncols)])
+        y = np.array([win_transform.f + (row + 0.5) * win_transform.e for row in range(nrows)])
 
         # Resample if resolution requested.
         if resolution is not None and resolution > 0:
@@ -211,8 +197,10 @@ def grid_from_raster(
                 from scipy.interpolate import RegularGridInterpolator
 
                 interp = RegularGridInterpolator(
-                    (y, x), data.astype(np.float64),
-                    bounds_error=False, fill_value=None,
+                    (y, x),
+                    data.astype(np.float64),
+                    bounds_error=False,
+                    fill_value=None,
                 )
                 yy, xx = np.meshgrid(new_y, new_x, indexing="ij")
                 data = interp((yy, xx))
@@ -221,11 +209,16 @@ def grid_from_raster(
 
     logger.info(
         "Extracted elevation grid (%d x %d) from %s",
-        data.shape[0], data.shape[1], raster_path,
+        data.shape[0],
+        data.shape[1],
+        raster_path,
     )
 
     return ElevationGrid(
-        x=x, y=y, elevation=data.astype(np.float64), crs=crs_str,
+        x=x,
+        y=y,
+        elevation=data.astype(np.float64),
+        crs=crs_str,
     )
 
 
@@ -257,12 +250,15 @@ def terrain_correction(
     coords = np.array(station_coords, dtype=np.float64)
     xy = coords[:, :2]
     elevations = elevations_from_raster(
-        raster_path, xy, target_crs=target_crs,
+        raster_path,
+        xy,
+        target_crs=target_crs,
     )
     result = coords.copy()
     result[:, 2] = elevations
     logger.info(
         "Terrain-corrected %d station elevations from %s",
-        len(elevations), raster_path,
+        len(elevations),
+        raster_path,
     )
-    return result
+    return np.asarray(result)

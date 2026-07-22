@@ -100,9 +100,7 @@ def party_to_markers(
                 continue
 
             median_time = median(pick_times)
-            event_time_str = UTCDateTime(median_time).strftime(
-                "%Y-%m-%d %H:%M:%S.%f"
-            )[:-1]
+            event_time_str = UTCDateTime(median_time).strftime("%Y-%m-%d %H:%M:%S.%f")[:-1]
             event_hash = base64.urlsafe_b64encode(
                 hashlib.sha1(event_time_str.encode("utf8")).digest()
             ).decode("ascii")
@@ -156,9 +154,7 @@ def party_to_markers(
     with open(output_path, "w") as fh:
         fh.writelines(lines)
 
-    logger.info(
-        "Wrote %d events from Party to %s", len(events), output_path
-    )
+    logger.info("Wrote %d events from Party to %s", len(events), output_path)
     return output_path
 
 
@@ -170,7 +166,7 @@ def parse_all_markers(marker_file_path: str | Path) -> list[dict]:
     with ``type`` and ``raw_line`` keys.
     """
     markers = []
-    with open(marker_file_path, "r") as f:
+    with open(marker_file_path) as f:
         for line in f:
             line = line.rstrip("\n")
             if not line.strip():
@@ -266,7 +262,7 @@ def _iter_phase_markers(
 ) -> list[dict]:
     """Yield parsed phase marker dicts from a Snuffler marker file."""
     results = []
-    with open(marker_file_path, "r") as f:
+    with open(marker_file_path) as f:
         for line in f:
             line = line.rstrip("\n")
             if not line.startswith("phase:"):

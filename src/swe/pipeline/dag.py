@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections import defaultdict, deque
+from collections import defaultdict
 from typing import Any
 
 from swe.pipeline.core import PipelineStep
@@ -93,9 +93,7 @@ def topological_tiers(
         # Find all nodes with in_degree 0
         ready = [n for n in remaining if in_degree[n] == 0]
         if not ready:
-            raise ValueError(
-                f"Dependency cycle detected among steps: {remaining}"
-            )
+            raise ValueError(f"Dependency cycle detected among steps: {remaining}")
 
         tier = [step_map[n] for n in sorted(ready)]
         tiers.append(tier)

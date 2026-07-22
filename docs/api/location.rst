@@ -3,5 +3,4 @@
 
 .. automodule:: swe.location
    :members:
-   :undoc-members:
    :show-inheritance:

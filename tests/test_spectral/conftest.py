@@ -113,12 +113,8 @@ def coda_trace():
     for i in range(int(p_onset * sr), npts):
         t_lapse = t[i] - origin_offset
         if t_lapse > 0.1:
-            envelope_val = 10.0 * np.exp(
-                -np.pi * central_freq * t_lapse / qc_true
-            ) / t_lapse
-            data[i] += envelope_val * np.sin(
-                2.0 * np.pi * central_freq * t[i]
-            )
+            envelope_val = 10.0 * np.exp(-np.pi * central_freq * t_lapse / qc_true) / t_lapse
+            data[i] += envelope_val * np.sin(2.0 * np.pi * central_freq * t[i])
 
     header = {
         "network": "XX",

@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import calendar
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
-from obspy import Inventory, Stream, UTCDateTime
+from obspy import UTCDateTime
 from obspy.clients.fdsn import Client
 from obspy.clients.fdsn.header import FDSNException
 
@@ -74,12 +74,21 @@ def get_waveforms(
         for channel in channels:
             try:
                 st = fdsn_client.get_waveforms(
-                    network, station, location, channel, start_time, end_time,
+                    network,
+                    station,
+                    location,
+                    channel,
+                    start_time,
+                    end_time,
                 )
             except (FDSNException, ConnectionError, OSError):
                 logger.warning(
                     "No data for %s.%s.%s (%s - %s)",
-                    network, station, channel, start_time, end_time,
+                    network,
+                    station,
+                    channel,
+                    start_time,
+                    end_time,
                 )
                 continue
 
@@ -94,23 +103,18 @@ def get_waveforms(
             stream_end = st[0].stats.endtime
 
             day_start = UTCDateTime(
-                f"{stream_start.year}-{stream_start.month:02}-"
-                f"{stream_start.day:02}T00:00:00.0Z"
+                f"{stream_start.year}-{stream_start.month:02}-{stream_start.day:02}T00:00:00.0Z"
             )
 
             while day_start < stream_end:
                 day_end = UTCDateTime(
-                    f"{day_start.year}-{day_start.month:02}-"
-                    f"{day_start.day:02}T23:59:59.999999999Z"
+                    f"{day_start.year}-{day_start.month:02}-{day_start.day:02}T23:59:59.999999999Z"
                 )
                 day_st = st.copy()
                 day_st.trim(day_start, day_end, nearest_sample=False)
 
                 if day_st:
-                    date_str = (
-                        f"{day_start.year}-{day_start.month:02}-"
-                        f"{day_start.day:02}"
-                    )
+                    date_str = f"{day_start.year}-{day_start.month:02}-{day_start.day:02}"
                     fname = filename_format.format(
                         network=network,
                         station=station,
@@ -136,9 +140,7 @@ def get_waveforms(
                     day = 1
                 else:
                     day += 1
-                day_start = UTCDateTime(
-                    f"{year}-{month:02}-{day:02}T00:00:00.0Z"
-                )
+                day_start = UTCDateTime(f"{year}-{month:02}-{day:02}T00:00:00.0Z")
 
     return written
 

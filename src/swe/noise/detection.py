@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import NamedTuple
 
@@ -44,7 +44,7 @@ class NoiseWindowResult(NamedTuple):
 
 
 def find_noise_windows(
-    filepaths: list[str | Path],
+    filepaths: Sequence[str | Path],
     detection_parameters: tuple[int, int, float, int],
     time_periods: list[tuple[UTCDateTime, UTCDateTime]],
     *,
@@ -135,14 +135,9 @@ def find_noise_windows(
 
             if remove_response:
                 if response_dir is None:
-                    raise ValueError(
-                        "response_dir must be provided when "
-                        "remove_response=True"
-                    )
+                    raise ValueError("response_dir must be provided when remove_response=True")
                 inv = _load_response(period_trace, response_dir)
-                period_trace.remove_response(
-                    inventory=inv, output="VEL", plot=False
-                )
+                period_trace.remove_response(inventory=inv, output="VEL", plot=False)
 
             if bandpass_filter:
                 period_trace.filter(
@@ -178,9 +173,7 @@ def find_noise_windows(
 
             n_found = len(station_windows)
             if n_found == 0:
-                logger.info(
-                    "%s--%s  Found 0 noise windows.", start_time, end_time
-                )
+                logger.info("%s--%s  Found 0 noise windows.", start_time, end_time)
             else:
                 logger.info(
                     "%s--%s  Found %d noise windows.",
@@ -194,13 +187,16 @@ def find_noise_windows(
         elapsed = time.time() - t0
         logger.info("station/channel runtime: %.2f minutes.", elapsed / 60)
 
-    noise_windows_arr = np.array(noise_windows) if noise_windows else np.empty((0, threshold_period))
+    noise_windows_arr = (
+        np.array(noise_windows) if noise_windows else np.empty((0, threshold_period))
+    )
     return NoiseWindowResult(noise_windows_arr, noise_windows_times)
 
 
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
 
 def _default_station_parser(filepath: Path) -> tuple[str, str]:
     """Extract station and channel from a MiniSEED filename.
@@ -225,7 +221,5 @@ def _load_response(trace, response_dir: str | Path):
     """Load the RESP file for a given trace."""
     response_dir = Path(response_dir)
     stats = trace.stats
-    resp_file = response_dir / (
-        f"RESP.{stats.network}.{stats.station}..{stats.channel}"
-    )
+    resp_file = response_dir / (f"RESP.{stats.network}.{stats.station}..{stats.channel}")
     return read_inventory(str(resp_file), format="RESP")

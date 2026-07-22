@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -17,9 +16,9 @@ from numpy.typing import NDArray
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "UncertainValue",
     "LocationUncertainty",
     "MagnitudeUncertainty",
+    "UncertainValue",
 ]
 
 
@@ -80,9 +79,7 @@ class LocationUncertainty:
     horiz_uncertainty_m: float = 0.0
     depth_uncertainty_m: float = 0.0
     rms: float = 0.0
-    covariance_matrix: NDArray[np.floating] | None = field(
-        default=None, repr=False
-    )
+    covariance_matrix: NDArray[np.floating] | None = field(default=None, repr=False)
     n_samples: int = 0
     method: str = ""
 
@@ -109,18 +106,18 @@ class LocationUncertainty:
 
     def __hash__(self) -> int:
         cov_hash = (
-            tuple(self.covariance_matrix.flat)
-            if self.covariance_matrix is not None
-            else None
+            tuple(self.covariance_matrix.flat) if self.covariance_matrix is not None else None
         )
-        return hash((
-            self.horiz_uncertainty_m,
-            self.depth_uncertainty_m,
-            self.rms,
-            cov_hash,
-            self.n_samples,
-            self.method,
-        ))
+        return hash(
+            (
+                self.horiz_uncertainty_m,
+                self.depth_uncertainty_m,
+                self.rms,
+                cov_hash,
+                self.n_samples,
+                self.method,
+            )
+        )
 
 
 @dataclass(frozen=True)

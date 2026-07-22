@@ -54,14 +54,22 @@ class TestMonteCarloLocationUncertainty:
 
         small_unc = np.array([0.001, 0.001, 0.001])
         result_small = monte_carlo_location_uncertainty(
-            pick_times, small_unc, self._dummy_locator, {},
-            n_samples=200, random_state=0,
+            pick_times,
+            small_unc,
+            self._dummy_locator,
+            {},
+            n_samples=200,
+            random_state=0,
         )
 
         large_unc = np.array([0.1, 0.1, 0.1])
         result_large = monte_carlo_location_uncertainty(
-            pick_times, large_unc, self._dummy_locator, {},
-            n_samples=200, random_state=0,
+            pick_times,
+            large_unc,
+            self._dummy_locator,
+            {},
+            n_samples=200,
+            random_state=0,
         )
 
         assert result_large.horiz_uncertainty_m > result_small.horiz_uncertainty_m
@@ -70,8 +78,12 @@ class TestMonteCarloLocationUncertainty:
         pick_times = np.array([1.0, 2.0, 3.0])
         pick_unc = np.array([0.01, 0.01, 0.01])
         result = monte_carlo_location_uncertainty(
-            pick_times, pick_unc, self._dummy_locator, {},
-            n_samples=50, random_state=0,
+            pick_times,
+            pick_unc,
+            self._dummy_locator,
+            {},
+            n_samples=50,
+            random_state=0,
         )
         assert result.covariance_matrix is not None
         assert result.covariance_matrix.shape == (3, 3)
@@ -104,12 +116,20 @@ class TestMonteCarloLocationUncertainty:
         pick_unc = np.array([0.01, 0.01, 0.01])
 
         r1 = monte_carlo_location_uncertainty(
-            pick_times, pick_unc, self._dummy_locator, {},
-            n_samples=50, random_state=123,
+            pick_times,
+            pick_unc,
+            self._dummy_locator,
+            {},
+            n_samples=50,
+            random_state=123,
         )
         r2 = monte_carlo_location_uncertainty(
-            pick_times, pick_unc, self._dummy_locator, {},
-            n_samples=50, random_state=123,
+            pick_times,
+            pick_unc,
+            self._dummy_locator,
+            {},
+            n_samples=50,
+            random_state=123,
         )
         assert r1.horiz_uncertainty_m == r2.horiz_uncertainty_m
 
@@ -126,7 +146,9 @@ class TestHypocentersToLocationUncertainty:
         from swe.location.nonlinloc import HypocenterResult
 
         hyp = HypocenterResult(
-            x_km=10.0, y_km=20.0, z_m=5000.0,
+            x_km=10.0,
+            y_km=20.0,
+            z_m=5000.0,
             horiz_uncertainty_m=100.0,
             depth_uncertainty_m=200.0,
             rms=0.15,

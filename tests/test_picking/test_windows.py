@@ -1,10 +1,11 @@
 """Tests for swe.picking.windows."""
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
-from unittest.mock import patch, MagicMock
+from obspy import Stream, Trace, UTCDateTime
 
-from obspy import UTCDateTime, Stream, Trace
 from swe.picking.windows import (
     find_picking_windows,
     get_threshold_picks,
@@ -111,7 +112,10 @@ class TestRemoveDuplicatePicks:
     def test_empty_input(self):
         """Empty input returns empty results."""
         station_picks, uw, uwt, uidx = remove_duplicate_picks(
-            [], [], [], ["STA1"],
+            [],
+            [],
+            [],
+            ["STA1"],
         )
         assert station_picks == {}
         assert uw == []
@@ -127,12 +131,11 @@ class TestRemoveDuplicatePicks:
         n_picks = 5
         picked_windows = [np.array([float(i)]) for i in range(n_picks)]
         picked_windows_times = [
-            (t0 + i * 0.001, t0 + 1 + i * 0.001, "STA1", "HHZ")
-            for i in range(n_picks)
+            (t0 + i * 0.001, t0 + 1 + i * 0.001, "STA1", "HHZ") for i in range(n_picks)
         ]
         index_of_max = [0] * n_picks
 
-        station_picks, uw, uwt, uidx = remove_duplicate_picks(
+        station_picks, uw, _uwt, _uidx = remove_duplicate_picks(
             picked_windows,
             picked_windows_times,
             index_of_max,
@@ -162,7 +165,7 @@ class TestRemoveDuplicatePicks:
         ]
         index_of_max = [0, 0]
 
-        station_picks, uw, uwt, uidx = remove_duplicate_picks(
+        station_picks, uw, _uwt, _uidx = remove_duplicate_picks(
             picked_windows,
             picked_windows_times,
             index_of_max,
@@ -178,6 +181,7 @@ class TestRemoveDuplicatePicks:
 # ---------------------------------------------------------------------------
 # Tests for find_picking_windows
 # ---------------------------------------------------------------------------
+
 
 class TestFindPickingWindows:
     """Tests for find_picking_windows."""
@@ -258,12 +262,9 @@ class TestFindPickingWindows:
         end = start + (npts / sr)
 
         st = self._make_stream(npts, sr, start)
-        # Track calls on the trace
-        original_remove = st[0].remove_response
+        # Replace the trace methods with mocks to track calls
         st[0].remove_response = MagicMock()
-        original_filter = st[0].filter
         st[0].filter = MagicMock()
-        original_detrend = st[0].detrend
         st[0].detrend = MagicMock()
 
         mock_read.return_value = st
@@ -296,15 +297,15 @@ class TestGetThresholdPicks:
 
     def test_basic_threshold_filtering(self):
         """Only rows with max > threshold should be retained."""
-        predictions = np.array([
-            [0.1, 0.2, 0.9],  # max=0.9, above 0.5
-            [0.1, 0.3, 0.4],  # max=0.4, below 0.5
-            [0.8, 0.1, 0.2],  # max=0.8, above 0.5
-        ])
+        predictions = np.array(
+            [
+                [0.1, 0.2, 0.9],  # max=0.9, above 0.5
+                [0.1, 0.3, 0.4],  # max=0.4, below 0.5
+                [0.8, 0.1, 0.2],  # max=0.8, above 0.5
+            ]
+        )
         raw = [np.array([1, 2, 3]), np.array([4, 5, 6]), np.array([7, 8, 9])]
-        meta = [("t0", "t1", "S1", "C1"),
-                ("t2", "t3", "S2", "C2"),
-                ("t4", "t5", "S3", "C3")]
+        meta = [("t0", "t1", "S1", "C1"), ("t2", "t3", "S2", "C2"), ("t4", "t5", "S3", "C3")]
 
         pw, pwt, idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
 
@@ -328,14 +329,16 @@ class TestGetThresholdPicks:
 
     def test_all_picks_above_threshold(self):
         """All rows above threshold -> all returned with correct max indices."""
-        predictions = np.array([
-            [0.6, 0.9, 0.3],
-            [0.7, 0.5, 0.8],
-        ])
+        predictions = np.array(
+            [
+                [0.6, 0.9, 0.3],
+                [0.7, 0.5, 0.8],
+            ]
+        )
         raw = [np.array([1, 2, 3]), np.array([4, 5, 6])]
         meta = [("a", "b", "S1", "C1"), ("c", "d", "S2", "C2")]
 
-        pw, pwt, idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
+        pw, _pwt, idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
 
         assert len(pw) == 2
         assert idx_max[0] == 1  # argmax of [0.6, 0.9, 0.3]
@@ -352,53 +355,61 @@ class TestGetThresholdPicksEdgeCases:
 
     def test_nan_in_predictions(self):
         """Rows with NaN should be excluded (NaN > threshold is False)."""
-        predictions = np.array([
-            [np.nan, np.nan, np.nan],
-            [0.1, 0.9, 0.3],
-        ])
+        predictions = np.array(
+            [
+                [np.nan, np.nan, np.nan],
+                [0.1, 0.9, 0.3],
+            ]
+        )
         raw = [np.array([1, 2, 3]), np.array([4, 5, 6])]
         meta = [("a", "b", "S1", "C1"), ("c", "d", "S2", "C2")]
 
-        pw, pwt, idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
+        pw, pwt, _idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
         # NaN row should not pass threshold; only second row passes
         assert len(pw) == 1
         assert pwt[0] == meta[1]
 
     def test_inf_in_predictions(self):
         """Rows with inf should pass threshold (inf > threshold is True)."""
-        predictions = np.array([
-            [np.inf, 0.1, 0.2],
-            [0.1, 0.2, 0.3],
-        ])
+        predictions = np.array(
+            [
+                [np.inf, 0.1, 0.2],
+                [0.1, 0.2, 0.3],
+            ]
+        )
         raw = [np.array([1, 2, 3]), np.array([4, 5, 6])]
         meta = [("a", "b", "S1", "C1"), ("c", "d", "S2", "C2")]
 
-        pw, pwt, idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
+        pw, _pwt, idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
         assert len(pw) == 1  # Only the inf row passes
         assert idx_max[0] == 0  # inf is at index 0
 
     def test_threshold_zero(self):
         """Threshold=0 should let all positive-max rows pass."""
-        predictions = np.array([
-            [0.1, 0.2, 0.3],
-            [0.4, 0.5, 0.6],
-        ])
+        predictions = np.array(
+            [
+                [0.1, 0.2, 0.3],
+                [0.4, 0.5, 0.6],
+            ]
+        )
         raw = [np.array([1, 2, 3]), np.array([4, 5, 6])]
         meta = [("a", "b", "S1", "C1"), ("c", "d", "S2", "C2")]
 
-        pw, pwt, idx_max = get_threshold_picks(predictions, 0.0, raw, meta)
+        pw, _pwt, _idx_max = get_threshold_picks(predictions, 0.0, raw, meta)
         assert len(pw) == 2
 
     def test_threshold_one(self):
         """Threshold=1.0 should only pass rows with max > 1.0."""
-        predictions = np.array([
-            [0.5, 0.9, 0.3],
-            [0.8, 1.5, 0.2],
-        ])
+        predictions = np.array(
+            [
+                [0.5, 0.9, 0.3],
+                [0.8, 1.5, 0.2],
+            ]
+        )
         raw = [np.array([1, 2, 3]), np.array([4, 5, 6])]
         meta = [("a", "b", "S1", "C1"), ("c", "d", "S2", "C2")]
 
-        pw, pwt, idx_max = get_threshold_picks(predictions, 1.0, raw, meta)
+        pw, _pwt, idx_max = get_threshold_picks(predictions, 1.0, raw, meta)
         assert len(pw) == 1
         assert idx_max[0] == 1  # max of second row at index 1
 
@@ -408,7 +419,7 @@ class TestGetThresholdPicksEdgeCases:
         raw = [np.array([10, 20])]
         meta = [("a", "b", "S1", "C1")]
 
-        pw, pwt, idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
+        pw, _pwt, idx_max = get_threshold_picks(predictions, 0.5, raw, meta)
         assert len(pw) == 1
         assert idx_max[0] == 0
 
@@ -449,7 +460,7 @@ class TestFindPickingWindowsEdgeCases:
         tr.stats.network = "XX"
         mock_read.return_value = Stream([tr])
 
-        windows, raw, meta = find_picking_windows(
+        _windows, raw, meta = find_picking_windows(
             ["/fake/XX.STA1.00.BHZ.mseed"],
             window_length=500,  # larger than npts
             window_offset=250,
@@ -476,7 +487,7 @@ class TestRemoveDuplicatePicksEdgeCases:
         index_of_max = [0]
         station_list = ["STA1", "STA2"]  # UNKNOWN not in list
 
-        station_picks, uw, uwt, uidx = remove_duplicate_picks(
+        station_picks, uw, _uwt, _uidx = remove_duplicate_picks(
             picked_windows,
             picked_windows_times,
             index_of_max,

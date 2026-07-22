@@ -7,8 +7,9 @@ apply threshold-based pick culling, and remove duplicate picks.
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import NamedTuple, Sequence
+from typing import NamedTuple
 
 import numpy as np
 from obspy import read
@@ -153,12 +154,8 @@ def find_picking_windows(
                     f".{period_trace.stats.station}"
                     f"..{period_trace.stats.channel}"
                 )
-                inv = read_inventory(
-                    path_or_file_object=str(resp_file), format="RESP"
-                )
-                period_trace.remove_response(
-                    inventory=inv, output="VEL", plot=False
-                )
+                inv = read_inventory(path_or_file_object=str(resp_file), format="RESP")
+                period_trace.remove_response(inventory=inv, output="VEL", plot=False)
 
             if apply_filter:
                 period_trace.detrend("linear")
@@ -176,9 +173,7 @@ def find_picking_windows(
                 window_start = times[index]
                 window_end = times[index + window_length - 1]
                 station_windows.append(data[index : index + window_length])
-                station_windows_times.append(
-                    (window_start, window_end, station, channel)
-                )
+                station_windows_times.append((window_start, window_end, station, channel))
 
             for w_idx in range(len(station_windows)):
                 window_data = station_windows[w_idx]
@@ -187,16 +182,16 @@ def find_picking_windows(
 
                 for row_idx in range(len(reshaped)):
                     reshaped[row_idx][1] = np.sign(window_data[row_idx])
-                    reshaped[row_idx][0] = np.log(
-                        np.abs(window_data[row_idx]) + epsilon
-                    )
+                    reshaped[row_idx][0] = np.log(np.abs(window_data[row_idx]) + epsilon)
 
                 picking_windows.append(reshaped)
                 picking_windows_times.append(station_windows_times[w_idx])
 
     picking_windows_arr = np.array(picking_windows)
 
-    return PickingWindowResult(picking_windows_arr, picking_windows_untransformed, picking_windows_times)
+    return PickingWindowResult(
+        picking_windows_arr, picking_windows_untransformed, picking_windows_times
+    )
 
 
 def get_threshold_picks(
@@ -232,9 +227,7 @@ def get_threshold_picks(
 
     index_of_max_prediction: list[int] = []
     for row in above_threshold_rows:
-        row_max_idx = np.where(
-            pick_predictions[row] == max_row_prediction[row]
-        )
+        row_max_idx = np.where(pick_predictions[row] == max_row_prediction[row])
         index_of_max_prediction.append(row_max_idx[0][0])
 
     picked_windows: list[np.ndarray] = []
@@ -295,12 +288,8 @@ def remove_duplicate_picks(
     duplicate_list: list[int] = []
 
     for index in range(len(picked_windows_times)):
-        window_start, _window_end, station, _channel = picked_windows_times[
-            index
-        ]
-        pick_time = window_start + (
-            index_of_max_prediction[index] / sampling_rate
-        )
+        window_start, _window_end, station, _channel = picked_windows_times[index]
+        pick_time = window_start + (index_of_max_prediction[index] / sampling_rate)
 
         if station not in station_picks:
             station_picks[station] = []
@@ -310,9 +299,7 @@ def remove_duplicate_picks(
         else:
             duplicate_flag = False
             for pick in station_picks[station]:
-                if abs(pick - pick_time) <= (
-                    duplicate_threshold / sampling_rate
-                ):
+                if abs(pick - pick_time) <= (duplicate_threshold / sampling_rate):
                     duplicate_flag = True
                     duplicate_list.append(index)
 
@@ -320,19 +307,13 @@ def remove_duplicate_picks(
                 station_picks[station].append(pick_time)
 
     unique_picked_windows = [
-        item
-        for idx, item in enumerate(picked_windows)
-        if idx not in duplicate_list
+        item for idx, item in enumerate(picked_windows) if idx not in duplicate_list
     ]
     unique_picked_windows_times = [
-        item
-        for idx, item in enumerate(picked_windows_times)
-        if idx not in duplicate_list
+        item for idx, item in enumerate(picked_windows_times) if idx not in duplicate_list
     ]
     unique_index_of_max_prediction = [
-        item
-        for idx, item in enumerate(index_of_max_prediction)
-        if idx not in duplicate_list
+        item for idx, item in enumerate(index_of_max_prediction) if idx not in duplicate_list
     ]
 
     return DeduplicatedPickResult(

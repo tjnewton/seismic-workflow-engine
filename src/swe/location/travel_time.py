@@ -80,7 +80,10 @@ def locate_by_travel_time_grid(
 
     logger.info(
         "Travel-time grid-search: %d x %d x %d nodes, %d stations",
-        len(grid_x), len(grid_y), len(grid_z), n_stations,
+        len(grid_x),
+        len(grid_y),
+        len(grid_z),
+        n_stations,
     )
 
     # Observed differential times relative to the reference station.
@@ -106,7 +109,10 @@ def locate_by_travel_time_grid(
 
     logger.info(
         "Best grid-TT location: x=%.1f  y=%.1f  z=%.1f  residual=%.4f",
-        best_x, best_y, best_z, best_residual,
+        best_x,
+        best_y,
+        best_z,
+        best_residual,
     )
 
     return LocationResult(

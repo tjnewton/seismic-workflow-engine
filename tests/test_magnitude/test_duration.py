@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from obspy import Trace, UTCDateTime
 
 from swe.magnitude.duration import (
@@ -25,19 +24,21 @@ class TestCodaDuration:
         """Duration should be less than the trace length after P."""
         p_time = synthetic_trace.stats.starttime + 10.0
         tau = coda_duration(synthetic_trace, p_time)
-        max_possible = (
-            synthetic_trace.stats.endtime - p_time
-        )
+        max_possible = synthetic_trace.stats.endtime - p_time
         assert tau <= max_possible + 1.0
 
     def test_higher_snr_threshold_shorter_duration(self, synthetic_trace):
         """A lower SNR threshold should give a longer coda."""
         p_time = synthetic_trace.stats.starttime + 10.0
         tau_low = coda_duration(
-            synthetic_trace, p_time, snr_threshold=1.5,
+            synthetic_trace,
+            p_time,
+            snr_threshold=1.5,
         )
         tau_high = coda_duration(
-            synthetic_trace, p_time, snr_threshold=5.0,
+            synthetic_trace,
+            p_time,
+            snr_threshold=5.0,
         )
         assert tau_low >= tau_high
 
@@ -97,7 +98,9 @@ class TestDurationMagnitude:
     def test_snr_threshold_stored(self, synthetic_trace):
         p_time = synthetic_trace.stats.starttime + 10.0
         result = duration_magnitude(
-            synthetic_trace, p_time, snr_threshold=3.0,
+            synthetic_trace,
+            p_time,
+            snr_threshold=3.0,
         )
         assert result.snr_threshold_used == 3.0
 
@@ -105,17 +108,25 @@ class TestDurationMagnitude:
         """Increasing distance should increase Md (positive a2)."""
         p_time = synthetic_trace.stats.starttime + 10.0
         result_near = duration_magnitude(
-            synthetic_trace, p_time, distance_km=0.0,
+            synthetic_trace,
+            p_time,
+            distance_km=0.0,
         )
         result_far = duration_magnitude(
-            synthetic_trace, p_time, distance_km=100.0,
+            synthetic_trace,
+            p_time,
+            distance_km=100.0,
         )
         assert result_far.md > result_near.md
 
     def test_custom_coefficients(self, synthetic_trace):
         p_time = synthetic_trace.stats.starttime + 10.0
         result = duration_magnitude(
-            synthetic_trace, p_time, a0=0.0, a1=1.0, a2=0.0,
+            synthetic_trace,
+            p_time,
+            a0=0.0,
+            a1=1.0,
+            a2=0.0,
         )
         # With a0=0, a1=1, a2=0: Md = log10(tau)
         expected = np.log10(result.coda_duration)

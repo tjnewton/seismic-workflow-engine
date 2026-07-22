@@ -13,12 +13,13 @@ Persson, B. N. J. (2006). Contact mechanics for randomly rough
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+
     from swe.roughness.surface import RoughnessPSDResult
 
 logger = logging.getLogger(__name__)
@@ -105,10 +106,7 @@ def forward_model_frequency(
     """
     valid_models = ("elastic_halfspace", "hertzian")
     if contact_model not in valid_models:
-        raise ValueError(
-            f"contact_model must be one of {valid_models}, "
-            f"got {contact_model!r}"
-        )
+        raise ValueError(f"contact_model must be one of {valid_models}, got {contact_model!r}")
     if slip_velocity <= 0:
         raise ValueError(f"slip_velocity must be positive, got {slip_velocity}")
 

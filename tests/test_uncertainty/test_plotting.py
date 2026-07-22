@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import numpy as np
-import pytest
 from matplotlib.figure import Figure
 
 from swe.uncertainty.plotting import (
@@ -32,9 +32,7 @@ class TestPlotPickUncertainty:
     def test_with_labels(self):
         times = np.array([1.0, 2.0])
         uncertainties = np.array([0.1, 0.2])
-        fig = plot_pick_uncertainty(
-            times, uncertainties, station_labels=["STA1", "STA2"]
-        )
+        fig = plot_pick_uncertainty(times, uncertainties, station_labels=["STA1", "STA2"])
         assert isinstance(fig, Figure)
 
     def test_with_figsize(self):
@@ -102,18 +100,14 @@ class TestPlotUncertaintySummary:
 
     def test_location_uncertainty(self):
         results = {
-            "Location": LocationUncertainty(
-                horiz_uncertainty_m=500, depth_uncertainty_m=1000
-            ),
+            "Location": LocationUncertainty(horiz_uncertainty_m=500, depth_uncertainty_m=1000),
         }
         fig = plot_uncertainty_summary(results)
         assert isinstance(fig, Figure)
 
     def test_magnitude_uncertainty(self):
         results = {
-            "Magnitude": MagnitudeUncertainty(
-                mag_uncertainty=0.15, station_std=0.1
-            ),
+            "Magnitude": MagnitudeUncertainty(mag_uncertainty=0.15, station_std=0.1),
         }
         fig = plot_uncertainty_summary(results)
         assert isinstance(fig, Figure)

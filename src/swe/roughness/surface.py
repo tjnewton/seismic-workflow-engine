@@ -16,14 +16,16 @@ Renard, F. et al. (2013). Constant dimensionality of fault roughness
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
-from scipy.signal import welch, detrend as sp_detrend
+from scipy.signal import detrend as sp_detrend
+from scipy.signal import welch
 from scipy.stats import linregress
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+
     from swe.topo.raster import ElevationGrid
 
 logger = logging.getLogger(__name__)
@@ -108,9 +110,7 @@ def compute_roughness_psd_1d(
     z = np.asarray(z, dtype=np.float64)
 
     if len(x) != len(z):
-        raise ValueError(
-            f"x and z must have the same length ({len(x)} vs {len(z)})"
-        )
+        raise ValueError(f"x and z must have the same length ({len(x)} vs {len(z)})")
     if len(z) < 4:
         raise ValueError("Need at least 4 points for PSD estimation")
 
@@ -154,8 +154,7 @@ def compute_roughness_psd_1d(
     dominant_wl = float(wavelengths[peak_idx])
 
     logger.info(
-        "1-D roughness PSD: %d points, dominant wavelength=%.3f m, "
-        "spectral slope=%.2f",
+        "1-D roughness PSD: %d points, dominant wavelength=%.3f m, spectral slope=%.2f",
         len(z),
         dominant_wl,
         spectral_slope,
@@ -214,7 +213,7 @@ def compute_roughness_psd_2d(
         )
         A = np.column_stack([xx.ravel(), yy.ravel(), np.ones(nx * ny)])
         coeffs, _, _, _ = np.linalg.lstsq(A, elev.ravel(), rcond=None)
-        trend = (coeffs[0] * xx + coeffs[1] * yy + coeffs[2])
+        trend = coeffs[0] * xx + coeffs[1] * yy + coeffs[2]
         elev = elev - trend
 
     # Apply 2-D window
@@ -336,9 +335,7 @@ def dominant_roughness_wavelength(
     psd_filt = psd[mask]
 
     if len(wl_filt) == 0:
-        logger.warning(
-            "No wavelengths in range [%.3f, %.3f] m", min_wavelength, max_wavelength
-        )
+        logger.warning("No wavelengths in range [%.3f, %.3f] m", min_wavelength, max_wavelength)
         return np.nan
 
     if method == "peak":

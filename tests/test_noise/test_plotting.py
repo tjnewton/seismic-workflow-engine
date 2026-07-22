@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import numpy as np
@@ -13,7 +14,6 @@ from obspy.core.utcdatetime import UTCDateTime
 from obspy.signal.trigger import classic_sta_lta
 
 from swe.noise._plotting import plot_noise_windows, plot_stalta
-
 
 # ---------------------------------------------------------------------------
 # Local fixtures
@@ -87,8 +87,12 @@ class TestPlotStalta:
         start = synthetic_trace.stats.starttime + 1
         end = synthetic_trace.stats.endtime - 1
         fig = plot_stalta(
-            synthetic_trace, synthetic_cft, start, end,
-            sta_samples=50, lta_samples=500,
+            synthetic_trace,
+            synthetic_cft,
+            start,
+            end,
+            sta_samples=50,
+            lta_samples=500,
         )
         ylabel = fig.axes[1].get_ylabel()
         assert "50" in ylabel

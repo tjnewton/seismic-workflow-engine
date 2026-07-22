@@ -9,10 +9,10 @@ from swe.location.amplitude import LocationResult
 from swe.location.travel_time import locate_by_travel_time_grid
 from swe.velocity.model import TravelTimeGrid
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _build_constant_velocity_ttg(
     velocity: float = 5000.0,
@@ -27,15 +27,17 @@ def _build_constant_velocity_ttg(
     gz = np.arange(grid_bounds[2][0], grid_bounds[2][1] + dz / 2, dz)
 
     if station_coords is None:
-        station_coords = np.array([
-            [0.0, 0.0, 0.0],
-            [200.0, 0.0, 0.0],
-            [0.0, 200.0, 0.0],
-            [200.0, 200.0, 0.0],
-            [100.0, 100.0, 0.0],
-            [50.0, 150.0, 0.0],
-            [150.0, 50.0, 0.0],
-        ])
+        station_coords = np.array(
+            [
+                [0.0, 0.0, 0.0],
+                [200.0, 0.0, 0.0],
+                [0.0, 200.0, 0.0],
+                [200.0, 200.0, 0.0],
+                [100.0, 100.0, 0.0],
+                [50.0, 150.0, 0.0],
+                [150.0, 50.0, 0.0],
+            ]
+        )
 
     nx, ny, nz = len(gx), len(gy), len(gz)
     n_stations = station_coords.shape[0]
@@ -44,9 +46,7 @@ def _build_constant_velocity_ttg(
     for idx in range(n_stations):
         sx, sy, sz = station_coords[idx]
         gxx, gyy, gzz = np.meshgrid(gx, gy, gz, indexing="ij")
-        dist = np.sqrt(
-            (gxx - sx) ** 2 + (gyy - sy) ** 2 + (gzz - sz) ** 2
-        )
+        dist = np.sqrt((gxx - sx) ** 2 + (gyy - sy) ** 2 + (gzz - sz) ** 2)
         travel_times[idx] = dist / velocity
 
     return TravelTimeGrid(
@@ -61,6 +61,7 @@ def _build_constant_velocity_ttg(
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestLocateByTravelTimeGrid:
     def test_recovers_known_location(self):
@@ -112,7 +113,9 @@ class TestLocateByTravelTimeGrid:
         observed_times = dists / velocity
 
         result = locate_by_travel_time_grid(
-            observed_times, ttg, reference_station_index=3,
+            observed_times,
+            ttg,
+            reference_station_index=3,
         )
         assert abs(result.x - true_loc[0]) <= 10.0
         assert abs(result.y - true_loc[1]) <= 10.0

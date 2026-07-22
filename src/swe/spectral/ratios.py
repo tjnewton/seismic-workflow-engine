@@ -22,7 +22,7 @@ Konno, K. & Ohmachi, T. (1998). Ground-motion characteristics estimated
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
@@ -161,9 +161,7 @@ def _identify_components(
         elif last_char in ("N", "E", "1", "2"):
             horizontal.append(tr)
         else:
-            logger.warning(
-                "Cannot classify channel %s; skipping", tr.stats.channel
-            )
+            logger.warning("Cannot classify channel %s; skipping", tr.stats.channel)
     return horizontal, vertical
 
 
@@ -219,15 +217,11 @@ def compute_hvsr(
     horizontal, vertical = _identify_components(stream)
 
     if len(horizontal) < 2:
-        raise ValueError(
-            f"Need at least 2 horizontal components, got {len(horizontal)}"
-        )
+        raise ValueError(f"Need at least 2 horizontal components, got {len(horizontal)}")
     if len(vertical) < 1:
         raise ValueError("No vertical component found in stream")
 
-    station = (
-        f"{vertical[0].stats.network}.{vertical[0].stats.station}"
-    )
+    station = f"{vertical[0].stats.network}.{vertical[0].stats.station}"
 
     # Use the first vertical trace
     vert_trace = vertical[0]
@@ -239,20 +233,16 @@ def compute_hvsr(
 
     if window_samples < 4:
         raise ValueError(
-            f"Window length {window_length}s is too short "
-            f"(need at least 4 samples at {sr} Hz)"
+            f"Window length {window_length}s is too short (need at least 4 samples at {sr} Hz)"
         )
 
     # Find common time range
-    t_start = max(tr.stats.starttime for tr in [vert_trace] + horiz_traces)
-    t_end = min(tr.stats.endtime for tr in [vert_trace] + horiz_traces)
+    t_start = max(tr.stats.starttime for tr in [vert_trace, *horiz_traces])
+    t_end = min(tr.stats.endtime for tr in [vert_trace, *horiz_traces])
 
     # Trim all to common range
     vert_data = vert_trace.copy().trim(t_start, t_end).data.astype(np.float64)
-    horiz_data = [
-        tr.copy().trim(t_start, t_end).data.astype(np.float64)
-        for tr in horiz_traces
-    ]
+    horiz_data = [tr.copy().trim(t_start, t_end).data.astype(np.float64) for tr in horiz_traces]
 
     total_samples = min(len(vert_data), *(len(h) for h in horiz_data))
 
@@ -264,9 +254,7 @@ def compute_hvsr(
         idx += step_samples
 
     if len(starts) == 0:
-        raise ValueError(
-            f"Trace too short for window_length={window_length}s"
-        )
+        raise ValueError(f"Trace too short for window_length={window_length}s")
 
     # Frequency array for the FFT
     freqs = np.fft.rfftfreq(window_samples, d=1.0 / sr)
@@ -293,13 +281,9 @@ def compute_hvsr(
 
         # Smooth
         if smoothing_type == "konno_ohmachi":
-            v_spec = _konno_ohmachi_smoothing(
-                v_spec, out_freqs, bandwidth=smoothing_bandwidth
-            )
+            v_spec = _konno_ohmachi_smoothing(v_spec, out_freqs, bandwidth=smoothing_bandwidth)
             h_specs = [
-                _konno_ohmachi_smoothing(
-                    hs, out_freqs, bandwidth=smoothing_bandwidth
-                )
+                _konno_ohmachi_smoothing(hs, out_freqs, bandwidth=smoothing_bandwidth)
                 for hs in h_specs
             ]
 
@@ -319,7 +303,9 @@ def compute_hvsr(
 
     hvsr_array = np.array(hvsr_windows)
     hvsr_mean = np.mean(hvsr_array, axis=0)
-    hvsr_std = np.std(hvsr_array, axis=0, ddof=1) if len(hvsr_windows) > 1 else np.zeros_like(hvsr_mean)
+    hvsr_std = (
+        np.std(hvsr_array, axis=0, ddof=1) if len(hvsr_windows) > 1 else np.zeros_like(hvsr_mean)
+    )
 
     peak_idx = int(np.argmax(hvsr_mean))
     peak_frequency = float(out_freqs[peak_idx])
@@ -392,19 +378,13 @@ def compute_ssr(
             f"({len(reference_traces)}) must have the same length"
         )
 
-    target_station = (
-        f"{target_traces[0].stats.network}."
-        f"{target_traces[0].stats.station}"
-    )
-    reference_station = (
-        f"{reference_traces[0].stats.network}."
-        f"{reference_traces[0].stats.station}"
-    )
+    target_station = f"{target_traces[0].stats.network}.{target_traces[0].stats.station}"
+    reference_station = f"{reference_traces[0].stats.network}.{reference_traces[0].stats.station}"
 
     ssr_events: list[NDArray] = []
     out_freqs: NDArray | None = None
 
-    for tgt, ref in zip(target_traces, reference_traces):
+    for tgt, ref in zip(target_traces, reference_traces, strict=False):
         # Use the shorter trace length for consistent FFT size
         npts = min(len(tgt.data), len(ref.data))
         sr = tgt.stats.sampling_rate
@@ -431,12 +411,8 @@ def compute_ssr(
 
         # Smooth
         if smoothing_type == "konno_ohmachi":
-            tgt_s = _konno_ohmachi_smoothing(
-                tgt_s, f_out, bandwidth=smoothing_bandwidth
-            )
-            ref_s = _konno_ohmachi_smoothing(
-                ref_s, f_out, bandwidth=smoothing_bandwidth
-            )
+            tgt_s = _konno_ohmachi_smoothing(tgt_s, f_out, bandwidth=smoothing_bandwidth)
+            ref_s = _konno_ohmachi_smoothing(ref_s, f_out, bandwidth=smoothing_bandwidth)
 
         # Spectral ratio
         ratio = tgt_s / (ref_s + water_level)
@@ -447,12 +423,9 @@ def compute_ssr(
 
     ssr_array = np.array(ssr_events)
     ssr_mean = np.mean(ssr_array, axis=0)
-    ssr_std = (
-        np.std(ssr_array, axis=0, ddof=1)
-        if len(ssr_events) > 1
-        else np.zeros_like(ssr_mean)
-    )
+    ssr_std = np.std(ssr_array, axis=0, ddof=1) if len(ssr_events) > 1 else np.zeros_like(ssr_mean)
 
+    assert out_freqs is not None  # set on the first loop iteration
     return SSRResult(
         frequencies=out_freqs,
         ssr_mean=ssr_mean,

@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as spsig
-from matplotlib.dates import AutoDateLocator, DateFormatter
 from matplotlib import gridspec
+from matplotlib.dates import AutoDateLocator, DateFormatter
 from scipy import fftpack as spfft
 
 from swe.utils.helpers import max_amplitude, snr
@@ -25,17 +25,17 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "plot_stream",
-    "plot_time_series_and_spectrogram",
-    "plot_time_series",
-    "plot_party_detections",
-    "plot_stack",
-    "plot_template_and_stack",
-    "plot_stream_absolute",
     "plot_event_picks",
-    "plot_spectrogram",
-    "plot_spectra",
     "plot_multi_spectra",
+    "plot_party_detections",
+    "plot_spectra",
+    "plot_spectrogram",
+    "plot_stack",
+    "plot_stream",
+    "plot_stream_absolute",
+    "plot_template_and_stack",
+    "plot_time_series",
+    "plot_time_series_and_spectrogram",
 ]
 
 
@@ -43,11 +43,10 @@ __all__ = [
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _trace_label(trace) -> str:
     """Build a *net.sta.cha* label from trace stats."""
-    return (
-        f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
-    )
+    return f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
 
 
 def _normalize(data: np.ndarray, offset: float = 0.0) -> np.ndarray:
@@ -57,7 +56,7 @@ def _normalize(data: np.ndarray, offset: float = 0.0) -> np.ndarray:
     denom = dmax - dmin
     if denom == 0:
         return np.zeros_like(data) + offset
-    return (data - dmin) / denom * 1.25 + offset
+    return np.asarray((data - dmin) / denom * 1.25 + offset)
 
 
 def _spectrogram_params(trace):
@@ -76,6 +75,7 @@ def _spectrogram_params(trace):
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def plot_stream(
     stream: Stream,
@@ -113,7 +113,9 @@ def plot_stream(
     psd_ax = fig.add_subplot(gs[3, :])
 
     freq_inner = gridspec.GridSpecFromSubplotSpec(
-        n, 1, subplot_spec=gs[1:3, :],
+        n,
+        1,
+        subplot_spec=gs[1:3, :],
     )
     # Remove the outer axes ticks (we use it only as a frame)
     freq_outer.set_yticks([])
@@ -140,17 +142,25 @@ def plot_stream(
         spec_ax = fig.add_subplot(freq_inner[(idx + 1) * -1, 0])
         with np.errstate(divide="ignore"):
             spec_ax.pcolormesh(
-                t_stft, f_stft, 20 * np.log10(np.abs(stft)),
-                cmap="magma", shading="auto",
+                t_stft,
+                f_stft,
+                20 * np.log10(np.abs(stft)),
+                cmap="magma",
+                shading="auto",
             )
         spec_ax.set_ylabel(
-            f"{_trace_label(trace)}.{idx}", rotation=0, labelpad=40,
+            f"{_trace_label(trace)}.{idx}",
+            rotation=0,
+            labelpad=40,
         )
         spec_ax.tick_params(
-            axis="x", which="both", bottom=False, top=False,
+            axis="x",
+            which="both",
+            bottom=False,
+            top=False,
             labelbottom=False,
         )
-        spec_ax.set_ylim([0, trace.stats.sampling_rate / 2])
+        spec_ax.set_ylim((0, trace.stats.sampling_rate / 2))
 
         # PSD
         f_psd, pxx = spsig.welch(
@@ -166,7 +176,7 @@ def plot_stream(
     amplitude_ax.set_yticks(np.arange(0.5, n + 0.5))
     amplitude_ax.set_yticklabels(y_labels)
     amplitude_ax.set_ylabel("Station.Channel")
-    amplitude_ax.set_xlim([time[0], time[-1]])
+    amplitude_ax.set_xlim((time[0], time[-1]))
     amplitude_ax.set_xlabel("Time (Min:Sec)")
     amplitude_ax.xaxis.set_major_formatter(DateFormatter("%M:%S"))
     amplitude_ax.xaxis.set_major_locator(AutoDateLocator(minticks=10, maxticks=15))
@@ -176,7 +186,7 @@ def plot_stream(
     psd_ax.set_xlabel("Frequency [Hz]")
     psd_ax.set_ylabel("PSD [V**2/Hz]")
     psd_ax.set_title("Power Spectrum")
-    psd_ax.set_xlim([0, trace.stats.sampling_rate / 2])
+    psd_ax.set_xlim((0, trace.stats.sampling_rate / 2))
     psd_ax.legend()
 
     fig.tight_layout()
@@ -226,7 +236,9 @@ def plot_time_series_and_spectrogram(
     amplitude_ax = fig.add_subplot(gs[0, :])
     freq_outer = fig.add_subplot(gs[1:, :])
     freq_inner = gridspec.GridSpecFromSubplotSpec(
-        n, 1, subplot_spec=gs[1:, :],
+        n,
+        1,
+        subplot_spec=gs[1:, :],
     )
     freq_outer.set_yticks([])
     freq_outer.set_xticks([])
@@ -242,13 +254,17 @@ def plot_time_series_and_spectrogram(
         if net_sta in time_markers:
             tm = time_markers[net_sta]
             x_vals = [
-                tm[0].matplotlib_date, tm[0].matplotlib_date,
-                tm[1].matplotlib_date, tm[1].matplotlib_date,
+                tm[0].matplotlib_date,
+                tm[0].matplotlib_date,
+                tm[1].matplotlib_date,
+                tm[1].matplotlib_date,
                 tm[0].matplotlib_date,
             ]
             y_vals = [
-                min(norm_amp), max(norm_amp),
-                max(norm_amp), min(norm_amp),
+                min(norm_amp),
+                max(norm_amp),
+                max(norm_amp),
+                min(norm_amp),
                 min(norm_amp),
             ]
             amplitude_ax.plot(x_vals, y_vals, color="r", linewidth=2.0)
@@ -267,28 +283,40 @@ def plot_time_series_and_spectrogram(
         spec_ax = fig.add_subplot(freq_inner[(idx + 1) * -1, 0])
         with np.errstate(divide="ignore"):
             spec_ax.pcolormesh(
-                t_stft, f_stft, 20 * np.log10(np.abs(stft)),
-                cmap="magma", shading="auto",
+                t_stft,
+                f_stft,
+                20 * np.log10(np.abs(stft)),
+                cmap="magma",
+                shading="auto",
             )
         if net_sta in time_markers:
             tm = time_markers[net_sta]
             x_s = [
-                tm[0] - trace_start, tm[0] - trace_start,
-                tm[1] - trace_start, tm[1] - trace_start,
+                tm[0] - trace_start,
+                tm[0] - trace_start,
+                tm[1] - trace_start,
+                tm[1] - trace_start,
                 tm[0] - trace_start,
             ]
             y_s = [
-                f_stft.min(), f_stft.max(),
-                f_stft.max(), f_stft.min(),
+                f_stft.min(),
+                f_stft.max(),
+                f_stft.max(),
+                f_stft.min(),
                 f_stft.min(),
             ]
             spec_ax.plot(x_s, y_s, "r-", linewidth=2.0)
 
         spec_ax.set_ylabel(
-            _trace_label(trace), rotation=0, labelpad=40,
+            _trace_label(trace),
+            rotation=0,
+            labelpad=40,
         )
         spec_ax.tick_params(
-            axis="x", which="both", bottom=False, top=False,
+            axis="x",
+            which="both",
+            bottom=False,
+            top=False,
             labelbottom=False,
         )
 
@@ -298,10 +326,8 @@ def plot_time_series_and_spectrogram(
     amplitude_ax.set_ylabel("Station.Channel")
     start_t = st[0].stats.starttime
     end_t = st[0].stats.endtime
-    amplitude_ax.set_xlim([start_t.matplotlib_date, end_t.matplotlib_date])
-    amplitude_ax.set_xlabel(
-        f"Time on {start_t.month:02}-{start_t.day:02}-{start_t.year}"
-    )
+    amplitude_ax.set_xlim((start_t.matplotlib_date, end_t.matplotlib_date))
+    amplitude_ax.set_xlabel(f"Time on {start_t.month:02}-{start_t.day:02}-{start_t.year}")
     amplitude_ax.xaxis.set_major_formatter(DateFormatter("%H:%M:%S"))
     amplitude_ax.xaxis.set_major_locator(AutoDateLocator(minticks=5, maxticks=10))
     amplitude_ax.set_ylim((-0.5, n + 0.3))
@@ -366,13 +392,17 @@ def plot_time_series(
         if net_sta in time_markers:
             tm = time_markers[net_sta]
             x_vals = [
-                tm[0].matplotlib_date, tm[0].matplotlib_date,
-                tm[1].matplotlib_date, tm[1].matplotlib_date,
+                tm[0].matplotlib_date,
+                tm[0].matplotlib_date,
+                tm[1].matplotlib_date,
+                tm[1].matplotlib_date,
                 tm[0].matplotlib_date,
             ]
             y_vals = [
-                min(norm_amp), max(norm_amp),
-                max(norm_amp), min(norm_amp),
+                min(norm_amp),
+                max(norm_amp),
+                max(norm_amp),
+                min(norm_amp),
                 min(norm_amp),
             ]
             amplitude_ax.plot(x_vals, y_vals, color="r", linewidth=2.0)
@@ -384,7 +414,7 @@ def plot_time_series(
     amplitude_ax.set_ylabel("Station.Channel")
     start_t = st[0].stats.starttime
     end_t = st[-1].stats.endtime
-    amplitude_ax.set_xlim([start_t.matplotlib_date, end_t.matplotlib_date])
+    amplitude_ax.set_xlim((start_t.matplotlib_date, end_t.matplotlib_date))
     amplitude_ax.set_xlabel("Time (Hr:Min:Sec)")
     amplitude_ax.xaxis.set_major_formatter(DateFormatter("%H:%M:%S"))
     amplitude_ax.xaxis.set_major_locator(AutoDateLocator(minticks=10, maxticks=35))
@@ -455,7 +485,7 @@ def plot_party_detections(
     amplitude_ax.set_yticklabels(y_labels)
     amplitude_ax.set_ylabel("Station.Channel")
     amplitude_ax.set_xlim(
-        [plot_start.matplotlib_date, plot_end.matplotlib_date],
+        (plot_start.matplotlib_date, plot_end.matplotlib_date),
     )
     amplitude_ax.set_xlabel("Time (Hr:Min:Sec)")
     amplitude_ax.xaxis.set_major_formatter(DateFormatter("%H:%M:%S"))
@@ -523,7 +553,7 @@ def plot_stack(
     amplitude_ax.set_yticks(np.arange(0.5, n + 0.5))
     amplitude_ax.set_yticklabels(y_labels)
     amplitude_ax.set_ylabel("Station.Channel")
-    amplitude_ax.set_xlim([time[0], time[-1]])
+    amplitude_ax.set_xlim((time[0], time[-1]))
     amplitude_ax.set_xlabel("Time (Hr:Min:Sec)")
     amplitude_ax.xaxis.set_major_formatter(DateFormatter("%H:%M:%S"))
     amplitude_ax.xaxis.set_major_locator(AutoDateLocator(minticks=10, maxticks=35))
@@ -580,7 +610,10 @@ def plot_template_and_stack(
             combined += s_copy
 
     return plot_stack(
-        combined, figsize=figsize, title=title, show_snr=False,
+        combined,
+        figsize=figsize,
+        title=title,
+        show_snr=False,
     )
 
 
@@ -692,8 +725,10 @@ def plot_event_picks(
         # Mark the pick
         pick_idx = np.abs(trace_times - pick_time.matplotlib_date).argmin()
         amplitude_ax.plot(
-            pick_time.matplotlib_date, norm_amp[pick_idx],
-            "ro", linewidth=0.7,
+            pick_time.matplotlib_date,
+            norm_amp[pick_idx],
+            "ro",
+            linewidth=0.7,
         )
         y_labels.append(_trace_label(trace))
 
@@ -749,16 +784,19 @@ def plot_spectrogram(
     fig, ax = plt.subplots(figsize=figsize)
     with np.errstate(divide="ignore"):
         ax.pcolormesh(
-            t_stft, f_stft, 20 * np.log10(np.abs(stft)),
-            cmap=cmap, shading="auto",
+            t_stft,
+            f_stft,
+            20 * np.log10(np.abs(stft)),
+            cmap=cmap,
+            shading="auto",
         )
     ax.set_ylabel("Frequency (Hz)")
     ax.set_xlabel("Time (s)")
     ax.set_title(_trace_label(trace))
     if freq_max is not None:
-        ax.set_ylim([0, freq_max])
+        ax.set_ylim((0, freq_max))
     else:
-        ax.set_ylim([0, trace.stats.sampling_rate / 2])
+        ax.set_ylim((0, trace.stats.sampling_rate / 2))
     fig.tight_layout()
     return fig
 
@@ -803,9 +841,9 @@ def plot_spectra(
     ax.set_xlabel("Frequency (Hz)")
     ax.set_title(_trace_label(trace))
     if freq_max is not None:
-        ax.set_xlim([0, freq_max])
+        ax.set_xlim((0, freq_max))
     else:
-        ax.set_xlim([0, fs / 2])
+        ax.set_xlim((0, fs / 2))
     ax.grid(True, which="both", axis="x")
     fig.tight_layout()
     return fig

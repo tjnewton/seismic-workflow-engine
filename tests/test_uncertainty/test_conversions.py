@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from obspy.core.event import QuantityError
 
 from swe.uncertainty.conversions import (
@@ -84,9 +83,7 @@ class TestLocationUncertaintyConversions:
         d = location_uncertainty_to_dict(lu)
         restored = location_uncertainty_from_dict(d)
         assert restored.horiz_uncertainty_m == 50.0
-        np.testing.assert_array_almost_equal(
-            restored.covariance_matrix, cov
-        )
+        np.testing.assert_array_almost_equal(restored.covariance_matrix, cov)
 
     def test_dict_is_json_safe(self):
         import json

@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.figure import Figure
-
 from obspy.core.trace import Trace
 from obspy.core.utcdatetime import UTCDateTime
 
@@ -49,9 +48,7 @@ def plot_stalta(
     ax[0].xaxis_date()
     ax[0].set_ylabel("Amplitude")
 
-    ax[1].plot(
-        mpl_times, cft[start_idx : end_idx + 1], "k-", linewidth=0.4
-    )
+    ax[1].plot(mpl_times, cft[start_idx : end_idx + 1], "k-", linewidth=0.4)
     ax[1].xaxis_date()
     ylabel = "STA/LTA"
     if sta_samples is not None and lta_samples is not None:
@@ -130,8 +127,8 @@ def plot_noise_windows(
                 "k-",
                 linewidth=0.4,
             )
-        ax.set_xlim([0, len(noise_windows[0])])
-        ax.set_ylim([min(indices) - 1, max(indices) + 1])
+        ax.set_xlim((0, len(noise_windows[0])))
+        ax.set_ylim((min(indices) - 1, max(indices) + 1))
         plt.ylabel("Window #")
         plt.xlabel("Sample")
         plt.yticks(indices)

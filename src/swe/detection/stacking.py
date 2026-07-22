@@ -10,7 +10,6 @@ beyond the basic linear and phase-weighted stacks.
 from __future__ import annotations
 
 import logging
-from math import ceil
 from pathlib import Path
 from typing import NamedTuple
 
@@ -31,13 +30,12 @@ class StackResult(NamedTuple):
     ccs: list[float]
     """Per-detection cross-correlation coefficients."""
 
+
 try:
-    from eqcorrscan import Tribe, Party, Template
-    from eqcorrscan.utils.stacking import PWS_stack, linstack, align_traces
+    from eqcorrscan import Party, Tribe
+    from eqcorrscan.utils.stacking import PWS_stack, linstack
 except ImportError as exc:  # pragma: no cover
-    raise ImportError(
-        "eqcorrscan is required for swe.detection.stacking"
-    ) from exc
+    raise ImportError("eqcorrscan is required for swe.detection.stacking") from exc
 
 
 class Stack(Tribe):
@@ -117,7 +115,7 @@ def stack_waveforms(
     ccs: list[float] = []
 
     for detection in family.detections:
-        net, sta, cha = main_trace
+        _net, sta, _cha = main_trace
         det_time = detection.detect_time
         day_str = det_time.strftime("%Y-%m-%d")
         pattern = str(streams_dir / f"*{sta}*{day_str}*.ms")
@@ -147,7 +145,9 @@ def stack_waveforms(
             all_streams.append(st)
             ccs.append(detection.detect_val)
         except (OSError, ValueError, TypeError) as exc:
-            logger.warning("Failed to process detection at %s: %s: %s", det_time, type(exc).__name__, exc)
+            logger.warning(
+                "Failed to process detection at %s: %s: %s", det_time, type(exc).__name__, exc
+            )
 
     if not all_streams:
         return StackResult(Stream(), Stream(), [])
@@ -204,6 +204,7 @@ def stack_template_detections(
         Per-detection cross-correlation coefficients.
     """
     import glob
+
     from obspy.signal.cross_correlation import correlate, xcorr_max
 
     streams_dir = Path(streams_dir)
@@ -213,7 +214,7 @@ def stack_template_detections(
     ccs: list[float] = []
 
     for detection in family.detections:
-        net, sta, cha = main_trace
+        _net, sta, _cha = main_trace
         det_time = detection.detect_time
         day_str = det_time.strftime("%Y-%m-%d")
         pattern = str(streams_dir / f"*{sta}*{day_str}*.ms")
@@ -256,13 +257,19 @@ def stack_template_detections(
                 for tr in st:
                     trace_id = f"{tr.stats.network}.{tr.stats.station}.{tr.stats.channel}"
                     if trace_id in template_times:
-                        ref_start, ref_end = template_times[trace_id]
+                        _ref_start, _ref_end = template_times[trace_id]
                         # Cross-correlate with first stream as reference
-                        if i > 0 and len(all_streams[0].select(
-                            network=tr.stats.network,
-                            station=tr.stats.station,
-                            channel=tr.stats.channel,
-                        )) > 0:
+                        if (
+                            i > 0
+                            and len(
+                                all_streams[0].select(
+                                    network=tr.stats.network,
+                                    station=tr.stats.station,
+                                    channel=tr.stats.channel,
+                                )
+                            )
+                            > 0
+                        ):
                             ref_tr = all_streams[0].select(
                                 network=tr.stats.network,
                                 station=tr.stats.station,
@@ -273,13 +280,15 @@ def stack_template_detections(
                                 tr.data.astype(float),
                                 int(shift_len * tr.stats.sampling_rate),
                             )
-                            shift_val, cc_val = xcorr_max(cc)
+                            shift_val, _cc_val = xcorr_max(cc)
                             shift_secs = shift_val / tr.stats.sampling_rate
                             if abs(shift_secs) <= shift_len:
                                 shifted = time_shift(tr, -shift_secs)
                                 tr.data = shifted.data
         except (ValueError, IndexError) as exc:
-            logger.warning("Alignment failed, falling back to zero alignment: %s: %s", type(exc).__name__, exc)
+            logger.warning(
+                "Alignment failed, falling back to zero alignment: %s: %s", type(exc).__name__, exc
+            )
 
     pws = PWS_stack(all_streams) if len(all_streams) > 1 else all_streams[0]
     linear = linstack(all_streams) if len(all_streams) > 1 else all_streams[0]
@@ -445,8 +454,7 @@ def selective_stack(
             selected.append(tr)
 
     logger.info(
-        "SNR-selective stack: %d / %d traces above threshold %.1f "
-        "(SNR range: %.1f - %.1f)",
+        "SNR-selective stack: %d / %d traces above threshold %.1f (SNR range: %.1f - %.1f)",
         len(selected),
         len(traces),
         snr_threshold,
@@ -468,8 +476,7 @@ def selective_stack(
         return nth_root_stack(selected, n=nth_root_n)
     else:
         raise ValueError(
-            f"Unknown stacking method: {method!r}. "
-            f"Supported: 'linear', 'median', 'nth_root'"
+            f"Unknown stacking method: {method!r}. Supported: 'linear', 'median', 'nth_root'"
         )
 
 
@@ -525,8 +532,8 @@ def trace_snr(
     data = trace.data.astype(np.float64)
 
     def _slice(window: tuple[float, float], label: str) -> np.ndarray:
-        start = int(round((base + window[0]) * sr))
-        end = int(round((base + window[1]) * sr))
+        start = round((base + window[0]) * sr)
+        end = round((base + window[1]) * sr)
         start_c = max(0, min(start, n))
         end_c = max(0, min(end, n))
         if end_c <= start_c:
@@ -534,7 +541,7 @@ def trace_snr(
                 f"{label} {window} (s) lies outside the trace "
                 f"(0-{n / sr:.3f} s relative to reference)"
             )
-        return data[start_c:end_c]
+        return np.asarray(data[start_c:end_c])
 
     signal = _slice(signal_window, "signal_window")
     noise = _slice(noise_window, "noise_window")

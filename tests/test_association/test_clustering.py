@@ -1,12 +1,21 @@
 """Tests for swe.association.clustering."""
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
+from matplotlib.dates import date2num
+from obspy import UTCDateTime
 
 from swe.association.clustering import (
     AssociationResult,
+    associate_picks,
+    build_pick_data,
+    build_pick_dict,
     cluster_picks,
     get_cluster_stats,
+    process_clusters,
+    save_associations,
 )
 
 
@@ -46,7 +55,7 @@ class TestClusterPicks:
         )
 
         assert len(labels) == 20
-        assert all(l == -1 for l in labels), "Expected all noise labels"
+        assert all(label == -1 for label in labels), "Expected all noise labels"
 
     def test_single_cluster(self):
         """Tightly grouped points should form a single cluster.
@@ -156,17 +165,6 @@ class TestGetClusterStats:
 # Tests for build_pick_dict
 # ---------------------------------------------------------------------------
 
-from unittest.mock import patch, MagicMock
-from matplotlib.dates import date2num
-from obspy import UTCDateTime
-from swe.association.clustering import (
-    build_pick_dict,
-    build_pick_data,
-    process_clusters,
-    associate_picks,
-    save_associations,
-)
-
 
 class TestBuildPickDict:
     """Tests for build_pick_dict."""
@@ -176,9 +174,7 @@ class TestBuildPickDict:
         reverse = {0: "STA1", 1: "STA2", 2: "STA3"}
         # Build pick times as matplotlib date numbers
         base = UTCDateTime("2024-01-01T00:00:00")
-        times = [
-            date2num((base + i * 10).datetime) for i in range(6)
-        ]
+        times = [date2num((base + i * 10).datetime) for i in range(6)]
         station_order = [0, 1, 2, 0, 1, 2]
 
         result = build_pick_dict(
@@ -259,10 +255,7 @@ class TestBuildPickData:
 
     def _make_station_picks(self, base, offsets):
         """Helper: create station_picks dict from time offsets."""
-        return {
-            sta: [base + dt for dt in dts]
-            for sta, dts in offsets.items()
-        }
+        return {sta: [base + dt for dt in dts] for sta, dts in offsets.items()}
 
     def test_basic_transformation(self):
         """Pick array should contain [lon, lat, elev, mpl_date]."""
@@ -272,7 +265,9 @@ class TestBuildPickData:
         station_distance = {"STA1": 0}
 
         pa, pso, pt = build_pick_data(
-            station_picks, location_dict, station_distance,
+            station_picks,
+            location_dict,
+            station_distance,
         )
 
         assert len(pa) == 1
@@ -302,8 +297,10 @@ class TestBuildPickData:
         location_dict = {"A": [1.0, 2.0, 3.0], "B": [4.0, 5.0, 6.0]}
         station_distance = {"A": 0, "B": 1}
 
-        pa, pso, pt = build_pick_data(
-            station_picks, location_dict, station_distance,
+        pa, pso, _pt = build_pick_data(
+            station_picks,
+            location_dict,
+            station_distance,
         )
 
         assert len(pa) == 3
@@ -333,9 +330,7 @@ class TestProcessClusters:
     @staticmethod
     def _make_pick_times(base, offsets_sec):
         """Return mpl-date pick_times from a base UTCDateTime + offsets."""
-        return [
-            date2num((base + dt).datetime) for dt in offsets_sec
-        ]
+        return [date2num((base + dt).datetime) for dt in offsets_sec]
 
     def test_small_cluster_dissolved(self):
         """Clusters below min_picks_per_cluster get dissolved to noise."""
@@ -577,9 +572,7 @@ class TestSaveAssociations:
     def test_calls_write_events_with_correct_structure(self, mock_write):
         """Events dict should have correct number of keys, each with pick dicts."""
         base = UTCDateTime("2024-01-01T12:00:00")
-        times = [
-            date2num((base + i * 0.1).datetime) for i in range(6)
-        ]
+        times = [date2num((base + i * 0.1).datetime) for i in range(6)]
         labels = np.array([0, 0, 0, 1, 1, 1])
         station_order = [0, 1, 2, 0, 1, 2]
         reverse = {0: "STA1", 1: "STA2", 2: "STA3"}
@@ -621,7 +614,7 @@ class TestSaveAssociations:
         save_associations("out.mrkr", labels, times, station_order, reverse)
 
         events = mock_write.call_args[0][0]
-        picks = list(events.values())[0]
+        picks = next(iter(events.values()))
         station_names = {p["station"] for p in picks}
         assert "UNET.DP1" in station_names
         assert "STA1.DP1" in station_names
@@ -662,7 +655,10 @@ class TestComputeClusterQuality:
         reverse = {i: f"S{i}" for i in range(6)}
 
         quality = compute_cluster_quality(
-            labels, pick_times, pick_station_order, reverse,
+            labels,
+            pick_times,
+            pick_station_order,
+            reverse,
         )
 
         assert set(quality.keys()) == {0, 1}
@@ -683,7 +679,10 @@ class TestComputeClusterQuality:
         reverse = {0: "A", 1: "B", 2: "C"}
 
         quality = compute_cluster_quality(
-            labels, pick_times, pick_station_order, reverse,
+            labels,
+            pick_times,
+            pick_station_order,
+            reverse,
         )
 
         assert quality == {}
@@ -698,7 +697,10 @@ class TestComputeClusterQuality:
         reverse = {0: "STA1"}
 
         quality = compute_cluster_quality(
-            labels, pick_times, pick_station_order, reverse,
+            labels,
+            pick_times,
+            pick_station_order,
+            reverse,
         )
 
         assert quality[0]["time_spread_s"] == 0.0

@@ -151,10 +151,7 @@ def from_obspy_picks(obspy_picks: list[Pick]) -> list[SWEPick]:
         time = op.time if op.time is not None else UTCDateTime(0)
         confidence = 1.0
         time_uncertainty_s = 0.0
-        if (
-            op.time_errors is not None
-            and op.time_errors.uncertainty is not None
-        ):
+        if op.time_errors is not None and op.time_errors.uncertainty is not None:
             time_uncertainty_s = float(op.time_errors.uncertainty)
             confidence = max(0.0, min(1.0, 1.0 - time_uncertainty_s))
 
@@ -210,13 +207,9 @@ def to_obspy_picks(
             phase_hint=p.phase,
         )
         if p.time_uncertainty_s > 0:
-            pick.time_errors = QuantityError(
-                uncertainty=p.time_uncertainty_s
-            )
+            pick.time_errors = QuantityError(uncertainty=p.time_uncertainty_s)
         elif map_confidence_to_time_error:
-            pick.time_errors = QuantityError(
-                uncertainty=(1.0 - p.confidence) * max_time_error
-            )
+            pick.time_errors = QuantityError(uncertainty=(1.0 - p.confidence) * max_time_error)
         result.append(pick)
     return result
 

@@ -62,15 +62,11 @@ def get_trace_properties(
     data_envelope = obspy.signal.filter.envelope(trace.data)
 
     # Build absolute-time and matplotlib-time arrays
-    trace_times_dt = np.asarray(
-        [trace.stats.starttime + offset for offset in trace.times()]
-    )
+    trace_times_dt = np.asarray([trace.stats.starttime + offset for offset in trace.times()])
     trace_times = trace.times("matplotlib")
 
     # Index into trace closest to pick_time
-    pick_time_index = int(
-        np.abs([t - pick_time for t in trace_times_dt]).argmin()
-    )
+    pick_time_index = int(np.abs([t - pick_time for t in trace_times_dt]).argmin())
 
     # Window bounds
     half_samples = int(duration / 2 * sampling_rate)
@@ -107,9 +103,7 @@ def get_trace_properties(
     max_pool_amplitude_arr = np.asarray(max_pool_amplitude)
 
     # Polynomial fit
-    p = np.poly1d(
-        np.polyfit(max_pool_indices, max_pool_amplitude_arr, polynomial_degree)
-    )
+    p = np.poly1d(np.polyfit(max_pool_indices, max_pool_amplitude_arr, polynomial_degree))
     t = np.linspace(max_pool_indices[0], max_pool_indices[-1], num=1000)
 
     # Envelope interpolation (for reference; included in fits)
@@ -125,7 +119,7 @@ def get_trace_properties(
     # Derivatives
     dy = np.gradient(p(t), t)
     d2y = np.gradient(dy, t)
-    curvature = np.abs(d2y) / (np.sqrt(1 + dy ** 2)) ** 1.5
+    curvature = np.abs(d2y) / (np.sqrt(1 + dy**2)) ** 1.5
 
     # MADs for three windows around pick
     mp_pick_matches = np.where(np.array(max_pool_indices) == pick_time_index)[0]
@@ -136,9 +130,7 @@ def get_trace_properties(
     else:
         mp_pick_idx = int(mp_pick_matches[0])
     w1 = max_pool_amplitude_arr[: max(mp_pick_idx - 10, 0)]
-    w2 = max_pool_amplitude_arr[
-        max(mp_pick_idx - 10, 0) : mp_pick_idx + 6
-    ]
+    w2 = max_pool_amplitude_arr[max(mp_pick_idx - 10, 0) : mp_pick_idx + 6]
     w3 = max_pool_amplitude_arr[mp_pick_idx + 6 :]
 
     def _median_mad(arr: np.ndarray) -> tuple[float, float]:
@@ -193,5 +185,5 @@ def instantaneous_frequency(
     h = analytic.imag
     dv = np.gradient(v, dt)
     dh = np.gradient(h, dt)
-    f_t = (1 / (2 * np.pi)) * ((v * dh - h * dv) / (v ** 2 + h ** 2))
+    f_t = (1 / (2 * np.pi)) * ((v * dh - h * dv) / (v**2 + h**2))
     return float(np.median(f_t))

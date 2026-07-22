@@ -9,14 +9,13 @@ from __future__ import annotations
 
 import glob
 import logging
+from collections.abc import Sequence
 from pathlib import Path
-from typing import NamedTuple, Sequence
+from typing import NamedTuple
 
 import numpy as np
 from obspy import Stream, UTCDateTime, read
-from obspy.core.event import Catalog, Event, Magnitude, Origin, Pick
-from obspy.core.event import WaveformStreamID
-from obspy.core.event import read_events
+from obspy.core.event import Catalog, Event, Magnitude, Origin, Pick, WaveformStreamID, read_events
 
 from swe.utils.helpers import snr
 
@@ -40,9 +39,7 @@ try:
     from eqcorrscan import Family, Party, Template, Tribe
     from eqcorrscan.core.match_filter.matched_filter import MatchFilterError
 except ImportError as exc:  # pragma: no cover
-    raise ImportError(
-        "eqcorrscan is required for swe.detection.matched_filter"
-    ) from exc
+    raise ImportError("eqcorrscan is required for swe.detection.matched_filter") from exc
 
 
 def _next_day(dt: UTCDateTime) -> UTCDateTime:
@@ -93,7 +90,7 @@ def markers_to_template(
     earliest_pick_time: UTCDateTime | None = None
     earliest_pick_station: str = ""
 
-    with open(marker_file_path, "r") as fh:
+    with open(marker_file_path) as fh:
         for line in fh:
             if len(line) <= 52:
                 continue
@@ -149,9 +146,7 @@ def markers_to_template(
             continue
         time_diff = pick_time - (earliest_pick_time_adj + prepick_offset)
         microseconds = int((time_diff - int(time_diff)) * 1000)
-        templates.append(
-            f"{station:4}   {int(time_diff):2}.{microseconds:03}  1       P\n"
-        )
+        templates.append(f"{station:4}   {int(time_diff):2}.{microseconds:03}  1       P\n")
         pick_offset[station] = time_diff
 
     return MarkerTemplateResult(templates, station_dict, pick_offset, template_windows)
@@ -221,9 +216,7 @@ def make_templates(
     """
     import tempfile
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".pha", delete=False
-    ) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".pha", delete=False) as tmp:
         for line in templates:
             tmp.write(line)
         tmp_path = tmp.name
@@ -348,8 +341,7 @@ def detect_signals(
         day_files = sorted(
             glob.glob(
                 str(
-                    detection_files_path
-                    / f"*.{iteration_date.year}-{iteration_date.month:02}"
+                    detection_files_path / f"*.{iteration_date.year}-{iteration_date.month:02}"
                     f"-{iteration_date.day:02}.ms"
                 )
             )
@@ -436,8 +428,7 @@ def cull_detections(
         day_files = sorted(
             glob.glob(
                 str(
-                    detection_files_path
-                    / f"{net}.{sta}.{cha}.{doi.year}-{doi.month:02}"
+                    detection_files_path / f"{net}.{sta}.{cha}.{doi.year}-{doi.month:02}"
                     f"-{doi.day:02}.ms"
                 )
             )
@@ -516,11 +507,7 @@ def get_detections(
     for event in party.families[0].catalog.events:
         for pick in event.picks:
             wf = pick.waveform_id
-            if (
-                wf.station_code == sta
-                and wf.network_code == net
-                and wf.channel_code == cha
-            ):
+            if wf.station_code == sta and wf.network_code == net and wf.channel_code == cha:
                 pick_times.append(pick.time)
                 break
 
@@ -529,8 +516,7 @@ def get_detections(
         day_files = sorted(
             glob.glob(
                 str(
-                    streams_path
-                    / f"{net}.{sta}.{cha}.{pick_time.year}"
+                    streams_path / f"{net}.{sta}.{cha}.{pick_time.year}"
                     f"-{pick_time.month:02}-{pick_time.day:02}.ms"
                 )
             )
@@ -619,9 +605,7 @@ def detections_from_stacks(
         if pick_times and trace.stats.station in pick_times:
             pt = pick_times[trace.stats.station]
         else:
-            pt = trace.stats.starttime + (
-                trace.stats.endtime - trace.stats.starttime
-            ) / 2
+            pt = trace.stats.starttime + (trace.stats.endtime - trace.stats.starttime) / 2
         picks.append(
             Pick(
                 time=pt,
@@ -649,9 +633,7 @@ def detections_from_stacks(
     catalog = Catalog([event])
 
     if process_len is None:
-        process_len = max(
-            60, int(stack[0].stats.endtime - stack[0].stats.starttime) + 10
-        )
+        process_len = max(60, int(stack[0].stats.endtime - stack[0].stats.starttime) + 10)
 
     stack_tribe = Tribe().construct(
         method="from_meta_file",
@@ -677,8 +659,7 @@ def detections_from_stacks(
         day_files = sorted(
             glob.glob(
                 str(
-                    detection_files_path
-                    / f"*.{iteration_date.year}-{iteration_date.month:02}"
+                    detection_files_path / f"*.{iteration_date.year}-{iteration_date.month:02}"
                     f"-{iteration_date.day:02}.ms"
                 )
             )

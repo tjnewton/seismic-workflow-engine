@@ -36,16 +36,14 @@ from swe.moment_tensor.radiation import (
 from swe.moment_tensor.tensor import (
     MomentTensor,
     decompose_moment_tensor,
-    from_matrix,
-    strike_dip_rake_to_tensor,
 )
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     "AmplitudeMTResult",
-    "moment_tensor_from_amplitudes",
     "moment_tensor_from_amplitude_ratios",
+    "moment_tensor_from_amplitudes",
     "moment_tensor_from_s_p_ratios",
 ]
 
@@ -193,8 +191,7 @@ def moment_tensor_from_amplitudes(
         candidates = _generate_full_grid()
     else:
         raise ValueError(
-            f"Unknown constraint: {constraint!r}. "
-            f"Supported: 'dc', 'deviatoric', 'full'"
+            f"Unknown constraint: {constraint!r}. Supported: 'dc', 'deviatoric', 'full'"
         )
 
     logger.info(
@@ -390,8 +387,7 @@ def moment_tensor_from_amplitude_ratios(
         candidates = _generate_full_grid()
     else:
         raise ValueError(
-            f"Unknown constraint: {constraint!r}. "
-            f"Supported: 'dc', 'deviatoric', 'full'"
+            f"Unknown constraint: {constraint!r}. Supported: 'dc', 'deviatoric', 'full'"
         )
 
     logger.info(
@@ -534,11 +530,7 @@ def moment_tensor_from_s_p_ratios(
             n_observations=n_obs,
         )
 
-    w = (
-        np.asarray(weights, dtype=np.float64)[valid]
-        if weights is not None
-        else np.ones_like(obs)
-    )
+    w = np.asarray(weights, dtype=np.float64)[valid] if weights is not None else np.ones_like(obs)
 
     from swe.moment_tensor.inversion import (
         _generate_dc_grid,
@@ -557,8 +549,7 @@ def moment_tensor_from_s_p_ratios(
         candidates = _generate_full_grid()
     else:
         raise ValueError(
-            f"Unknown constraint: {constraint!r}. "
-            f"Supported: 'dc', 'deviatoric', 'full'"
+            f"Unknown constraint: {constraint!r}. Supported: 'dc', 'deviatoric', 'full'"
         )
 
     logger.info(

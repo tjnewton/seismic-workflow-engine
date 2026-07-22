@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from swe.pipeline.cache import compute_step_hash, find_cached_result
 from swe.pipeline.run_context import RunContext
 from swe.pipeline.serialization import serialize_output
@@ -88,7 +86,6 @@ class TestFindCachedResult:
         """Should scan most recent runs first."""
         # Create two runs with deterministic ordering by using
         # explicit directory names rather than auto-generated IDs.
-        import json
 
         run1_dir = tmp_path / "20240101T000000_aaaaaaaa"
         run1_steps = run1_dir / "steps"

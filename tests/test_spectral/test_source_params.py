@@ -56,9 +56,15 @@ class TestMomentFromSpectralLevel:
         tr = self._boxcar_displacement(height=height, width_s=width_s)
         rho, c, R, F = 2700.0, 3500.0, 25_000.0, 1.0
         res = moment_from_spectral_level(
-            tr, distance_m=R, density_kg_m3=rho, velocity_m_s=c,
-            phase="S", free_surface_factor=F,
-            plateau_freq_min=0.5, plateau_freq_max=2.0, taper_fraction=0.01,
+            tr,
+            distance_m=R,
+            density_kg_m3=rho,
+            velocity_m_s=c,
+            phase="S",
+            free_surface_factor=F,
+            plateau_freq_min=0.5,
+            plateau_freq_max=2.0,
+            taper_fraction=0.01,
         )
         u = np.sqrt(2.0 / 5.0)  # S-wave RMS radiation
         expected = 4.0 * np.pi * rho * c**3 * R * res.omega_0 / (u * F)
@@ -77,13 +83,12 @@ class TestMomentFromSpectralLevel:
 
     def test_free_surface_factor_halves_moment(self):
         tr = self._boxcar_displacement(height=1.0, width_s=0.1)
-        kw = dict(distance_m=25_000.0, plateau_freq_min=0.5, plateau_freq_max=2.0,
-                  taper_fraction=0.01)
+        kw = dict(
+            distance_m=25_000.0, plateau_freq_min=0.5, plateau_freq_max=2.0, taper_fraction=0.01
+        )
         m_borehole = moment_from_spectral_level(tr, free_surface_factor=1.0, **kw)
         m_surface = moment_from_spectral_level(tr, free_surface_factor=2.0, **kw)
-        assert m_surface.seismic_moment == pytest.approx(
-            0.5 * m_borehole.seismic_moment, rel=1e-6
-        )
+        assert m_surface.seismic_moment == pytest.approx(0.5 * m_borehole.seismic_moment, rel=1e-6)
 
     def test_invalid_inputs(self):
         tr = self._boxcar_displacement(height=1.0, width_s=0.1)
@@ -127,16 +132,12 @@ class TestSourceTimeFunctionWidth:
         tr = self._wavelet(sigma)
         res = source_time_function_width(tr, method="envelope_halfwidth")
         # Half-amplitude width of a Gaussian envelope equals its FWHM
-        assert res.duration_s == pytest.approx(
-            2.0 * np.sqrt(2.0 * np.log(2.0)) * sigma, rel=0.25
-        )
+        assert res.duration_s == pytest.approx(2.0 * np.sqrt(2.0 * np.log(2.0)) * sigma, rel=0.25)
         assert np.isnan(res.fit_quality)
 
     def test_signal_window(self):
         tr = self._wavelet(0.2)
-        res = source_time_function_width(
-            tr, method="gaussian_fwhm", signal_window=(2.0, 6.0)
-        )
+        res = source_time_function_width(tr, method="gaussian_fwhm", signal_window=(2.0, 6.0))
         assert res.duration_s > 0
 
     def test_invalid_method(self):

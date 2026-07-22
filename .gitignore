@@ -23,6 +23,7 @@ env/
 venv/
 .ipynb_checkpoints/
 .idea/
+.DS_Store
 explore_progress.json
 
 # Local-only: AI-agent config, internal planning docs, redacted

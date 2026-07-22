@@ -14,7 +14,7 @@ Hardebeck, J.L. & Shearer, P.M. (2002). A new method for
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "PolarityObservation",
     "PolarityResult",
-    "measure_polarity",
     "measure_polarities",
+    "measure_polarity",
 ]
 
 
@@ -123,15 +123,11 @@ def measure_polarity(
     # Validate indices
     if noise_end <= noise_start or p_idx < 0 or p_idx >= len(tr.data):
         logger.warning("Trace too short for polarity measurement on %s", station_id)
-        return PolarityObservation(
-            station=station_id, polarity=0, confidence=0.0, snr=0.0
-        )
+        return PolarityObservation(station=station_id, polarity=0, confidence=0.0, snr=0.0)
 
     if signal_end <= p_idx:
         logger.warning("Signal window too short for polarity on %s", station_id)
-        return PolarityObservation(
-            station=station_id, polarity=0, confidence=0.0, snr=0.0
-        )
+        return PolarityObservation(station=station_id, polarity=0, confidence=0.0, snr=0.0)
 
     # Noise RMS
     noise_data = tr.data[noise_start:noise_end].astype(np.float64)

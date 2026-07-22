@@ -14,13 +14,12 @@ Lee, W.H.K., Bennett, R.E. & Meagher, K.L. (1972). A method of
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from scipy.signal import hilbert
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
     from obspy.core.trace import Trace
     from obspy.core.utcdatetime import UTCDateTime
 
@@ -118,7 +117,7 @@ def coda_duration(
     else:
         coda_samples = below[0]
 
-    return coda_samples / sr
+    return float(coda_samples / sr)
 
 
 def duration_magnitude(
@@ -265,9 +264,7 @@ def duration_magnitudes_batch(
         if station_names is not None:
             names.append(station_names[i])
         else:
-            names.append(
-                f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
-            )
+            names.append(f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}")
 
     valid = [m for m in mds if not np.isnan(m)]
     n_valid = len(valid)

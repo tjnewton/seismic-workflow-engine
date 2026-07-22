@@ -11,10 +11,10 @@ from obspy import Stream, Trace, UTCDateTime
 
 from swe.picking.deep_learning import _SUPPORTED_MODELS
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_stream(
     stations: list[str] | None = None,
@@ -51,18 +51,22 @@ def _make_mock_picks(
     """Create fake SeisBench Pick objects as SimpleNamespace instances."""
     picks = []
     for i, sta in enumerate(stations):
-        picks.append(SimpleNamespace(
-            trace_id=f"XX.{sta}..HHZ",
-            phase="P",
-            peak_time=starttime + 10.0 + i * 5.0,
-            peak_value=0.85 - i * 0.1,
-        ))
-        picks.append(SimpleNamespace(
-            trace_id=f"XX.{sta}..HHZ",
-            phase="S",
-            peak_time=starttime + 15.0 + i * 5.0,
-            peak_value=0.75 - i * 0.1,
-        ))
+        picks.append(
+            SimpleNamespace(
+                trace_id=f"XX.{sta}..HHZ",
+                phase="P",
+                peak_time=starttime + 10.0 + i * 5.0,
+                peak_value=0.85 - i * 0.1,
+            )
+        )
+        picks.append(
+            SimpleNamespace(
+                trace_id=f"XX.{sta}..HHZ",
+                phase="S",
+                peak_time=starttime + 15.0 + i * 5.0,
+                peak_value=0.75 - i * 0.1,
+            )
+        )
     return picks
 
 
@@ -87,15 +91,19 @@ def _make_mock_seisbench(picks):
 
 def _patch_seisbench(mock_sbm, mock_seisbench_pkg):
     """Context manager that injects mock seisbench into sys.modules."""
-    return patch.dict("sys.modules", {
-        "seisbench": mock_seisbench_pkg,
-        "seisbench.models": mock_sbm,
-    })
+    return patch.dict(
+        "sys.modules",
+        {
+            "seisbench": mock_seisbench_pkg,
+            "seisbench.models": mock_sbm,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
 # Tests for predict_phase_arrivals
 # ---------------------------------------------------------------------------
+
 
 class TestPredictPhaseArrivals:
     """Tests for predict_phase_arrivals with mocked SeisBench."""
@@ -128,12 +136,14 @@ class TestPredictPhaseArrivals:
 
         t0 = UTCDateTime("2024-01-01T00:00:00.0Z")
         stream = _make_stream(["MYSTA"], starttime=t0)
-        picks = [SimpleNamespace(
-            trace_id="XX.MYSTA..HHZ",
-            phase="P",
-            peak_time=t0 + 10.0,
-            peak_value=0.9,
-        )]
+        picks = [
+            SimpleNamespace(
+                trace_id="XX.MYSTA..HHZ",
+                phase="P",
+                peak_time=t0 + 10.0,
+                peak_value=0.9,
+            )
+        ]
         mock_sbm, _, _, mock_pkg = _make_mock_seisbench(picks)
 
         with _patch_seisbench(mock_sbm, mock_pkg):
@@ -147,12 +157,14 @@ class TestPredictPhaseArrivals:
 
         t0 = UTCDateTime("2024-01-01T00:00:00.0Z")
         stream = _make_stream(["STA1"], starttime=t0)
-        picks = [SimpleNamespace(
-            trace_id="RAWID",
-            phase="P",
-            peak_time=t0 + 5.0,
-            peak_value=0.7,
-        )]
+        picks = [
+            SimpleNamespace(
+                trace_id="RAWID",
+                phase="P",
+                peak_time=t0 + 5.0,
+                peak_value=0.7,
+            )
+        ]
         mock_sbm, _, _, mock_pkg = _make_mock_seisbench(picks)
 
         with _patch_seisbench(mock_sbm, mock_pkg):
@@ -179,9 +191,11 @@ class TestPredictPhaseArrivals:
         stream = _make_stream(["STA1"])
         mock_sbm, _, _, mock_pkg = _make_mock_seisbench([])
 
-        with _patch_seisbench(mock_sbm, mock_pkg):
-            with pytest.raises(ValueError, match="Unsupported model"):
-                predict_phase_arrivals(stream, model_name="NotAModel")
+        with (
+            _patch_seisbench(mock_sbm, mock_pkg),
+            pytest.raises(ValueError, match="Unsupported model"),
+        ):
+            predict_phase_arrivals(stream, model_name="NotAModel")
 
     def test_import_error_without_seisbench(self):
         """Missing seisbench raises a clear ImportError."""
@@ -190,9 +204,11 @@ class TestPredictPhaseArrivals:
         stream = _make_stream(["STA1"])
 
         # Ensure seisbench is not importable
-        with patch.dict("sys.modules", {"seisbench": None, "seisbench.models": None}):
-            with pytest.raises(ImportError, match="seisbench is required"):
-                predict_phase_arrivals(stream, model_name="PhaseNet")
+        with (
+            patch.dict("sys.modules", {"seisbench": None, "seisbench.models": None}),
+            pytest.raises(ImportError, match="seisbench is required"),
+        ):
+            predict_phase_arrivals(stream, model_name="PhaseNet")
 
     def test_eqtransformer_model(self):
         """EQTransformer model name is accepted."""
@@ -200,18 +216,18 @@ class TestPredictPhaseArrivals:
 
         t0 = UTCDateTime("2024-01-01T00:00:00.0Z")
         stream = _make_stream(["STA1"], starttime=t0)
-        picks = [SimpleNamespace(
-            trace_id="XX.STA1..HHZ",
-            phase="P",
-            peak_time=t0 + 10.0,
-            peak_value=0.8,
-        )]
+        picks = [
+            SimpleNamespace(
+                trace_id="XX.STA1..HHZ",
+                phase="P",
+                peak_time=t0 + 10.0,
+                peak_value=0.8,
+            )
+        ]
         mock_sbm, _, _, mock_pkg = _make_mock_seisbench(picks)
 
         with _patch_seisbench(mock_sbm, mock_pkg):
-            results = predict_phase_arrivals(
-                stream, model_name="EQTransformer"
-            )
+            results = predict_phase_arrivals(stream, model_name="EQTransformer")
 
         assert len(results) == 1
         assert results[0].phase == "P"
@@ -260,6 +276,7 @@ class TestPredictPhaseArrivals:
 # Tests for pick_stream
 # ---------------------------------------------------------------------------
 
+
 class TestPickStream:
     """Tests for pick_stream convenience wrapper."""
 
@@ -293,12 +310,16 @@ class TestPickStream:
         stream = _make_stream(["STA1"], starttime=t0)
         picks = [
             SimpleNamespace(
-                trace_id="XX.STA1..HHZ", phase="S",
-                peak_time=t0 + 20.0, peak_value=0.7,
+                trace_id="XX.STA1..HHZ",
+                phase="S",
+                peak_time=t0 + 20.0,
+                peak_value=0.7,
             ),
             SimpleNamespace(
-                trace_id="XX.STA1..HHZ", phase="P",
-                peak_time=t0 + 10.0, peak_value=0.9,
+                trace_id="XX.STA1..HHZ",
+                phase="P",
+                peak_time=t0 + 10.0,
+                peak_value=0.9,
             ),
         ]
         mock_sbm, _, _, mock_pkg = _make_mock_seisbench(picks)
@@ -345,7 +366,7 @@ class TestPickStream:
         assert isinstance(station_picks, dict)
         assert "STA1" in station_picks
         assert "STA2" in station_picks
-        for station, times in station_picks.items():
+        for _station, times in station_picks.items():
             assert isinstance(times, list)
             for t in times:
                 assert isinstance(t, UTCDateTime)

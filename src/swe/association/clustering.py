@@ -11,14 +11,15 @@ import base64
 import hashlib
 import logging
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
-from typing import NamedTuple, Sequence
+from typing import NamedTuple
 
 import numpy as np
 from matplotlib.dates import num2date
 from obspy import UTCDateTime
-from sklearn.cluster import DBSCAN
 from sklearn import decomposition
+from sklearn.cluster import DBSCAN
 
 from swe.io.snuffler import write_events_to_markers
 
@@ -95,9 +96,7 @@ def build_pick_dict(
         else:
             duplicate_flag = False
             for existing_pick in station_picks[station]:
-                if abs(existing_pick - pick_utc) <= (
-                    duplicate_threshold / sampling_rate
-                ):
+                if abs(existing_pick - pick_utc) <= (duplicate_threshold / sampling_rate):
                     duplicate_flag = True
             if not duplicate_flag:
                 station_picks[station].append(pick_utc)
@@ -183,34 +182,32 @@ def cluster_picks(
     numpy.ndarray
         Cluster labels for each pick (``-1`` indicates noise).
     """
-    pick_array = np.asarray(pick_array, dtype=float)
-    pick_array = np.nan_to_num(pick_array)
+    arr = np.asarray(pick_array, dtype=float)
+    arr = np.nan_to_num(arr)
 
-    means = np.mean(pick_array, axis=0)
-    stds = np.std(pick_array, axis=0)
+    means = np.mean(arr, axis=0)
+    stds = np.std(arr, axis=0)
     stds[stds == 0] = 1.0  # avoid division by zero
-    pick_array = (pick_array - means) / stds
-    pick_array = np.nan_to_num(pick_array)
+    arr = (arr - means) / stds
+    arr = np.nan_to_num(arr)
 
-    if scale_time and pick_array.shape[1] > 3:
-        pick_array[:, 3] *= scale_factor
+    if scale_time and arr.shape[1] > 3:
+        arr[:, 3] *= scale_factor
 
     if use_pca:
         pca = decomposition.PCA(n_components=pca_components)
-        pca.fit(pick_array)
-        data_to_cluster = pca.transform(pick_array)
+        pca.fit(arr)
+        data_to_cluster = pca.transform(arr)
     else:
-        data_to_cluster = pick_array
+        data_to_cluster = arr
 
     if clustering_algo == "DBSCAN":
-        db = DBSCAN(eps=dbscan_eps, min_samples=dbscan_min_samples).fit(
-            data_to_cluster
-        )
+        db = DBSCAN(eps=dbscan_eps, min_samples=dbscan_min_samples).fit(data_to_cluster)
         labels = db.labels_
     else:
         raise ValueError(f"Unsupported clustering algorithm: {clustering_algo}")
 
-    return labels
+    return np.asarray(labels)
 
 
 def get_cluster_stats(
@@ -366,25 +363,19 @@ def process_clusters(
         duplicates = defaultdict(list)
         for dup_idx, dup_station in enumerate(all_cluster_stations):
             duplicates[dup_station].append(dup_idx)
-        duplicates = {
-            s: idxs for s, idxs in duplicates.items() if len(idxs) > 1
-        }
+        dup_groups = {s: idxs for s, idxs in duplicates.items() if len(idxs) > 1}
 
-        for dup_station in duplicates:
+        for dup_station in dup_groups:
             median_distances = []
-            for index_index in duplicates[dup_station]:
-                pick_time = UTCDateTime(
-                    num2date(pick_times[member_indices[index_index]])
-                )
+            for index_index in dup_groups[dup_station]:
+                pick_time = UTCDateTime(num2date(pick_times[member_indices[index_index]]))
                 dist = abs(pick_time - cluster_median)
                 median_distances.append(dist)
 
             min_dist = min(median_distances)
             min_index = median_distances.index(min_dist)
 
-            for place_in_list, index_index in enumerate(
-                duplicates[dup_station]
-            ):
+            for place_in_list, index_index in enumerate(dup_groups[dup_station]):
                 if place_in_list != min_index:
                     labels[member_indices[index_index]] = -1
 
@@ -407,17 +398,12 @@ def process_clusters(
             if len(cluster_stations) == 0:
                 continue
 
-            station_diffs = [
-                abs(pick_station - cs) for cs in cluster_stations
-            ]
-            min_diff_idx = min(
-                range(len(station_diffs)), key=station_diffs.__getitem__
-            )
+            station_diffs = [abs(pick_station - cs) for cs in cluster_stations]
+            min_diff_idx = min(range(len(station_diffs)), key=station_diffs.__getitem__)
 
             pick_utc = UTCDateTime(num2date(pick))
             if (abs(pick_utc - cluster_median) > temporal_threshold) or (
-                abs(pick_station - cluster_stations[min_diff_idx])
-                > spatial_threshold
+                abs(pick_station - cluster_stations[min_diff_idx]) > spatial_threshold
             ):
                 labels[member_indices[index]] = -1
 
@@ -429,20 +415,13 @@ def process_clusters(
         merge_dict: dict[int, int] = {}
 
         for cluster in work_labels:
-            current_median = UTCDateTime(
-                num2date(cluster_medians[cluster])
-            )
+            current_median = UTCDateTime(num2date(cluster_medians[cluster]))
             for other_cluster in list(cluster_medians.keys()):
                 if other_cluster == -1 or other_cluster == cluster:
                     continue
-                if (
-                    other_cluster in merge_dict
-                    or cluster in merge_dict
-                ):
+                if other_cluster in merge_dict or cluster in merge_dict:
                     continue
-                other_median = UTCDateTime(
-                    num2date(cluster_medians[other_cluster])
-                )
+                other_median = UTCDateTime(num2date(cluster_medians[other_cluster]))
                 if abs(current_median - other_median) <= temporal_threshold:
                     c_members = np.where(labels == cluster)[0]
                     o_members = np.where(labels == other_cluster)[0]
@@ -454,18 +433,11 @@ def process_clusters(
                         o_sta_list = list(o_stations)
                         for ps in c_sta_list:
                             diffs = [abs(ps - os) for os in o_sta_list]
-                            min_idx = min(
-                                range(len(diffs)), key=diffs.__getitem__
-                            )
-                            if (
-                                abs(ps - o_sta_list[min_idx])
-                                <= spatial_threshold
+                            min_idx = min(range(len(diffs)), key=diffs.__getitem__)
+                            if (abs(ps - o_sta_list[min_idx]) <= spatial_threshold) and (
+                                other_cluster not in merge_dict and cluster not in merge_dict
                             ):
-                                if (
-                                    other_cluster not in merge_dict
-                                    and cluster not in merge_dict
-                                ):
-                                    merge_dict[cluster] = other_cluster
+                                merge_dict[cluster] = other_cluster
                     else:
                         merge_dict[cluster] = other_cluster
 
@@ -486,18 +458,17 @@ def process_clusters(
                     continue
                 c_median = UTCDateTime(num2date(cluster_medians[cluster_key]))
                 c_members = np.where(labels == cluster_key)[0]
-                c_stations = list(set(pick_station_order[c_members]))
+                cluster_stations = list(set(pick_station_order[c_members]))
 
-                if len(c_stations) == 0:
+                if len(cluster_stations) == 0:
                     continue
-                diffs = [abs(noise_station - cs) for cs in c_stations]
+                diffs = [abs(noise_station - cs) for cs in cluster_stations]
                 min_idx = min(range(len(diffs)), key=diffs.__getitem__)
 
                 if (abs(pick_utc - c_median) <= temporal_threshold) and (
-                    abs(noise_station - c_stations[min_idx])
-                    <= spatial_threshold
+                    abs(noise_station - cluster_stations[min_idx]) <= spatial_threshold
                 ):
-                    if noise_station not in c_stations:
+                    if noise_station not in cluster_stations:
                         labels[noise_indices[index]] = cluster_key
                     break
 
@@ -570,12 +541,8 @@ def associate_picks(
     labels : numpy.ndarray
         Final cluster labels.
     """
-    station_distance = {
-        str(sta): idx for idx, sta in enumerate(station_list)
-    }
-    reverse_station_distance = {
-        idx: str(sta) for idx, sta in enumerate(station_list)
-    }
+    station_distance = {str(sta): idx for idx, sta in enumerate(station_list)}
+    reverse_station_distance = {idx: str(sta) for idx, sta in enumerate(station_list)}
 
     pick_array, pick_station_order, pick_times = build_pick_data(
         station_picks, location_dict, station_distance
@@ -624,7 +591,10 @@ def associate_picks(
     )
 
     quality = compute_cluster_quality(
-        labels, pick_times, pick_station_order, reverse_station_distance,
+        labels,
+        pick_times,
+        pick_station_order,
+        reverse_station_distance,
     )
 
     return AssociationResult(
@@ -683,15 +653,12 @@ def save_associations(
             pick_station = reverse_station_distance[pick_station_hack]
             pick_channel = channel
             pick_utc = UTCDateTime(num2date(pick_val))
-            picks_list.append(
-                {"station": f"{pick_station}.{pick_channel}", "time": pick_utc}
-            )
+            picks_list.append({"station": f"{pick_station}.{pick_channel}", "time": pick_utc})
 
         events[event_hash] = picks_list
 
     station_order_list = [
-        reverse_station_distance[i]
-        for i in sorted(reverse_station_distance.keys())
+        reverse_station_distance[i] for i in sorted(reverse_station_distance.keys())
     ]
     write_events_to_markers(
         events,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import numpy as np
@@ -16,10 +17,10 @@ from swe.velocity.plotting import (
     plot_velocity_slice,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def velocity_model():
@@ -41,8 +42,11 @@ def travel_time_grid():
     rng = np.random.default_rng(42)
     tt = rng.random((2, 6, 6, 4)) * 0.1
     return TravelTimeGrid(
-        grid_x=gx, grid_y=gy, grid_z=gz,
-        station_coords=stations, travel_times=tt,
+        grid_x=gx,
+        grid_y=gy,
+        grid_z=gz,
+        station_coords=stations,
+        travel_times=tt,
     )
 
 
@@ -50,23 +54,29 @@ def travel_time_grid():
 # TestPlotVelocityProfile
 # ---------------------------------------------------------------------------
 
+
 class TestPlotVelocityProfile:
     def test_returns_figure(self, velocity_model):
         fig = plot_velocity_profile(velocity_model)
         assert isinstance(fig, Figure)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_custom_indices(self, velocity_model):
         fig = plot_velocity_profile(
-            velocity_model, x_index=0, y_index=0,
+            velocity_model,
+            x_index=0,
+            y_index=0,
         )
         assert isinstance(fig, Figure)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_with_existing_axes(self, velocity_model):
         import matplotlib.pyplot as plt
+
         fig_ext, ax = plt.subplots()
         fig = plot_velocity_profile(velocity_model, ax=ax)
         assert fig is fig_ext
@@ -77,18 +87,21 @@ class TestPlotVelocityProfile:
 # TestPlotVelocitySlice
 # ---------------------------------------------------------------------------
 
+
 class TestPlotVelocitySlice:
     @pytest.mark.parametrize("axis", ["x", "y", "z"])
     def test_returns_figure_for_each_axis(self, velocity_model, axis):
         fig = plot_velocity_slice(velocity_model, axis=axis)
         assert isinstance(fig, Figure)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_custom_index(self, velocity_model):
         fig = plot_velocity_slice(velocity_model, axis="z", index=0)
         assert isinstance(fig, Figure)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_invalid_axis(self, velocity_model):
@@ -100,18 +113,21 @@ class TestPlotVelocitySlice:
 # TestPlotTravelTimeSlice
 # ---------------------------------------------------------------------------
 
+
 class TestPlotTravelTimeSlice:
     @pytest.mark.parametrize("axis", ["x", "y", "z"])
     def test_returns_figure_for_each_axis(self, travel_time_grid, axis):
         fig = plot_travel_time_slice(travel_time_grid, 0, axis=axis)
         assert isinstance(fig, Figure)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_second_station(self, travel_time_grid):
         fig = plot_travel_time_slice(travel_time_grid, 1)
         assert isinstance(fig, Figure)
         import matplotlib.pyplot as plt
+
         plt.close(fig)
 
     def test_invalid_axis(self, travel_time_grid):

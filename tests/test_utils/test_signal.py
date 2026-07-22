@@ -1,7 +1,6 @@
 """Tests for swe.utils.signal."""
 
 import numpy as np
-import pytest
 from obspy import Trace, UTCDateTime
 
 from swe.utils.signal import get_trace_properties, instantaneous_frequency
@@ -53,9 +52,7 @@ class TestGetTraceProperties:
         tr = Trace(data=data, header={"sampling_rate": sr, "starttime": start})
         pick_time = start + duration_s / 2  # middle of trace
 
-        dy, d2y, curvature, fits, mads = get_trace_properties(
-            tr, pick_time, 0.4, sampling_rate=sr
-        )
+        dy, d2y, curvature, fits, mads = get_trace_properties(tr, pick_time, 0.4, sampling_rate=sr)
 
         assert len(dy) == 1000
         assert len(d2y) == 1000

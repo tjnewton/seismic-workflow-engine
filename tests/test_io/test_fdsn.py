@@ -1,6 +1,5 @@
 """Tests for swe.io.fdsn."""
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -8,7 +7,7 @@ import pytest
 from obspy import Stream, Trace, UTCDateTime
 from obspy.clients.fdsn.header import FDSNException
 
-from swe.io.fdsn import get_waveforms, get_response_files
+from swe.io.fdsn import get_response_files, get_waveforms
 
 
 def _make_day_stream(network, station, channel, date_str, sr=100.0, n=8640000):
@@ -52,8 +51,13 @@ class TestGetWaveforms:
         mock_client.get_waveforms.return_value = Stream([tr])
 
         result = get_waveforms(
-            "XX", "TEST", "BHZ", start, end,
-            output_dir=tmp_path, client="IRIS",
+            "XX",
+            "TEST",
+            "BHZ",
+            start,
+            end,
+            output_dir=tmp_path,
+            client="IRIS",
         )
         assert len(result) == 1
         assert result[0].exists()
@@ -70,11 +74,14 @@ class TestGetWaveforms:
         end = UTCDateTime("2020-01-01T23:59:59.9Z")
 
         result = get_waveforms(
-            "XX", "TEST", "BHZ", start, end,
+            "XX",
+            "TEST",
+            "BHZ",
+            start,
+            end,
             output_dir=tmp_path,
         )
         assert result == []
-
 
     @patch("swe.io.fdsn.Client")
     def test_typeerror_propagates(self, MockClient, tmp_path):
@@ -88,7 +95,11 @@ class TestGetWaveforms:
 
         with pytest.raises(TypeError, match="bad arg"):
             get_waveforms(
-                "XX", "TEST", "BHZ", start, end,
+                "XX",
+                "TEST",
+                "BHZ",
+                start,
+                end,
                 output_dir=tmp_path,
             )
 
@@ -101,6 +112,7 @@ class TestGetResponseFiles:
         MockClient.return_value = mock_client
 
         from obspy import Inventory
+
         mock_inv = MagicMock(spec=Inventory)
         mock_client.get_stations.return_value = mock_inv
 
@@ -108,7 +120,11 @@ class TestGetResponseFiles:
         end = UTCDateTime("2020-01-01T23:59:59.9Z")
 
         result = get_response_files(
-            "XX", ["STA1", "STA2"], "BHZ", start, end,
+            "XX",
+            ["STA1", "STA2"],
+            "BHZ",
+            start,
+            end,
             output_dir=tmp_path,
         )
         assert len(result) == 2
@@ -125,7 +141,11 @@ class TestGetResponseFiles:
         end = UTCDateTime("2020-01-01T23:59:59.9Z")
 
         result = get_response_files(
-            "XX", ["FAIL"], "BHZ", start, end,
+            "XX",
+            ["FAIL"],
+            "BHZ",
+            start,
+            end,
             output_dir=tmp_path,
         )
         assert result == []
@@ -142,6 +162,10 @@ class TestGetResponseFiles:
 
         with pytest.raises(TypeError, match="bad arg"):
             get_response_files(
-                "XX", ["FAIL"], "BHZ", start, end,
+                "XX",
+                ["FAIL"],
+                "BHZ",
+                start,
+                end,
                 output_dir=tmp_path,
             )

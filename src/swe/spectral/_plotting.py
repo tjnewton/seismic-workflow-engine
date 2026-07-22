@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.figure import Figure
 
 if TYPE_CHECKING:
@@ -152,8 +152,7 @@ def plot_ssr(
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel("Spectral Ratio")
     ax.set_title(
-        f"SSR - {result.target_station} / {result.reference_station} "
-        f"({result.n_events} events)"
+        f"SSR - {result.target_station} / {result.reference_station} ({result.n_events} events)"
     )
     ax.legend()
     ax.grid(True, alpha=0.3, which="both")
@@ -199,21 +198,26 @@ def plot_coda_decay(
     # Panel 1: Waveform with coda window
     axes[0].plot(times, trace.data, "k-", linewidth=0.4)
     axes[0].axvline(
-        result.coda_start_time, color="green", linestyle="--",
+        result.coda_start_time,
+        color="green",
+        linestyle="--",
         label="Coda start",
     )
     axes[0].axvline(
-        result.coda_end_time, color="red", linestyle="--",
+        result.coda_end_time,
+        color="red",
+        linestyle="--",
         label="Coda end",
     )
     axes[0].axvspan(
-        result.coda_start_time, result.coda_end_time,
-        alpha=0.1, color="yellow",
+        result.coda_start_time,
+        result.coda_end_time,
+        alpha=0.1,
+        color="yellow",
     )
     axes[0].set_ylabel("Amplitude")
     axes[0].set_title(
-        f"Coda decay - {result.station} "
-        f"(Qc={result.qc:.0f}, f={result.central_frequency:.1f} Hz)"
+        f"Coda decay - {result.station} (Qc={result.qc:.0f}, f={result.central_frequency:.1f} Hz)"
     )
     axes[0].legend(loc="upper right")
 
@@ -229,11 +233,7 @@ def plot_coda_decay(
 
         # Overlay the fitted line in the coda window
         if not np.isnan(result.qc):
-            coda_mask = (
-                (times >= result.coda_start_time)
-                & (times <= result.coda_end_time)
-                & valid
-            )
+            coda_mask = (times >= result.coda_start_time) & (times <= result.coda_end_time) & valid
             if np.any(coda_mask):
                 t_coda = t_lapse[coda_mask]
                 slope = -np.pi * result.central_frequency / result.qc
@@ -242,7 +242,10 @@ def plot_coda_decay(
                 intercept = np.mean(y_obs - slope * t_coda)
                 y_fit = intercept + slope * t_coda
                 axes[1].plot(
-                    times[coda_mask], y_fit, "r-", linewidth=2,
+                    times[coda_mask],
+                    y_fit,
+                    "r-",
+                    linewidth=2,
                     label=f"Fit (R\u00b2={result.fit_r_squared:.2f})",
                 )
 
@@ -296,12 +299,13 @@ def plot_coda_q_vs_frequency(
                 np.log10(result.frequencies[valid].max()),
                 50,
             )
-            q_model = result.q0 * f_model ** result.eta
+            q_model = result.q0 * f_model**result.eta
             ax.plot(
-                f_model, q_model, "r-", linewidth=2,
-                label=(
-                    f"Qc = {result.q0:.0f} \u00b7 f^{result.eta:.2f}"
-                ),
+                f_model,
+                q_model,
+                "r-",
+                linewidth=2,
+                label=(f"Qc = {result.q0:.0f} \u00b7 f^{result.eta:.2f}"),
             )
 
     ax.set_xscale("log")
@@ -364,10 +368,7 @@ def plot_brune_fit(
 
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel("Displacement Spectrum")
-    ax.set_title(
-        f"Brune Fit - {result.station} "
-        f"(RMS={result.residual_rms:.3f})"
-    )
+    ax.set_title(f"Brune Fit - {result.station} (RMS={result.residual_rms:.3f})")
     ax.legend()
     ax.grid(True, alpha=0.3, which="both")
 

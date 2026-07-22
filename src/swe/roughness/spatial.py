@@ -7,7 +7,7 @@ roughness metrics derived from elevation data.
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from scipy import ndimage
@@ -15,6 +15,7 @@ from scipy.stats import pearsonr
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+
     from swe.topo.raster import ElevationGrid
 
 logger = logging.getLogger(__name__)
@@ -112,12 +113,8 @@ def compute_spatial_frequency_map(
 
     freq_grid = np.full((len(y_grid), len(x_grid)), np.nan)
 
-    ix = np.clip(
-        np.searchsorted(x_edges, locs[:, 0]) - 1, 0, len(x_grid) - 1
-    )
-    iy = np.clip(
-        np.searchsorted(y_edges, locs[:, 1]) - 1, 0, len(y_grid) - 1
-    )
+    ix = np.clip(np.searchsorted(x_edges, locs[:, 0]) - 1, 0, len(x_grid) - 1)
+    iy = np.clip(np.searchsorted(y_edges, locs[:, 1]) - 1, 0, len(y_grid) - 1)
 
     for j in range(len(y_grid)):
         for i in range(len(x_grid)):
@@ -134,9 +131,7 @@ def compute_spatial_frequency_map(
         smoothed_vals = ndimage.gaussian_filter(filled, sigma=sigma)
         smoothed_wt = ndimage.gaussian_filter(weight, sigma=sigma)
         with np.errstate(invalid="ignore", divide="ignore"):
-            freq_grid = np.where(
-                smoothed_wt > 0, smoothed_vals / smoothed_wt, np.nan
-            )
+            freq_grid = np.where(smoothed_wt > 0, smoothed_vals / smoothed_wt, np.nan)
 
     logger.info(
         "Spatial frequency map: %d x %d grid, spacing=%.2f",
@@ -189,8 +184,7 @@ def correlate_frequency_roughness(
     valid_metrics = ("rms_height", "dominant_wavelength", "slope_variance")
     if roughness_metric not in valid_metrics:
         raise ValueError(
-            f"roughness_metric must be one of {valid_metrics}, "
-            f"got {roughness_metric!r}"
+            f"roughness_metric must be one of {valid_metrics}, got {roughness_metric!r}"
         )
 
     locs = np.asarray(event_locations, dtype=np.float64)
@@ -254,9 +248,7 @@ def correlate_frequency_roughness(
     # Filter out NaN entries
     valid = ~np.isnan(local_roughness) & ~np.isnan(freqs)
     if np.sum(valid) < 3:
-        logger.warning(
-            "Fewer than 3 valid event-roughness pairs; correlation unreliable"
-        )
+        logger.warning("Fewer than 3 valid event-roughness pairs; correlation unreliable")
         predicted = np.full(len(locs), np.nan)
         return SpatialCorrelationResult(
             event_x=locs[:, 0],

@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, NamedTuple
 
-from swe.picks import SWEPick, from_phase_arrivals, to_station_picks
+from swe.picks import SWEPick, from_phase_arrivals
 
 if TYPE_CHECKING:
     from obspy import Stream, UTCDateTime
@@ -32,12 +32,15 @@ class PhaseArrival(NamedTuple):
     confidence: float
     """Model probability for the pick."""
 
-_SUPPORTED_MODELS = frozenset({
-    "PhaseNet",
-    "EQTransformer",
-    "GPD",
-    "BasicPhaseAE",
-})
+
+_SUPPORTED_MODELS = frozenset(
+    {
+        "PhaseNet",
+        "EQTransformer",
+        "GPD",
+        "BasicPhaseAE",
+    }
+)
 
 
 def predict_phase_arrivals(
@@ -96,8 +99,7 @@ def predict_phase_arrivals(
 
     if model_name not in _SUPPORTED_MODELS:
         raise ValueError(
-            f"Unsupported model: {model_name!r}. "
-            f"Supported models: {sorted(_SUPPORTED_MODELS)}"
+            f"Unsupported model: {model_name!r}. Supported models: {sorted(_SUPPORTED_MODELS)}"
         )
 
     model_cls = getattr(sbm, model_name)
@@ -110,7 +112,7 @@ def predict_phase_arrivals(
         len(stream),
     )
 
-    annotations = model.annotate(stream, batch_size=batch_size)
+    model.annotate(stream, batch_size=batch_size)
     picks = model.classify(
         stream,
         batch_size=batch_size,
@@ -120,12 +122,14 @@ def predict_phase_arrivals(
 
     results: list[PhaseArrival] = []
     for pick in picks:
-        results.append(PhaseArrival(
-            station=pick.trace_id.split(".")[1] if "." in pick.trace_id else pick.trace_id,
-            phase=pick.phase,
-            time=pick.peak_time,
-            confidence=pick.peak_value,
-        ))
+        results.append(
+            PhaseArrival(
+                station=pick.trace_id.split(".")[1] if "." in pick.trace_id else pick.trace_id,
+                phase=pick.phase,
+                time=pick.peak_time,
+                confidence=pick.peak_value,
+            )
+        )
 
     logger.info("Found %d picks (%s)", len(results), model_name)
     return results

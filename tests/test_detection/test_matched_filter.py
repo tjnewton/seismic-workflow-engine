@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -103,7 +102,7 @@ class TestMarkersToTemplate:
     def test_empty_file(self, tmp_path):
         empty = tmp_path / "empty.mrkr"
         empty.write_text("")
-        templates, sd, po, tw = markers_to_template(empty, prepick_offset=1.0)
+        templates, sd, _po, _tw = markers_to_template(empty, prepick_offset=1.0)
         assert templates == []
         assert sd == {}
 
@@ -149,6 +148,7 @@ class TestNextDay:
 # ---------------------------------------------------------------------------
 # Helpers for mock Tribe / Party
 # ---------------------------------------------------------------------------
+
 
 def _mock_tribe_with_detect(detect_return):
     """Return a mock Tribe whose .detect() returns *detect_return*."""
@@ -381,8 +381,14 @@ class TestDetectSignals:
         mock_mt.return_value = tribe
 
         result = detect_signals(
-            ["# h\n"], ["/f.ms"], {}, 16.0, 2.0,
-            "/data", UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+            ["# h\n"],
+            ["/f.ms"],
+            {},
+            16.0,
+            2.0,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-16"),
         )
         assert result is not None
         tribe.detect.assert_called_once()
@@ -394,9 +400,15 @@ class TestDetectSignals:
         tribe = _mock_tribe_with_detect(party)
         mock_mt.return_value = tribe
 
-        result = detect_signals(
-            ["# h\n"], ["/f.ms"], {}, 16.0, 2.0,
-            "/data", UTCDateTime("2020-01-31"), UTCDateTime("2020-02-02"),
+        detect_signals(
+            ["# h\n"],
+            ["/f.ms"],
+            {},
+            16.0,
+            2.0,
+            "/data",
+            UTCDateTime("2020-01-31"),
+            UTCDateTime("2020-02-02"),
         )
         assert tribe.detect.call_count == 2
 
@@ -408,8 +420,14 @@ class TestDetectSignals:
         mock_mt.return_value = tribe
 
         result = detect_signals(
-            ["# h\n"], ["/f.ms"], {}, 16.0, 2.0,
-            "/data", UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+            ["# h\n"],
+            ["/f.ms"],
+            {},
+            16.0,
+            2.0,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-16"),
         )
         tribe.detect.assert_called_once()
         assert result is None
@@ -425,8 +443,14 @@ class TestDetectSignals:
 
         with caplog.at_level(logging.WARNING):
             result = detect_signals(
-                ["# h\n"], ["/f.ms"], {}, 16.0, 2.0,
-                "/data", UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+                ["# h\n"],
+                ["/f.ms"],
+                {},
+                16.0,
+                2.0,
+                "/data",
+                UTCDateTime("2020-01-15"),
+                UTCDateTime("2020-01-16"),
             )
         assert result is None
         assert "Detection failed" in caplog.text
@@ -439,8 +463,14 @@ class TestDetectSignals:
         mock_mt.return_value = tribe
 
         result = detect_signals(
-            ["# h\n"], ["/f.ms"], {}, 16.0, 2.0,
-            "/data", UTCDateTime("2020-01-15"), UTCDateTime("2020-01-17"),
+            ["# h\n"],
+            ["/f.ms"],
+            {},
+            16.0,
+            2.0,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-17"),
         )
         assert result is None
 
@@ -452,8 +482,14 @@ class TestDetectSignals:
         mock_mt.return_value = tribe
 
         detect_signals(
-            ["# h\n"], ["/f.ms"], {}, 16.0, 2.0,
-            "/data", UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+            ["# h\n"],
+            ["/f.ms"],
+            {},
+            16.0,
+            2.0,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-16"),
             output_path=str(tmp_path / "out"),
         )
         party.write.assert_called_once()
@@ -495,8 +531,10 @@ class TestCullDetections:
         det = _make_mock_detection(UTCDateTime("2020-01-15T10:00:00"))
         party = _make_mock_party(detections=[det])
 
-        with patch(f"{self._MODULE}.Party") as MockParty, \
-             patch(f"{self._MODULE}.Family") as MockFamily:
+        with (
+            patch(f"{self._MODULE}.Party") as MockParty,
+            patch(f"{self._MODULE}.Family") as MockFamily,
+        ):
             MockFamily.return_value = MagicMock()
             MockParty.return_value = MagicMock()
             cull_detections(party, "/data", ("YG", "STA1", "BHZ"))
@@ -513,8 +551,10 @@ class TestCullDetections:
         det = _make_mock_detection(UTCDateTime("2020-01-15T10:00:00"))
         party = _make_mock_party(detections=[det])
 
-        with patch(f"{self._MODULE}.Party") as MockParty, \
-             patch(f"{self._MODULE}.Family") as MockFamily:
+        with (
+            patch(f"{self._MODULE}.Party") as MockParty,
+            patch(f"{self._MODULE}.Family") as MockFamily,
+        ):
             MockFamily.return_value = MagicMock()
             MockParty.return_value = MagicMock()
             cull_detections(party, "/data", ("YG", "STA1", "BHZ"), snr_min=1.0)
@@ -531,8 +571,10 @@ class TestCullDetections:
         det = _make_mock_detection(UTCDateTime("2020-01-15T10:00:00"))
         party = _make_mock_party(detections=[det])
 
-        with patch(f"{self._MODULE}.Party") as MockParty, \
-             patch(f"{self._MODULE}.Family") as MockFamily:
+        with (
+            patch(f"{self._MODULE}.Party") as MockParty,
+            patch(f"{self._MODULE}.Family") as MockFamily,
+        ):
             MockFamily.return_value = MagicMock()
             MockParty.return_value = MagicMock()
             cull_detections(party, "/data", ("YG", "STA1", "BHZ"), snr_max=25.0)
@@ -549,8 +591,10 @@ class TestCullDetections:
         det = _make_mock_detection(UTCDateTime("2020-01-15T10:00:00"))
         party = _make_mock_party(detections=[det])
 
-        with patch(f"{self._MODULE}.Party") as MockParty, \
-             patch(f"{self._MODULE}.Family") as MockFamily:
+        with (
+            patch(f"{self._MODULE}.Party") as MockParty,
+            patch(f"{self._MODULE}.Family") as MockFamily,
+        ):
             MockFamily.return_value = MagicMock()
             MockParty.return_value = MagicMock()
             cull_detections(party, "/data", ("YG", "STA1", "BHZ"))
@@ -568,8 +612,10 @@ class TestCullDetections:
         det = _make_mock_detection(UTCDateTime("2020-01-15T10:00:00"))
         party = _make_mock_party(detections=[det])
 
-        with patch(f"{self._MODULE}.Party") as MockParty, \
-             patch(f"{self._MODULE}.Family") as MockFamily:
+        with (
+            patch(f"{self._MODULE}.Party") as MockParty,
+            patch(f"{self._MODULE}.Family") as MockFamily,
+        ):
             MockFamily.return_value = MagicMock()
             MockParty.return_value = MagicMock()
             cull_detections(party, "/data", ("YG", "STA1", "BHZ"), zero_fraction=0.3)
@@ -581,8 +627,10 @@ class TestCullDetections:
         det = _make_mock_detection(UTCDateTime("2020-01-15T10:00:00"))
         party = _make_mock_party(detections=[det])
 
-        with patch(f"{self._MODULE}.Party") as MockParty, \
-             patch(f"{self._MODULE}.Family") as MockFamily:
+        with (
+            patch(f"{self._MODULE}.Party") as MockParty,
+            patch(f"{self._MODULE}.Family") as MockFamily,
+        ):
             MockFamily.return_value = MagicMock()
             MockParty.return_value = MagicMock()
             cull_detections(party, "/data", ("YG", "STA1", "BHZ"))
@@ -595,8 +643,10 @@ class TestCullDetections:
         det = _make_mock_detection(UTCDateTime("2020-01-15T10:00:00"))
         party = _make_mock_party(detections=[det])
 
-        with patch(f"{self._MODULE}.Party") as MockParty, \
-             patch(f"{self._MODULE}.Family") as MockFamily:
+        with (
+            patch(f"{self._MODULE}.Party") as MockParty,
+            patch(f"{self._MODULE}.Family") as MockFamily,
+        ):
             MockFamily.return_value = MagicMock()
             MockParty.return_value = MagicMock()
             with caplog.at_level(logging.WARNING):
@@ -647,18 +697,22 @@ class TestGetDetections:
         tr.stats.starttime = UTCDateTime("2020-01-15T00:00:00")
         mock_read.return_value = Stream([tr])
 
-        party = self._make_catalog_party([
-            ("YG", "STA1", "BHZ", UTCDateTime("2020-01-15T10:00:00")),
-        ])
+        party = self._make_catalog_party(
+            [
+                ("YG", "STA1", "BHZ", UTCDateTime("2020-01-15T10:00:00")),
+            ]
+        )
 
         result = get_detections(party, "/data", ("YG", "STA1", "BHZ"))
         assert len(result) == 1
 
     @patch(f"{_MODULE}.glob.glob", return_value=[])
     def test_no_day_files_returns_empty_trace(self, mock_glob):
-        party = self._make_catalog_party([
-            ("YG", "STA1", "BHZ", UTCDateTime("2020-01-15T10:00:00")),
-        ])
+        party = self._make_catalog_party(
+            [
+                ("YG", "STA1", "BHZ", UTCDateTime("2020-01-15T10:00:00")),
+            ]
+        )
 
         result = get_detections(party, "/data", ("YG", "STA1", "BHZ"))
         assert len(result) == 1
@@ -673,10 +727,12 @@ class TestGetDetections:
         tr.stats.starttime = UTCDateTime("2020-01-15T00:00:00")
         mock_read.return_value = Stream([tr])
 
-        party = self._make_catalog_party([
-            ("YG", "STA1", "BHZ", UTCDateTime("2020-01-15T10:00:00")),
-            ("YG", "STA1", "BHZ", UTCDateTime("2020-01-15T14:00:00")),
-        ])
+        party = self._make_catalog_party(
+            [
+                ("YG", "STA1", "BHZ", UTCDateTime("2020-01-15T10:00:00")),
+                ("YG", "STA1", "BHZ", UTCDateTime("2020-01-15T14:00:00")),
+            ]
+        )
 
         result = get_detections(party, "/data", ("YG", "STA1", "BHZ"))
         assert len(result) == 2
@@ -702,8 +758,7 @@ class TestGetDetections:
         party = MagicMock()
         party.families = [family]
 
-        with patch(f"{self._MODULE}.glob.glob", return_value=[]), \
-             patch(f"{self._MODULE}.read"):
+        with patch(f"{self._MODULE}.glob.glob", return_value=[]), patch(f"{self._MODULE}.read"):
             result = get_detections(party, "/data", ("YG", "STA1", "BHZ"))
         # Should find 1 detection from the matching pick
         assert len(result) == 1
@@ -750,8 +805,10 @@ class TestDetectionsFromStacks:
         picks = {"STA1": UTCDateTime("2020-01-15T00:00:05")}
 
         result = detections_from_stacks(
-            stack, "/data",
-            UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+            stack,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-16"),
             pick_times=picks,
         )
         assert result is not None
@@ -767,8 +824,10 @@ class TestDetectionsFromStacks:
 
         stack = self._make_stack()
         result = detections_from_stacks(
-            stack, "/data",
-            UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+            stack,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-16"),
             pick_times=None,
         )
         assert result is not None
@@ -784,8 +843,10 @@ class TestDetectionsFromStacks:
 
         stack = self._make_stack()
         result = detections_from_stacks(
-            stack, "/data",
-            UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+            stack,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-16"),
         )
         assert result is None
 
@@ -802,8 +863,10 @@ class TestDetectionsFromStacks:
         stack = self._make_stack()
         with caplog.at_level(logging.WARNING):
             result = detections_from_stacks(
-                stack, "/data",
-                UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+                stack,
+                "/data",
+                UTCDateTime("2020-01-15"),
+                UTCDateTime("2020-01-16"),
             )
         assert result is None
         assert "Stack detection failed" in caplog.text
@@ -820,8 +883,10 @@ class TestDetectionsFromStacks:
 
         stack = self._make_stack()  # 1200 samples @ 100 Hz -> 12 s
         detections_from_stacks(
-            stack, "/data",
-            UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+            stack,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-16"),
         )
         assert tribe_inst.construct.call_args.kwargs["process_len"] == 60
 
@@ -837,8 +902,10 @@ class TestDetectionsFromStacks:
 
         stack = self._make_stack()
         detections_from_stacks(
-            stack, "/data",
-            UTCDateTime("2020-01-15"), UTCDateTime("2020-01-16"),
+            stack,
+            "/data",
+            UTCDateTime("2020-01-15"),
+            UTCDateTime("2020-01-16"),
             process_len=86400,
         )
         assert tribe_inst.construct.call_args.kwargs["process_len"] == 86400
@@ -854,7 +921,9 @@ class TestDetectionsFromStacks:
 
         stack = self._make_stack()
         detections_from_stacks(
-            stack, "/data",
-            UTCDateTime("2020-01-31"), UTCDateTime("2020-02-02"),
+            stack,
+            "/data",
+            UTCDateTime("2020-01-31"),
+            UTCDateTime("2020-02-02"),
         )
         assert tribe_inst.detect.call_count == 2

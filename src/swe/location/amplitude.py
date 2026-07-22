@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Result containers
 # ---------------------------------------------------------------------------
 
+
 class LocationResult(NamedTuple):
     """Result from a grid-search location."""
 
@@ -67,6 +68,7 @@ class AmplitudeLocationResult(NamedTuple):
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
 
 def _default_attenuation_params() -> dict[str, float]:
     """Return default seismic amplitude attenuation parameters.
@@ -139,10 +141,10 @@ def _compute_distance_grid(
     gx = grid_x[:, np.newaxis, np.newaxis]
     gy = grid_y[np.newaxis, :, np.newaxis]
     gz = grid_z[np.newaxis, np.newaxis, :]
-    return np.sqrt(
-        (gx - station_x) ** 2
-        + (gy - station_y) ** 2
-        + (gz - station_z) ** 2,
+    return np.asarray(
+        np.sqrt(
+            (gx - station_x) ** 2 + (gy - station_y) ** 2 + (gz - station_z) ** 2,
+        )
     )
 
 
@@ -177,15 +179,14 @@ def _predicted_amplitude(
     safe_dist = np.maximum(distance, np.finfo(float).tiny)
     exponent = np.clip(-attenuation_coeff * safe_dist, -700.0, 0.0)
     with np.errstate(over="ignore", divide="ignore", invalid="ignore"):
-        result = source_amplitude * np.exp(exponent) / (
-            safe_dist ** spreading_exponent
-        )
-    return np.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)
+        result = source_amplitude * np.exp(exponent) / (safe_dist**spreading_exponent)
+    return np.asarray(np.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0))
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def locate_by_travel_time(
     observed_times: NDArray[np.floating],
@@ -247,7 +248,9 @@ def locate_by_travel_time(
 
     logger.info(
         "Travel-time grid search: %d x %d x %d nodes",
-        len(grid_x), len(grid_y), len(grid_z),
+        len(grid_x),
+        len(grid_y),
+        len(grid_z),
     )
 
     # Observed differential times relative to reference station.
@@ -258,7 +261,9 @@ def locate_by_travel_time(
 
     # Compute distances from every grid node to the reference station.
     ref_dist = _compute_distance_grid(
-        grid_x, grid_y, grid_z,
+        grid_x,
+        grid_y,
+        grid_z,
         station_coords[reference_station_index, 0],
         station_coords[reference_station_index, 1],
         station_coords[reference_station_index, 2],
@@ -269,7 +274,9 @@ def locate_by_travel_time(
         if ii == reference_station_index:
             continue
         sta_dist = _compute_distance_grid(
-            grid_x, grid_y, grid_z,
+            grid_x,
+            grid_y,
+            grid_z,
             station_coords[ii, 0],
             station_coords[ii, 1],
             station_coords[ii, 2],
@@ -287,7 +294,10 @@ def locate_by_travel_time(
 
     logger.info(
         "Best travel-time location: x=%.1f  y=%.1f  z=%.1f  residual=%.4f",
-        best_x, best_y, best_z, best_residual,
+        best_x,
+        best_y,
+        best_z,
+        best_residual,
     )
 
     return LocationResult(
@@ -310,7 +320,8 @@ def amplocate(
         tuple[float, float],
         tuple[float, float],
         tuple[float, float],
-    ] | None = None,
+    ]
+    | None = None,
     grid_spacing: tuple[float, float, float] | None = None,
     weight_power: int = 2,
 ) -> AmplitudeLocationResult:
@@ -372,7 +383,9 @@ def amplocate(
         raise ValueError(msg)
 
     B = _attenuation_coefficient(
-        params["frequency"], params["q_factor"], params["velocity"],
+        params["frequency"],
+        params["q_factor"],
+        params["velocity"],
     )
     spreading = params["geometric_spreading_exponent"]
 
@@ -420,21 +433,22 @@ def amplocate(
         station_dists = np.empty((n_stations, *grid_shape))
         for ii in range(n_stations):
             station_dists[ii] = _compute_distance_grid(
-                grid_x, grid_y, grid_z,
+                grid_x,
+                grid_y,
+                grid_z,
                 station_coords[ii, 0],
                 station_coords[ii, 1],
                 station_coords[ii, 2],
             )
     else:
-        msg = (
-            "Either distance_grids or both grid_bounds and grid_spacing "
-            "must be provided."
-        )
+        msg = "Either distance_grids or both grid_bounds and grid_spacing must be provided."
         raise ValueError(msg)
 
     logger.info(
         "Amplitude grid search: grid %s, %d source amplitudes, %d stations",
-        grid_shape, n_a0, n_stations,
+        grid_shape,
+        n_a0,
+        n_stations,
     )
 
     # Compute weights: favour closer stations (using max distance per
@@ -457,11 +471,16 @@ def amplocate(
         r = station_dists[ii]  # (nx, ny, nz)
         for jj in range(n_a0):
             pred = _predicted_amplitude(
-                source_amplitudes[jj], r, B, spreading,
+                source_amplitudes[jj],
+                r,
+                B,
+                spreading,
             )
             with np.errstate(over="ignore"):
                 diff_sq = np.nan_to_num(
-                    (corrected_amps[ii] - pred) ** 2, nan=0.0, posinf=0.0,
+                    (corrected_amps[ii] - pred) ** 2,
+                    nan=0.0,
+                    posinf=0.0,
                 )
             residuals[..., jj] += diff_sq * weights[ii]
 
@@ -478,13 +497,19 @@ def amplocate(
     for ii in range(n_stations):
         r_at_best = station_dists[ii][min_idx[0], min_idx[1], min_idx[2]]
         predicted[ii] = _predicted_amplitude(
-            best_a0, np.array(r_at_best), B, spreading,
+            best_a0,
+            np.array(r_at_best),
+            B,
+            spreading,
         )
 
     logger.info(
-        "Best amplitude location: x=%.1f  y=%.1f  z=%.1f  A0=%.3g  "
-        "misfit=%.4g",
-        best_x, best_y, best_z, best_a0, best_misfit,
+        "Best amplitude location: x=%.1f  y=%.1f  z=%.1f  A0=%.3g  misfit=%.4g",
+        best_x,
+        best_y,
+        best_z,
+        best_a0,
+        best_misfit,
     )
 
     return AmplitudeLocationResult(
@@ -548,7 +573,9 @@ def synthetic_event(
         params.update(attenuation_params)
 
     B = _attenuation_coefficient(
-        params["frequency"], params["q_factor"], params["velocity"],
+        params["frequency"],
+        params["q_factor"],
+        params["velocity"],
     )
     spreading = params["geometric_spreading_exponent"]
 
@@ -576,9 +603,12 @@ def synthetic_event(
         amplitudes = np.maximum(amplitudes + amp_noise, 0.0)
 
     logger.debug(
-        "Synthetic event at (%.1f, %.1f, %.1f): %d stations, "
-        "noise_level=%.2f",
-        x0, y0, z0, n_stations, noise_level,
+        "Synthetic event at (%.1f, %.1f, %.1f): %d stations, noise_level=%.2f",
+        x0,
+        y0,
+        z0,
+        n_stations,
+        noise_level,
     )
 
     return SyntheticEventResult(travel_times, amplitudes)

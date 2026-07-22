@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from obspy import Stream, UTCDateTime
 
 from swe.focal.polarity import (
     PolarityObservation,
     PolarityResult,
-    measure_polarity,
     measure_polarities,
+    measure_polarity,
 )
 
 
@@ -58,9 +57,7 @@ class TestMeasurePolarity:
     def test_with_bandpass_filter(self, up_trace):
         """Bandpass filtering should still detect polarity."""
         t0 = up_trace.stats.starttime
-        obs = measure_polarity(
-            up_trace, t0 + 10.0, lowcut=1.0, highcut=40.0
-        )
+        obs = measure_polarity(up_trace, t0 + 10.0, lowcut=1.0, highcut=40.0)
         assert obs.polarity == 1
 
     def test_trace_too_short(self):

@@ -16,7 +16,7 @@ Madariaga, R. (1976). Dynamics of an expanding circular fault.
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -146,8 +146,7 @@ def compute_displacement_spectrum(
             tr.remove_response(output="DISP", water_level=water_level)
         except (ValueError, TypeError, OSError) as exc:
             logger.warning(
-                "Failed to remove response for %s.%s.%s: %s; "
-                "assuming data is already displacement",
+                "Failed to remove response for %s.%s.%s: %s; assuming data is already displacement",
                 tr.stats.network,
                 tr.stats.station,
                 tr.stats.channel,
@@ -155,8 +154,7 @@ def compute_displacement_spectrum(
             )
     else:
         logger.debug(
-            "No response metadata for %s.%s.%s; "
-            "assuming data is already displacement",
+            "No response metadata for %s.%s.%s; assuming data is already displacement",
             tr.stats.network,
             tr.stats.station,
             tr.stats.channel,
@@ -190,7 +188,7 @@ def _brune_log(
     freqs = np.power(10.0, log_freqs)
     fc = np.power(10.0, log_fc)
     omega_0 = np.power(10.0, log_omega_0)
-    return np.log10(omega_0 / (1.0 + (freqs / fc) ** n_gamma))
+    return np.asarray(np.log10(omega_0 / (1.0 + (freqs / fc) ** n_gamma)))
 
 
 def fit_brune_model(
@@ -228,9 +226,7 @@ def fit_brune_model(
         Fit results including corner frequency, spectral level,
         uncertainties, and the observed/fitted spectra.
     """
-    station = (
-        f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
-    )
+    station = f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
 
     freqs, amps = compute_displacement_spectrum(
         trace,
@@ -279,9 +275,7 @@ def fit_brune_model(
 
     # Initial guesses
     log_omega_0_guess = float(np.max(log_amps))
-    log_fc_guess = float(
-        np.clip(np.log10(np.median(freqs[valid])), log_fc_lo, log_fc_hi)
-    )
+    log_fc_guess = float(np.clip(np.log10(np.median(freqs[valid])), log_fc_lo, log_fc_hi))
 
     def _model(log_f: NDArray, log_o0: float, log_fc: float) -> NDArray:
         return _brune_log(log_f, log_o0, log_fc, n_gamma)
@@ -300,8 +294,8 @@ def fit_brune_model(
         return nan_result
 
     log_omega_0_fit, log_fc_fit = popt
-    omega_0_fit = 10.0 ** log_omega_0_fit
-    fc_fit = 10.0 ** log_fc_fit
+    omega_0_fit = 10.0**log_omega_0_fit
+    fc_fit = 10.0**log_fc_fit
 
     # Uncertainties from covariance
     perr = np.sqrt(np.diag(pcov))
@@ -310,9 +304,7 @@ def fit_brune_model(
     fc_std = fc_fit * np.log(10.0) * perr[1]
 
     # Fitted spectrum (over full frequency range)
-    fitted = brune_spectrum(
-        freqs, omega_0=omega_0_fit, corner_frequency=fc_fit, n_gamma=n_gamma
-    )
+    fitted = brune_spectrum(freqs, omega_0=omega_0_fit, corner_frequency=fc_fit, n_gamma=n_gamma)
 
     # RMS residual in log-space
     log_fitted = np.log10(np.maximum(fitted[valid], 1e-30))
@@ -373,23 +365,20 @@ def compute_stress_drop(
         if *source_model* is unknown.
     """
     if seismic_moment is None and magnitude is None:
-        raise ValueError(
-            "Either seismic_moment or magnitude must be provided"
-        )
+        raise ValueError("Either seismic_moment or magnitude must be provided")
 
     if source_model == "madariaga":
         k = 0.3724
     elif source_model == "brune":
         k = 0.3727
     else:
-        raise ValueError(
-            f"Unknown source model {source_model!r}; "
-            "use 'madariaga' or 'brune'"
-        )
+        raise ValueError(f"Unknown source model {source_model!r}; use 'madariaga' or 'brune'")
 
     fc = spectral_fit.corner_frequency
 
     if seismic_moment is None:
+        # magnitude is guaranteed non-None here (validated above)
+        assert magnitude is not None
         # Hanks & Kanamori (1979): log10(M0) = 1.5 * Mw + 9.05
         seismic_moment = 10.0 ** (1.5 * magnitude + 9.05)
 
@@ -459,20 +448,14 @@ def spectral_fit_batch(
         if list lengths do not match *traces*.
     """
     if magnitudes is None and seismic_moments is None:
-        raise ValueError(
-            "Either magnitudes or seismic_moments must be provided"
-        )
+        raise ValueError("Either magnitudes or seismic_moments must be provided")
 
     n = len(traces)
     if magnitudes is not None and len(magnitudes) != n:
-        raise ValueError(
-            f"magnitudes length ({len(magnitudes)}) must match "
-            f"traces length ({n})"
-        )
+        raise ValueError(f"magnitudes length ({len(magnitudes)}) must match traces length ({n})")
     if seismic_moments is not None and len(seismic_moments) != n:
         raise ValueError(
-            f"seismic_moments length ({len(seismic_moments)}) must match "
-            f"traces length ({n})"
+            f"seismic_moments length ({len(seismic_moments)}) must match traces length ({n})"
         )
 
     results: list[StressDropResult] = []

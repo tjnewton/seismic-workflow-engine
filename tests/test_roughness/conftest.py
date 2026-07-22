@@ -5,8 +5,6 @@ All data is synthetic - no real data files required.
 
 from __future__ import annotations
 
-from typing import NamedTuple
-
 import numpy as np
 import pytest
 from obspy import Trace, UTCDateTime
@@ -24,9 +22,7 @@ def synthetic_surface_profile():
     x = np.arange(0, 10.0, dx)
     lambda_1 = 0.5
     lambda_2 = 0.1
-    z = 1.0 * np.sin(2.0 * np.pi * x / lambda_1) + 0.3 * np.sin(
-        2.0 * np.pi * x / lambda_2
-    )
+    z = 1.0 * np.sin(2.0 * np.pi * x / lambda_1) + 0.3 * np.sin(2.0 * np.pi * x / lambda_2)
     return x, z, lambda_1
 
 
@@ -46,10 +42,7 @@ def synthetic_elevation_grid():
     y = np.arange(ny) * dx
 
     xx, yy = np.meshgrid(x, y)
-    elevation = (
-        1.0 * np.sin(2.0 * np.pi * xx / 2.0)
-        + 0.5 * np.sin(2.0 * np.pi * yy / 3.0)
-    )
+    elevation = 1.0 * np.sin(2.0 * np.pi * xx / 2.0) + 0.5 * np.sin(2.0 * np.pi * yy / 3.0)
     rng = np.random.default_rng(42)
     elevation += rng.standard_normal(elevation.shape) * 0.05
 

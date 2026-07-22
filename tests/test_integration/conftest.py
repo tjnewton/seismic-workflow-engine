@@ -94,7 +94,7 @@ def synthetic_pick_times(synthetic_station_network):
     station_picks: dict[str, list[UTCDateTime]] = {}
     for sta, delay in zip(stations, delays, strict=True):
         station_picks[sta] = [
-            t0 + 10.0 + delay,   # Event 1
+            t0 + 10.0 + delay,  # Event 1
             t0 + 610.0 + delay,  # Event 2
         ]
     return station_picks

@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: CI only needs to read the repo.
+permissions:
+  contents: read
+
+# Supersede stale runs on the same ref (saves runner time).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: environment.yml
+          cache-environment: true
+          cache-environment-key: env-lint-3.12-np2.4-${{ hashFiles('environment.yml') }}
+          # Pin numpy to the 2.4 line: its type stubs parse under mypy's 3.10
+          # target, whereas 2.5+ stubs use PEP 695 syntax that mypy rejects there.
+          create-args: >-
+            python=3.12
+            numpy=2.4
+      - name: Install package + pinned lint tools
+        run: |
+          pip install -e . --no-deps
+          pip install "ruff==0.15.0" "mypy==1.18.2" types-PyYAML
+      - name: Ruff lint
+        run: ruff check .
+      - name: Ruff format check
+        run: ruff format --check .
+      - name: Mypy
+        run: mypy src/swe
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12"]
+    env:
+      # Headless: never let matplotlib pick an interactive backend.
+      MPLBACKEND: Agg
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: environment.yml
+          cache-environment: true
+          cache-environment-key: env-${{ matrix.python }}-${{ hashFiles('environment.yml') }}
+          create-args: >-
+            python=${{ matrix.python }}
+      - name: Install package
+        run: pip install -e . --no-deps
+      # `python -m pytest` (not bare `pytest`) so the repo root is on sys.path;
+      # the pipeline tests import callables via a `tests.` dotted path.
+      - name: Run tests
+        run: python -m pytest tests/ --cov=swe --cov-report=term-missing --cov-fail-under=85
+
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: environment.yml
+          cache-environment: true
+          cache-environment-key: env-docs-${{ hashFiles('environment.yml') }}
+          create-args: >-
+            python=3.12
+            pandoc
+      - name: Install package + docs deps
+        run: pip install -e ".[docs]"
+      # -W matches ReadTheDocs' fail_on_warning: true.
+      - name: Build docs (strict)
+        run: sphinx-build -b html -W --keep-going docs docs/_build/html

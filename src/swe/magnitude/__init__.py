@@ -27,23 +27,23 @@ from swe.magnitude.relative import (
 )
 
 __all__ = [
-    # catalog integration
-    "attach_local_magnitudes",
-    "attach_duration_magnitudes",
-    "attach_magnitudes_to_catalog",
-    # relative
-    "RelativeMomentResult",
-    "relative_moments_from_party",
-    "relative_moments_from_streams",
-    "relative_moment_dataframe",
-    # local
-    "LocalMagnitudeResult",
-    "wood_anderson_amplitude",
-    "local_magnitude",
     # duration
     "DurationMagnitudeBatchResult",
     "DurationMagnitudeResult",
+    # local
+    "LocalMagnitudeResult",
+    # relative
+    "RelativeMomentResult",
+    "attach_duration_magnitudes",
+    # catalog integration
+    "attach_local_magnitudes",
+    "attach_magnitudes_to_catalog",
     "coda_duration",
     "duration_magnitude",
     "duration_magnitudes_batch",
+    "local_magnitude",
+    "relative_moment_dataframe",
+    "relative_moments_from_party",
+    "relative_moments_from_streams",
+    "wood_anderson_amplitude",
 ]

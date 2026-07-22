@@ -47,9 +47,7 @@ def compute_step_hash(
     h.update(function_path.encode())
 
     try:
-        canonical = json.dumps(
-            resolved_params, cls=SWEJSONEncoder, sort_keys=True
-        )
+        canonical = json.dumps(resolved_params, cls=SWEJSONEncoder, sort_keys=True)
     except (TypeError, ValueError):
         canonical = repr(sorted(resolved_params.items()))
     h.update(canonical.encode())

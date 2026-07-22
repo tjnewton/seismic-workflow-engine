@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import math
-
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -26,7 +25,7 @@ def nearest(items: np.ndarray, pivot: float | UTCDateTime):
 def nearest_ind(items: np.ndarray, pivot: float | UTCDateTime) -> int:
     """Return the index of the value in *items* closest to *pivot*."""
     time_diff = np.abs([date - pivot for date in items])
-    return time_diff.argmin(0)
+    return int(time_diff.argmin(0))
 
 
 def max_amplitude(
@@ -53,19 +52,17 @@ def max_amplitude(
         if len(time_series) == 0:
             return 0.0
         trace_max = [np.nanmax(np.abs(tr.data)) for tr in time_series]
-        return np.nanmax(trace_max)
+        return float(np.nanmax(trace_max))
 
     if isinstance(time_series, obspy.core.trace.Trace):
-        return np.nanmax(np.abs(time_series.data))
+        return float(np.nanmax(np.abs(time_series.data)))
 
     if isinstance(time_series, np.ndarray):
         if time_series.ndim == 1:
-            return np.nanmax(np.abs(time_series))
+            return float(np.nanmax(np.abs(time_series)))
         if time_series.ndim == 2:
-            return np.nanmax(np.abs(time_series), axis=1)
-        raise ValueError(
-            f"Expected 1-D or 2-D array, got {time_series.ndim}-D"
-        )
+            return np.asarray(np.nanmax(np.abs(time_series), axis=1))
+        raise ValueError(f"Expected 1-D or 2-D array, got {time_series.ndim}-D")
 
     raise TypeError(f"Unsupported type: {type(time_series)}")
 
@@ -89,7 +86,7 @@ def snr(obspy_object: Stream | Trace) -> list[float]:
     if isinstance(obspy_object, obspy.core.stream.Stream):
         snrs = []
         for trace in obspy_object:
-            rms = np.sqrt(np.mean(trace.data ** 2))
+            rms = np.sqrt(np.mean(trace.data**2))
             if rms == 0:
                 snrs.append(0.0)
             else:
@@ -99,7 +96,7 @@ def snr(obspy_object: Stream | Trace) -> list[float]:
     if isinstance(obspy_object, obspy.core.trace.Trace):
         if len(obspy_object.data) == 0:
             return []
-        rms = np.sqrt(np.mean(obspy_object.data ** 2))
+        rms = np.sqrt(np.mean(obspy_object.data**2))
         if rms == 0:
             return [0.0]
         return [float(np.max(np.abs(obspy_object.data)) / rms)]
@@ -150,19 +147,25 @@ def geo_to_local(
         lon = coords[0]
         lat = coords[1]
         elev = coords[2] if len(coords) > 2 else 0.0
-        ew_dist = ellipsoidal_distance(
-            [origin_lon, origin_lat, 0.0],
-            [lon, origin_lat, 0.0],
-            two_dimensional=True,
-        ) * 1000.0
+        ew_dist = (
+            ellipsoidal_distance(
+                [origin_lon, origin_lat, 0.0],
+                [lon, origin_lat, 0.0],
+                two_dimensional=True,
+            )
+            * 1000.0
+        )
         if lon < origin_lon:
             ew_dist = -ew_dist
 
-        ns_dist = ellipsoidal_distance(
-            [origin_lon, origin_lat, 0.0],
-            [origin_lon, lat, 0.0],
-            two_dimensional=True,
-        ) * 1000.0
+        ns_dist = (
+            ellipsoidal_distance(
+                [origin_lon, origin_lat, 0.0],
+                [origin_lon, lat, 0.0],
+                two_dimensional=True,
+            )
+            * 1000.0
+        )
         if lat < origin_lat:
             ns_dist = -ns_dist
 
@@ -196,8 +199,8 @@ def ellipsoidal_distance(
     float
         Distance in kilometres.
     """
-    from geopy.distance import distance as geodesic_distance
     from geopy import Point
+    from geopy.distance import distance as geodesic_distance
 
     lon1, lat1, depth1 = point1
     lon2, lat2, depth2 = point2
@@ -205,6 +208,6 @@ def ellipsoidal_distance(
     p2 = Point(lat2, lon2)
     dist_2d = geodesic_distance(p1, p2).km
     if two_dimensional:
-        return abs(dist_2d)
-    dist_3d = math.sqrt(dist_2d ** 2 + (depth1 - depth2) ** 2)
+        return float(abs(dist_2d))
+    dist_3d = math.sqrt(dist_2d**2 + (depth1 - depth2) ** 2)
     return abs(dist_3d)

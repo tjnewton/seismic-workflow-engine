@@ -22,43 +22,31 @@ class TestBruneSpectrum:
 
     def test_returns_omega0_at_low_frequency(self):
         freqs = np.array([0.01, 0.1])
-        result = brune_spectrum(
-            freqs, omega_0=1e-6, corner_frequency=5.0
-        )
+        result = brune_spectrum(freqs, omega_0=1e-6, corner_frequency=5.0)
         np.testing.assert_allclose(result, 1e-6, rtol=0.01)
 
     def test_falls_off_at_high_frequency(self):
         freqs = np.array([50.0, 100.0])
-        result = brune_spectrum(
-            freqs, omega_0=1e-6, corner_frequency=5.0
-        )
+        result = brune_spectrum(freqs, omega_0=1e-6, corner_frequency=5.0)
         assert np.all(result < 1e-6 * 0.01)
 
     def test_corner_frequency_halfpoint(self):
         """At f=fc, amplitude should be omega_0 / 2 for n_gamma=2."""
         freqs = np.array([5.0])
-        result = brune_spectrum(
-            freqs, omega_0=1e-6, corner_frequency=5.0, n_gamma=2.0
-        )
+        result = brune_spectrum(freqs, omega_0=1e-6, corner_frequency=5.0, n_gamma=2.0)
         expected = 1e-6 / 2.0
         np.testing.assert_allclose(result, expected, rtol=1e-10)
 
     def test_custom_n_gamma(self):
         freqs = np.array([10.0])
-        result_2 = brune_spectrum(
-            freqs, omega_0=1.0, corner_frequency=5.0, n_gamma=2.0
-        )
-        result_3 = brune_spectrum(
-            freqs, omega_0=1.0, corner_frequency=5.0, n_gamma=3.0
-        )
+        result_2 = brune_spectrum(freqs, omega_0=1.0, corner_frequency=5.0, n_gamma=2.0)
+        result_3 = brune_spectrum(freqs, omega_0=1.0, corner_frequency=5.0, n_gamma=3.0)
         # Steeper falloff with higher n_gamma
         assert result_3[0] < result_2[0]
 
     def test_returns_ndarray(self):
         freqs = np.linspace(0.1, 50.0, 100)
-        result = brune_spectrum(
-            freqs, omega_0=1e-6, corner_frequency=5.0
-        )
+        result = brune_spectrum(freqs, omega_0=1e-6, corner_frequency=5.0)
         assert isinstance(result, np.ndarray)
         assert result.shape == freqs.shape
 
@@ -73,15 +61,11 @@ class TestComputeDisplacementSpectrum:
         assert len(freqs) == len(amps)
 
     def test_respects_freq_min(self, brune_trace):
-        freqs, _ = compute_displacement_spectrum(
-            brune_trace, freq_min=2.0
-        )
+        freqs, _ = compute_displacement_spectrum(brune_trace, freq_min=2.0)
         assert freqs[0] >= 2.0
 
     def test_respects_freq_max(self, brune_trace):
-        freqs, _ = compute_displacement_spectrum(
-            brune_trace, freq_max=20.0
-        )
+        freqs, _ = compute_displacement_spectrum(brune_trace, freq_max=20.0)
         assert freqs[-1] <= 20.0
 
     def test_no_response_uses_raw(self, brune_trace):
@@ -144,8 +128,11 @@ class TestFitBruneModel:
         npts = 4096
         rng = np.random.default_rng(7)
         header = {
-            "network": "XX", "station": "FLAT", "channel": "BHZ",
-            "sampling_rate": sr, "npts": npts,
+            "network": "XX",
+            "station": "FLAT",
+            "channel": "BHZ",
+            "sampling_rate": sr,
+            "npts": npts,
             "starttime": UTCDateTime(2024, 1, 1),
         }
         # White noise -> no Brune corner within 1.5-7 Hz
@@ -181,16 +168,10 @@ class TestComputeStressDrop:
 
     def test_madariaga_vs_brune_k(self, brune_trace):
         fit = fit_brune_model(brune_trace)
-        r_mad = compute_stress_drop(
-            fit, magnitude=2.0, source_model="madariaga"
-        )
-        r_brn = compute_stress_drop(
-            fit, magnitude=2.0, source_model="brune"
-        )
+        r_mad = compute_stress_drop(fit, magnitude=2.0, source_model="madariaga")
+        r_brn = compute_stress_drop(fit, magnitude=2.0, source_model="brune")
         # Very similar k-constants, so results should be close
-        np.testing.assert_allclose(
-            r_mad.source_radius_m, r_brn.source_radius_m, rtol=0.01
-        )
+        np.testing.assert_allclose(r_mad.source_radius_m, r_brn.source_radius_m, rtol=0.01)
 
     def test_raises_without_moment_or_magnitude(self, brune_trace):
         fit = fit_brune_model(brune_trace)

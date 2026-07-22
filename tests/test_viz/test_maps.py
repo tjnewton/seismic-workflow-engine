@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import numpy as np
@@ -17,19 +18,21 @@ from swe.viz.maps import (
     plot_station_event_map,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def station_coords():
-    return np.array([
-        [0.0, 0.0],
-        [5.0, 0.0],
-        [0.0, 5.0],
-        [5.0, 5.0],
-    ])
+    return np.array(
+        [
+            [0.0, 0.0],
+            [5.0, 0.0],
+            [0.0, 5.0],
+            [5.0, 5.0],
+        ]
+    )
 
 
 @pytest.fixture()
@@ -68,23 +71,27 @@ def event_times():
 def nll_pdfs():
     rng = np.random.default_rng(42)
     n = 500
-    return pd.DataFrame({
-        "x": rng.normal(2.5, 0.5, n),
-        "y": rng.normal(2.5, 0.5, n),
-        "z": rng.normal(5.0, 1.0, n),
-        "weight": rng.uniform(0, 1, n),
-    })
+    return pd.DataFrame(
+        {
+            "x": rng.normal(2.5, 0.5, n),
+            "y": rng.normal(2.5, 0.5, n),
+            "z": rng.normal(5.0, 1.0, n),
+            "weight": rng.uniform(0, 1, n),
+        }
+    )
 
 
 def _plt_close(fig: Figure) -> None:
     """Close a figure to free memory."""
     import matplotlib.pyplot as plt
+
     plt.close(fig)
 
 
 # ---------------------------------------------------------------------------
 # Tests: plot_station_event_map
 # ---------------------------------------------------------------------------
+
 
 class TestPlotStationEventMap:
     def test_returns_figure(self, station_coords, station_names):
@@ -93,30 +100,43 @@ class TestPlotStationEventMap:
         _plt_close(fig)
 
     def test_with_events_2d(
-        self, station_coords, station_names, event_coords_2d,
+        self,
+        station_coords,
+        station_names,
+        event_coords_2d,
     ):
         fig = plot_station_event_map(
-            station_coords, station_names,
+            station_coords,
+            station_names,
             event_coords=event_coords_2d,
         )
         assert isinstance(fig, Figure)
         _plt_close(fig)
 
     def test_with_events_3d_depth_color(
-        self, station_coords, station_names, event_coords_3d,
+        self,
+        station_coords,
+        station_names,
+        event_coords_3d,
     ):
         fig = plot_station_event_map(
-            station_coords, station_names,
+            station_coords,
+            station_names,
             event_coords=event_coords_3d,
         )
         assert isinstance(fig, Figure)
         _plt_close(fig)
 
     def test_with_magnitudes(
-        self, station_coords, station_names, event_coords_3d, event_magnitudes,
+        self,
+        station_coords,
+        station_names,
+        event_coords_3d,
+        event_magnitudes,
     ):
         fig = plot_station_event_map(
-            station_coords, station_names,
+            station_coords,
+            station_names,
             event_coords=event_coords_3d,
             event_magnitudes=event_magnitudes,
         )
@@ -129,7 +149,8 @@ class TestPlotStationEventMap:
         X, Y = np.meshgrid(x, y)
         Z = np.sin(X) * np.cos(Y) * 100
         fig = plot_station_event_map(
-            station_coords, station_names,
+            station_coords,
+            station_names,
             topo_grid=(x, y, Z),
         )
         assert isinstance(fig, Figure)
@@ -137,7 +158,9 @@ class TestPlotStationEventMap:
 
     def test_with_title(self, station_coords, station_names):
         fig = plot_station_event_map(
-            station_coords, station_names, title="Test Map",
+            station_coords,
+            station_names,
+            title="Test Map",
         )
         assert isinstance(fig, Figure)
         _plt_close(fig)
@@ -147,6 +170,7 @@ class TestPlotStationEventMap:
 # Tests: plot_cross_sections
 # ---------------------------------------------------------------------------
 
+
 class TestPlotCrossSections:
     def test_returns_figure(self, event_coords_3d):
         fig = plot_cross_sections(event_coords_3d)
@@ -154,7 +178,10 @@ class TestPlotCrossSections:
         _plt_close(fig)
 
     def test_with_stations(
-        self, event_coords_3d, station_coords, station_names,
+        self,
+        event_coords_3d,
+        station_coords,
+        station_names,
     ):
         fig = plot_cross_sections(
             event_coords_3d,
@@ -194,6 +221,7 @@ class TestPlotCrossSections:
 # Tests: plot_detection_timeline
 # ---------------------------------------------------------------------------
 
+
 class TestPlotDetectionTimeline:
     def test_returns_figure(self, event_coords_2d, event_times):
         fig = plot_detection_timeline(event_coords_2d, event_times)
@@ -201,10 +229,15 @@ class TestPlotDetectionTimeline:
         _plt_close(fig)
 
     def test_with_stations(
-        self, event_coords_2d, event_times, station_coords, station_names,
+        self,
+        event_coords_2d,
+        event_times,
+        station_coords,
+        station_names,
     ):
         fig = plot_detection_timeline(
-            event_coords_2d, event_times,
+            event_coords_2d,
+            event_times,
             station_coords=station_coords,
             station_names=station_names,
         )
@@ -212,10 +245,14 @@ class TestPlotDetectionTimeline:
         _plt_close(fig)
 
     def test_with_magnitudes(
-        self, event_coords_2d, event_times, event_magnitudes,
+        self,
+        event_coords_2d,
+        event_times,
+        event_magnitudes,
     ):
         fig = plot_detection_timeline(
-            event_coords_2d, event_times,
+            event_coords_2d,
+            event_times,
             magnitudes=event_magnitudes,
         )
         assert isinstance(fig, Figure)
@@ -230,6 +267,7 @@ class TestPlotDetectionTimeline:
 # ---------------------------------------------------------------------------
 # Tests: plot_nll_scatter
 # ---------------------------------------------------------------------------
+
 
 class TestPlotNLLScatter:
     def test_returns_figure(self, nll_pdfs):
@@ -254,11 +292,13 @@ class TestPlotNLLScatter:
 
     def test_without_weight_column(self):
         rng = np.random.default_rng(42)
-        pdfs = pd.DataFrame({
-            "x": rng.normal(0, 1, 100),
-            "y": rng.normal(0, 1, 100),
-            "z": rng.normal(5, 1, 100),
-        })
+        pdfs = pd.DataFrame(
+            {
+                "x": rng.normal(0, 1, 100),
+                "y": rng.normal(0, 1, 100),
+                "z": rng.normal(5, 1, 100),
+            }
+        )
         fig = plot_nll_scatter(pdfs)
         assert isinstance(fig, Figure)
         _plt_close(fig)

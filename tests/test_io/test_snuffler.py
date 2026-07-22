@@ -1,13 +1,12 @@
 """Tests for swe.io.snuffler."""
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
 from obspy import UTCDateTime
 
 from swe.io.snuffler import (
-    parse_phase_picks,
     parse_all_markers,
+    parse_phase_picks,
     party_to_markers,
     write_events_to_markers,
 )
@@ -93,7 +92,9 @@ class TestWriteEventsToMarkers:
         }
         output = tmp_path / "ordered.mrkr"
         write_events_to_markers(
-            events, output, station_order=["ZZZ", "AAA", "BBB"],
+            events,
+            output,
+            station_order=["ZZZ", "AAA", "BBB"],
         )
         content = output.read_text()
         # AAA is index 1 in station_order, so network code should be "1"
@@ -156,14 +157,18 @@ def _make_party(events_data):
         ev = Event()
         for net, sta, cha, time_str, hint in event_picks:
             wid = WaveformStreamID(
-                network_code=net, station_code=sta,
-                channel_code=cha, location_code="",
+                network_code=net,
+                station_code=sta,
+                channel_code=cha,
+                location_code="",
             )
-            ev.picks.append(Pick(
-                waveform_id=wid,
-                time=UTCDateTime(time_str),
-                phase_hint=hint,
-            ))
+            ev.picks.append(
+                Pick(
+                    waveform_id=wid,
+                    time=UTCDateTime(time_str),
+                    phase_hint=hint,
+                )
+            )
         cat.events.append(ev)
         families.append(SimpleNamespace(catalog=cat))
     return SimpleNamespace(families=families)
@@ -174,15 +179,17 @@ class TestPartyToMarkers:
 
     def test_two_events_with_p_and_s(self, tmp_path):
         """Party with 2 events should produce readable markers."""
-        party = _make_party([
+        party = _make_party(
             [
-                ("5A", "STA1", "BHZ", "2020-01-01T10:00:00", "P"),
-                ("5A", "STA1", "BHZ", "2020-01-01T10:00:02", "S"),
-            ],
-            [
-                ("UW", "STA2", "EHZ", "2020-01-01T11:00:00", "P"),
-            ],
-        ])
+                [
+                    ("5A", "STA1", "BHZ", "2020-01-01T10:00:00", "P"),
+                    ("5A", "STA1", "BHZ", "2020-01-01T10:00:02", "S"),
+                ],
+                [
+                    ("UW", "STA2", "EHZ", "2020-01-01T11:00:00", "P"),
+                ],
+            ]
+        )
         output = tmp_path / "party.mrkr"
         result = party_to_markers(party, output)
         assert result.exists()
@@ -206,12 +213,14 @@ class TestPartyToMarkers:
 
     def test_roundtrip(self, tmp_path):
         """Picks written by party_to_markers should round-trip through parse_phase_picks."""
-        party = _make_party([
+        party = _make_party(
             [
-                ("XX", "ABC", "BHZ", "2021-06-15T08:30:00.1234", "P"),
-                ("XX", "DEF", "BHN", "2021-06-15T08:30:01.5678", "P"),
-            ],
-        ])
+                [
+                    ("XX", "ABC", "BHZ", "2021-06-15T08:30:00.1234", "P"),
+                    ("XX", "DEF", "BHN", "2021-06-15T08:30:01.5678", "P"),
+                ],
+            ]
+        )
         output = tmp_path / "roundtrip.mrkr"
         party_to_markers(party, output)
 
@@ -222,12 +231,14 @@ class TestPartyToMarkers:
 
     def test_phase_hint_override(self, tmp_path):
         """phase_hint kwarg should override individual pick hints."""
-        party = _make_party([
+        party = _make_party(
             [
-                ("XX", "STA", "BHZ", "2020-01-01T00:00:00", "P"),
-                ("XX", "STA", "BHZ", "2020-01-01T00:00:01", "S"),
-            ],
-        ])
+                [
+                    ("XX", "STA", "BHZ", "2020-01-01T00:00:00", "P"),
+                    ("XX", "STA", "BHZ", "2020-01-01T00:00:01", "S"),
+                ],
+            ]
+        )
         output = tmp_path / "override.mrkr"
         party_to_markers(party, output, phase_hint="P")
 
@@ -238,9 +249,11 @@ class TestPartyToMarkers:
 
     def test_network_codes_preserved(self, tmp_path):
         """Network codes from picks should appear in marker lines."""
-        party = _make_party([
-            [("NZ", "WEL", "HHZ", "2022-03-01T12:00:00", "P")],
-        ])
+        party = _make_party(
+            [
+                [("NZ", "WEL", "HHZ", "2022-03-01T12:00:00", "P")],
+            ]
+        )
         output = tmp_path / "net.mrkr"
         party_to_markers(party, output)
         content = output.read_text()

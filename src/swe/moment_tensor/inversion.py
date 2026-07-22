@@ -77,9 +77,7 @@ def _generate_dc_grid(
     for strike in np.arange(0.0, 360.0, strike_step):
         for dip in np.arange(0.0, 90.0 + dip_step / 2.0, dip_step):
             for rake in np.arange(-180.0, 180.0, rake_step):
-                tensors.append(
-                    strike_dip_rake_to_tensor(strike, dip, rake, m0=1.0)
-                )
+                tensors.append(strike_dip_rake_to_tensor(strike, dip, rake, m0=1.0))
     return tensors
 
 
@@ -138,16 +136,20 @@ def _generate_deviatoric_grid(
                     cos_r = np.cos(r)
 
                     # Fault normal (n) and slip direction (d)
-                    n = np.array([
-                        -sin_d * sin_s,
-                        sin_d * cos_s,
-                        -cos_d,
-                    ])
-                    slip = np.array([
-                        cos_r * cos_s + sin_r * cos_d * sin_s,
-                        cos_r * sin_s - sin_r * cos_d * cos_s,
-                        -sin_r * sin_d,
-                    ])
+                    n = np.array(
+                        [
+                            -sin_d * sin_s,
+                            sin_d * cos_s,
+                            -cos_d,
+                        ]
+                    )
+                    slip = np.array(
+                        [
+                            cos_r * cos_s + sin_r * cos_d * sin_s,
+                            cos_r * sin_s - sin_r * cos_d * cos_s,
+                            -sin_r * sin_d,
+                        ]
+                    )
                     # Third axis (null/B axis)
                     b = np.cross(n, slip)
                     b_norm = np.linalg.norm(b)
@@ -220,16 +222,20 @@ def _generate_full_grid(
                         sin_r = np.sin(r)
                         cos_r = np.cos(r)
 
-                        n_vec = np.array([
-                            -sin_d * sin_s,
-                            sin_d * cos_s,
-                            -cos_d,
-                        ])
-                        slip = np.array([
-                            cos_r * cos_s + sin_r * cos_d * sin_s,
-                            cos_r * sin_s - sin_r * cos_d * cos_s,
-                            -sin_r * sin_d,
-                        ])
+                        n_vec = np.array(
+                            [
+                                -sin_d * sin_s,
+                                sin_d * cos_s,
+                                -cos_d,
+                            ]
+                        )
+                        slip = np.array(
+                            [
+                                cos_r * cos_s + sin_r * cos_d * sin_s,
+                                cos_r * sin_s - sin_r * cos_d * cos_s,
+                                -sin_r * sin_d,
+                            ]
+                        )
                         b = np.cross(n_vec, slip)
                         b_norm = np.linalg.norm(b)
                         if b_norm < 1e-12:
@@ -345,8 +351,7 @@ def moment_tensor_from_polarities(
         candidates = _generate_full_grid()
     else:
         raise ValueError(
-            f"Unknown constraint: {constraint!r}. "
-            f"Supported: 'dc', 'deviatoric', 'full'"
+            f"Unknown constraint: {constraint!r}. Supported: 'dc', 'deviatoric', 'full'"
         )
 
     logger.info(
@@ -454,9 +459,7 @@ def moment_tensor_batch(
     results: list[MomentTensorResult] = []
 
     for i, event in enumerate(events):
-        logger.info(
-            "Inverting moment tensor for event %d of %d", i + 1, len(events)
-        )
+        logger.info("Inverting moment tensor for event %d of %d", i + 1, len(events))
         result = moment_tensor_from_polarities(
             azimuths=event["azimuths"],
             takeoff_angles=event["takeoff_angles"],

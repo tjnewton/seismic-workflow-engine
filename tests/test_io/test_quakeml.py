@@ -1,5 +1,7 @@
 """Tests for swe.io.quakeml."""
 
+from pathlib import Path
+
 import pytest
 from obspy import UTCDateTime
 from obspy.core.event import (
@@ -11,7 +13,6 @@ from obspy.core.event import (
     Pick,
     WaveformStreamID,
 )
-from pathlib import Path
 
 from swe.io.quakeml import read_quakeml, write_quakeml
 
@@ -114,7 +115,9 @@ class TestQuakeMLRoundTrip:
         pick = Pick(
             time=UTCDateTime("2020-01-01T00:01:00"),
             waveform_id=WaveformStreamID(
-                network_code="XX", station_code="STA1", channel_code="BHZ",
+                network_code="XX",
+                station_code="STA1",
+                channel_code="BHZ",
             ),
             phase_hint="P",
         )
@@ -133,7 +136,9 @@ class TestQuakeMLRoundTrip:
             event = Event()
             origin = Origin(
                 time=UTCDateTime(2020, 1, 1) + i * 86400,
-                latitude=46.0, longitude=-122.0, depth=5000.0,
+                latitude=46.0,
+                longitude=-122.0,
+                depth=5000.0,
             )
             event.origins.append(origin)
             event.preferred_origin_id = origin.resource_id
@@ -182,7 +187,7 @@ class TestQuakeMLErrors:
     def test_read_nonexistent_file_raises(self, tmp_path):
         """Reading a nonexistent file should raise an exception."""
         fake_path = tmp_path / "does_not_exist.xml"
-        with pytest.raises(Exception):
+        with pytest.raises(OSError):
             read_quakeml(fake_path)
 
     def test_agency_id_preserved_when_set(self, tmp_path):
@@ -191,8 +196,10 @@ class TestQuakeMLErrors:
         event = Event()
         event.creation_info = CreationInfo(agency_id="USGS")
         origin = Origin(
-            time=UTCDateTime(2020, 1, 1), latitude=46.0,
-            longitude=-122.0, depth=5000.0,
+            time=UTCDateTime(2020, 1, 1),
+            latitude=46.0,
+            longitude=-122.0,
+            depth=5000.0,
         )
         event.origins.append(origin)
         cat.events.append(event)

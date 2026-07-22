@@ -7,7 +7,7 @@ import swe
 project = "Seismic Workflow Engine"
 author = "Seismic Workflow Engine contributors"
 release = swe.__version__
-copyright = "2020-2026, Seismic Workflow Engine contributors"  # noqa: A001
+copyright = "2020-2026, Seismic Workflow Engine contributors"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -17,7 +17,6 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
     "myst_parser",
-    "numpydoc",
     "nbsphinx",
     "sphinxcontrib.mermaid",
 ]
@@ -32,18 +31,29 @@ html_theme = "furo"
 html_title = "SWE"
 html_static_path = ["_static"]
 
-# Napoleon / numpydoc settings
+# Napoleon settings (NumPy-style docstrings). numpydoc is intentionally not
+# enabled alongside napoleon: both render the docstring ``Attributes`` section
+# into ``.. attribute::`` directives, which double-documents NamedTuple/dataclass
+# fields and breaks the strict (-W) build.
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
-numpydoc_show_class_members = False
+# Render ``Attributes`` as inline :ivar: fields rather than standalone
+# ``.. attribute::`` directives, so they don't duplicate the attributes autodoc
+# already emits for NamedTuple/dataclass fields (which breaks the -W build).
+napoleon_use_ivar = True
 
 # Autodoc settings
 autodoc_default_options = {
     "members": True,
-    "undoc-members": True,
     "show-inheritance": True,
 }
 autodoc_typehints = "description"
+
+# NDArray / Origin / UTCDateTime are imported only under ``if TYPE_CHECKING:``
+# (with ``from __future__ import annotations``), so sphinx-autodoc-typehints
+# cannot resolve them at doc-build time. Those forward references are benign;
+# suppress just that warning category so the strict (-W) build stays clean.
+suppress_warnings = ["sphinx_autodoc_typehints.forward_reference"]
 
 # Intersphinx mapping
 intersphinx_mapping = {

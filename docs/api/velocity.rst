@@ -3,5 +3,4 @@
 
 .. automodule:: swe.velocity
    :members:
-   :undoc-members:
    :show-inheritance:

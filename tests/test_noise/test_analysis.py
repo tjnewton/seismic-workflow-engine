@@ -1,6 +1,7 @@
 """Tests for swe.noise.analysis."""
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import numpy as np
@@ -145,7 +146,10 @@ class TestPlotNoiseTimeHistogram:
         """Exercises the day/hour tick code path."""
         times = _make_noise_times(20)
         fig = plot_noise_time_histogram(
-            times, bin_width=3600, major_x_tick="day", minor_x_tick="hour",
+            times,
+            bin_width=3600,
+            major_x_tick="day",
+            minor_x_tick="hour",
         )
         assert isinstance(fig, Figure)
 
@@ -159,7 +163,10 @@ class TestPlotNoiseTimeHistogram:
             end = start + 3600
             times.append(NoiseWindowMeta(start, end, "STA0", "BHZ"))
         fig = plot_noise_time_histogram(
-            times, bin_width=86400, major_x_tick="month", minor_x_tick="day",
+            times,
+            bin_width=86400,
+            major_x_tick="month",
+            minor_x_tick="day",
         )
         assert isinstance(fig, Figure)
 

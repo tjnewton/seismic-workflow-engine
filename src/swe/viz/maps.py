@@ -10,7 +10,7 @@ before calling these functions.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,16 +23,17 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "plot_station_event_map",
     "plot_cross_sections",
     "plot_detection_timeline",
     "plot_nll_scatter",
+    "plot_station_event_map",
 ]
 
 
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
 
 def _scatter_sizes(
     magnitudes: NDArray[np.floating] | None,
@@ -60,7 +61,7 @@ def _scatter_sizes(
     mags = np.asarray(magnitudes, dtype=np.float64)
     # Shift to positive range and scale
     mags_shifted = mags - np.nanmin(mags) + 0.5
-    return mags_shifted ** 2 * mag_scale
+    return mags_shifted**2 * mag_scale
 
 
 def _annotate_stations(
@@ -128,6 +129,7 @@ def _convert_times(times) -> NDArray[np.floating]:
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def plot_station_event_map(
     station_coords: NDArray[np.floating],
     station_names: list[str],
@@ -180,7 +182,9 @@ def plot_station_event_map(
     if topo_grid is not None:
         x_topo, y_topo, z_topo = topo_grid
         ax.contourf(
-            x_topo, y_topo, z_topo,
+            x_topo,
+            y_topo,
+            z_topo,
             levels=50,
             cmap=topo_cmap,
             alpha=topo_alpha,
@@ -198,7 +202,8 @@ def plot_station_event_map(
 
         if ev.shape[1] >= 3:
             scatter = ax.scatter(
-                ev[:, 0], ev[:, 1],
+                ev[:, 0],
+                ev[:, 1],
                 c=ev[:, 2],
                 s=sizes,
                 cmap=cmap,
@@ -211,7 +216,8 @@ def plot_station_event_map(
             fig.colorbar(scatter, ax=ax, label="Depth (km)", shrink=0.7)
         else:
             ax.scatter(
-                ev[:, 0], ev[:, 1],
+                ev[:, 0],
+                ev[:, 1],
                 s=sizes,
                 c="red",
                 alpha=0.7,
@@ -282,9 +288,7 @@ def plot_cross_sections(
     """
     ev = np.atleast_2d(event_coords)
     if ev.shape[1] < 3:
-        raise ValueError(
-            "event_coords must have at least 3 columns (x, y, z)"
-        )
+        raise ValueError("event_coords must have at least 3 columns (x, y, z)")
 
     n_ev = ev.shape[0]
     sizes = _scatter_sizes(magnitudes, n_ev, mag_scale)
@@ -296,7 +300,8 @@ def plot_cross_sections(
 
     fig = plt.figure(figsize=figsize)
     gs = gridspec.GridSpec(
-        2, 2,
+        2,
+        2,
         width_ratios=[3, 1],
         height_ratios=[3, 1],
         hspace=0.05,
@@ -306,9 +311,14 @@ def plot_cross_sections(
     # Map view (top-left)
     ax_map = fig.add_subplot(gs[0, 0])
     sc = ax_map.scatter(
-        ev[:, 0], ev[:, 1],
-        c=c, s=sizes, cmap=cmap,
-        alpha=0.7, edgecolors="grey", linewidths=0.3,
+        ev[:, 0],
+        ev[:, 1],
+        c=c,
+        s=sizes,
+        cmap=cmap,
+        alpha=0.7,
+        edgecolors="grey",
+        linewidths=0.3,
     )
     if station_coords is not None and station_names is not None:
         _annotate_stations(ax_map, np.atleast_2d(station_coords), station_names)
@@ -321,9 +331,14 @@ def plot_cross_sections(
     # N-S depth (top-right)
     ax_ns = fig.add_subplot(gs[0, 1], sharey=ax_map)
     ax_ns.scatter(
-        ev[:, 2], ev[:, 1],
-        c=c, s=sizes, cmap=cmap,
-        alpha=0.7, edgecolors="grey", linewidths=0.3,
+        ev[:, 2],
+        ev[:, 1],
+        c=c,
+        s=sizes,
+        cmap=cmap,
+        alpha=0.7,
+        edgecolors="grey",
+        linewidths=0.3,
     )
     ax_ns.set_xlabel("Depth (km)")
     ax_ns.tick_params(labelleft=False)
@@ -331,9 +346,14 @@ def plot_cross_sections(
     # E-W depth (bottom-left)
     ax_ew = fig.add_subplot(gs[1, 0], sharex=ax_map)
     ax_ew.scatter(
-        ev[:, 0], ev[:, 2],
-        c=c, s=sizes, cmap=cmap,
-        alpha=0.7, edgecolors="grey", linewidths=0.3,
+        ev[:, 0],
+        ev[:, 2],
+        c=c,
+        s=sizes,
+        cmap=cmap,
+        alpha=0.7,
+        edgecolors="grey",
+        linewidths=0.3,
     )
     ax_ew.set_xlabel("Easting (km)")
     ax_ew.set_ylabel("Depth (km)")
@@ -395,9 +415,14 @@ def plot_detection_timeline(
     fig, ax = plt.subplots(figsize=figsize)
 
     scatter = ax.scatter(
-        ev[:, 0], ev[:, 1],
-        c=time_floats, s=sizes, cmap=cmap,
-        alpha=0.7, edgecolors="grey", linewidths=0.3,
+        ev[:, 0],
+        ev[:, 1],
+        c=time_floats,
+        s=sizes,
+        cmap=cmap,
+        alpha=0.7,
+        edgecolors="grey",
+        linewidths=0.3,
         zorder=5,
     )
 
@@ -456,15 +481,19 @@ def plot_nll_scatter(
 
     fig = plt.figure(figsize=figsize)
     gs = gridspec.GridSpec(
-        2, 2,
+        2,
+        2,
         width_ratios=[3, 1],
         height_ratios=[3, 1],
         hspace=0.05,
         wspace=0.05,
     )
 
-    scatter_kw = dict(
-        s=2, cmap=cmap, alpha=0.5, edgecolors="none",
+    scatter_kw: dict[str, Any] = dict(
+        s=2,
+        cmap=cmap,
+        alpha=0.5,
+        edgecolors="none",
     )
 
     # Map view (top-left)
@@ -496,9 +525,13 @@ def plot_nll_scatter(
     # Overlay hypocenters
     if hypocenters is not None:
         hyp = np.atleast_2d(hypocenters)
-        hyp_kw = dict(
-            marker="*", c="lime", s=200,
-            edgecolors="black", linewidths=0.8, zorder=10,
+        hyp_kw: dict[str, Any] = dict(
+            marker="*",
+            c="lime",
+            s=200,
+            edgecolors="black",
+            linewidths=0.8,
+            zorder=10,
         )
         ax_map.scatter(hyp[:, 0], hyp[:, 1], **hyp_kw)
         ax_ns.scatter(hyp[:, 2], hyp[:, 1], **hyp_kw)

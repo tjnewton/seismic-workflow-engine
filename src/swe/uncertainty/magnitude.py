@@ -75,25 +75,19 @@ def propagate_location_to_magnitude(
     # Partial derivative dML/dr at each station distance
     valid_mask = distances_km > 0
     dml_dr = np.zeros_like(distances_km)
-    dml_dr[valid_mask] = (
-        a / (distances_km[valid_mask] * np.log(10.0)) + b
-    )
+    dml_dr[valid_mask] = a / (distances_km[valid_mask] * np.log(10.0)) + b
 
     # Per-station magnitude uncertainty from distance error
     station_mag_unc = np.abs(dml_dr) * sigma_r_km
 
     # RMS distance contribution across valid stations
     if np.any(valid_mask):
-        distance_contribution = float(
-            np.sqrt(np.mean(station_mag_unc[valid_mask] ** 2))
-        )
+        distance_contribution = float(np.sqrt(np.mean(station_mag_unc[valid_mask] ** 2)))
     else:
         distance_contribution = 0.0
 
     # Combine in quadrature: station scatter + distance contribution
-    mag_uncertainty = float(
-        np.sqrt(ml_stderr**2 + distance_contribution**2)
-    )
+    mag_uncertainty = float(np.sqrt(ml_stderr**2 + distance_contribution**2))
 
     return MagnitudeUncertainty(
         mag_uncertainty=mag_uncertainty,

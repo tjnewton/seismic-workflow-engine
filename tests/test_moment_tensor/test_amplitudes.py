@@ -46,9 +46,7 @@ class TestThreeComponentAmplitudes:
         c2 = _pulse(n, 5.0, 2.0)
         c3 = _pulse(n, 5.0, 1.0)
         st = _three_component(c1, c2, c3)
-        res = three_component_amplitudes(
-            st, p_window=(1.5, 3.0), s_window=(4.5, 6.0)
-        )
+        res = three_component_amplitudes(st, p_window=(1.5, 3.0), s_window=(4.5, 6.0))
         assert isinstance(res, ThreeComponentAmplitudes)
         assert res.station == "CCRB"
         # P vector magnitude = 1.0; S vector magnitude = sqrt(2^2+2^2+1^2)=3
@@ -63,9 +61,7 @@ class TestThreeComponentAmplitudes:
         c2 = _pulse(n, 2.0, 0.5) + _pulse(n, 5.0, 2.0)
         c3 = _pulse(n, 2.0, 0.2) + _pulse(n, 5.0, 1.0)
         st = _three_component(c1, c2, c3)
-        base = three_component_amplitudes(
-            st, p_window=(1.5, 3.0), s_window=(4.5, 6.0)
-        )
+        base = three_component_amplitudes(st, p_window=(1.5, 3.0), s_window=(4.5, 6.0))
 
         # Apply an arbitrary 3D rotation to the component vectors.
         theta, phi = 0.7, 1.3
@@ -87,9 +83,7 @@ class TestThreeComponentAmplitudes:
         stacked = np.vstack([c1, c2, c3])
         rot = R @ stacked
         st_rot = _three_component(rot[0], rot[1], rot[2])
-        rotated = three_component_amplitudes(
-            st_rot, p_window=(1.5, 3.0), s_window=(4.5, 6.0)
-        )
+        rotated = three_component_amplitudes(st_rot, p_window=(1.5, 3.0), s_window=(4.5, 6.0))
         assert rotated.p_amplitude == pytest.approx(base.p_amplitude, rel=1e-9)
         assert rotated.s_amplitude == pytest.approx(base.s_amplitude, rel=1e-9)
         assert rotated.sp_ratio == pytest.approx(base.sp_ratio, rel=1e-9)
@@ -112,9 +106,7 @@ class TestThreeComponentAmplitudes:
         zero = np.zeros(n)
         s = _pulse(n, 5.0, 1.0)
         st = _three_component(zero, zero.copy(), s)
-        res = three_component_amplitudes(
-            st, p_window=(1.0, 2.0), s_window=(4.5, 6.0)
-        )
+        res = three_component_amplitudes(st, p_window=(1.0, 2.0), s_window=(4.5, 6.0))
         assert res.p_amplitude == 0.0
         assert np.isnan(res.sp_ratio)
 

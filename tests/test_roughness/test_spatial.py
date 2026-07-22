@@ -21,9 +21,7 @@ class TestComputeSpatialFrequencyMap:
         locs = rng.uniform(0, 100, (50, 2))
         freqs = rng.uniform(30, 40, 50)
 
-        x_grid, y_grid, freq_grid = compute_spatial_frequency_map(
-            locs, freqs, grid_spacing=10.0
-        )
+        x_grid, y_grid, freq_grid = compute_spatial_frequency_map(locs, freqs, grid_spacing=10.0)
 
         assert freq_grid.shape == (len(y_grid), len(x_grid))
         # Some cells should have data
@@ -35,9 +33,7 @@ class TestComputeSpatialFrequencyMap:
         locs = rng.uniform(0, 100, (200, 2))
         freqs = rng.uniform(30, 40, 200)
 
-        _, _, grid_raw = compute_spatial_frequency_map(
-            locs, freqs, grid_spacing=10.0
-        )
+        _, _, grid_raw = compute_spatial_frequency_map(locs, freqs, grid_spacing=10.0)
         _, _, grid_smooth = compute_spatial_frequency_map(
             locs, freqs, grid_spacing=10.0, smoothing_radius=20.0
         )
@@ -48,9 +44,7 @@ class TestComputeSpatialFrequencyMap:
     def test_invalid_locations_shape(self):
         """Non-2D locations should raise ValueError."""
         with pytest.raises(ValueError, match="shape \\(N, 2\\)"):
-            compute_spatial_frequency_map(
-                np.array([1, 2, 3]), np.array([30.0])
-            )
+            compute_spatial_frequency_map(np.array([1, 2, 3]), np.array([30.0]))
 
     def test_length_mismatch_raises(self):
         """Mismatched locations/frequencies should raise ValueError."""
@@ -76,7 +70,7 @@ class TestCorrelateFrequencyRoughness:
         y = np.arange(ny) * dx
         rng = np.random.default_rng(42)
 
-        xx, yy = np.meshgrid(x, y)
+        xx, _yy = np.meshgrid(x, y)
         # Roughness amplitude scales with x position
         amplitude = xx / xx.max()  # 0 on left, 1 on right
         elevation = amplitude * rng.standard_normal((ny, nx))

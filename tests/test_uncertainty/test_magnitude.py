@@ -55,14 +55,20 @@ class TestPropagateLocationToMagnitude:
 
         lu_small = LocationUncertainty(horiz_uncertainty_m=100.0)
         result_small = propagate_location_to_magnitude(
-            ml_std=0.1, ml_stderr=0.05, n_valid_stations=3,
-            distances_km=distances, location_uncertainty=lu_small,
+            ml_std=0.1,
+            ml_stderr=0.05,
+            n_valid_stations=3,
+            distances_km=distances,
+            location_uncertainty=lu_small,
         )
 
         lu_large = LocationUncertainty(horiz_uncertainty_m=5000.0)
         result_large = propagate_location_to_magnitude(
-            ml_std=0.1, ml_stderr=0.05, n_valid_stations=3,
-            distances_km=distances, location_uncertainty=lu_large,
+            ml_std=0.1,
+            ml_stderr=0.05,
+            n_valid_stations=3,
+            distances_km=distances,
+            location_uncertainty=lu_large,
         )
 
         assert result_large.mag_uncertainty > result_small.mag_uncertainty
@@ -83,7 +89,9 @@ class TestPropagateLocationToMagnitude:
     def test_zero_distance_stations_skipped(self):
         lu = LocationUncertainty(horiz_uncertainty_m=500.0)
         result = propagate_location_to_magnitude(
-            ml_std=0.0, ml_stderr=0.0, n_valid_stations=1,
+            ml_std=0.0,
+            ml_stderr=0.0,
+            n_valid_stations=1,
             distances_km=np.array([0.0, 20.0]),
             location_uncertainty=lu,
         )
@@ -94,12 +102,16 @@ class TestPropagateLocationToMagnitude:
         """Closer stations have steeper dML/dr, so should be more sensitive."""
         lu = LocationUncertainty(horiz_uncertainty_m=1000.0)
         result_close = propagate_location_to_magnitude(
-            ml_std=0.1, ml_stderr=0.05, n_valid_stations=1,
+            ml_std=0.1,
+            ml_stderr=0.05,
+            n_valid_stations=1,
             distances_km=np.array([5.0]),
             location_uncertainty=lu,
         )
         result_far = propagate_location_to_magnitude(
-            ml_std=0.1, ml_stderr=0.05, n_valid_stations=1,
+            ml_std=0.1,
+            ml_stderr=0.05,
+            n_valid_stations=1,
             distances_km=np.array([100.0]),
             location_uncertainty=lu,
         )

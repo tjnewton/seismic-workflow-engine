@@ -50,7 +50,9 @@ class TestLoadPointCloud:
 
         with patch.dict("sys.modules", {"laspy": mock_laspy}):
             import importlib
+
             import swe.topo.pointcloud as mod
+
             importlib.reload(mod)
 
             result = mod.load_point_cloud("test.las")
@@ -77,7 +79,9 @@ class TestLoadPointCloud:
 
         with patch.dict("sys.modules", {"laspy": mock_laspy}):
             import importlib
+
             import swe.topo.pointcloud as mod
+
             importlib.reload(mod)
 
             result = mod.load_point_cloud(
@@ -104,11 +108,14 @@ class TestLoadPointCloud:
 
         with patch.dict("sys.modules", {"laspy": mock_laspy}):
             import importlib
+
             import swe.topo.pointcloud as mod
+
             importlib.reload(mod)
 
             result = mod.load_point_cloud(
-                "test.las", classification_filter=[2],
+                "test.las",
+                classification_filter=[2],
             )
 
         assert result.points.shape[0] == 2
@@ -130,7 +137,9 @@ class TestLoadPointCloud:
 
         with patch.dict("sys.modules", {"laspy": mock_laspy}):
             import importlib
+
             import swe.topo.pointcloud as mod
+
             importlib.reload(mod)
 
             result = mod.load_point_cloud("test.las", subsample=3)
@@ -141,6 +150,7 @@ class TestLoadPointCloud:
     def test_import_error_without_laspy(self):
         """Should raise ImportError when laspy is not installed."""
         import importlib
+
         import swe.topo.pointcloud as mod
 
         with patch.dict("sys.modules", {"laspy": None}):
@@ -156,7 +166,9 @@ class TestLoadPointCloud:
 
         with patch.dict("sys.modules", {"laspy": mock_laspy}):
             import importlib
+
             import swe.topo.pointcloud as mod
+
             importlib.reload(mod)
 
             result = mod.load_point_cloud("test.las")
@@ -171,7 +183,9 @@ class TestLoadPointCloud:
 
         with patch.dict("sys.modules", {"laspy": mock_laspy}):
             import importlib
+
             import swe.topo.pointcloud as mod
+
             importlib.reload(mod)
 
             result = mod.load_point_cloud("test.las")

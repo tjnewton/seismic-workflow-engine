@@ -22,9 +22,7 @@ class TestAssociationToCatalog:
         station_distance = {f"S{i}": i for i in range(n_stations)}
         reverse_station_distance = {i: f"S{i}" for i in range(n_stations)}
         pick_station_order = [i % n_stations for i in range(n_picks)]
-        pick_times = [
-            date2num((base + i * 0.1).datetime) for i in range(n_picks)
-        ]
+        pick_times = [date2num((base + i * 0.1).datetime) for i in range(n_picks)]
         return AssociationResult(
             station_distance=station_distance,
             reverse_station_distance=reverse_station_distance,

@@ -58,6 +58,9 @@ docs = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "ruff==0.15.0",
+    "mypy==1.18.2",
+    "types-PyYAML",
 ]
 
 [project.scripts]
@@ -75,6 +78,9 @@ markers = ["integration: cross-module integration tests"]
 target-version = "py310"
 line-length = 100
 src = ["src"]
+# Demo notebooks are pedagogical and untested; keep them out of the lint gate
+# (they are validated by the docs build instead).
+extend-exclude = ["*.ipynb"]
 
 [tool.ruff.lint]
 select = [
@@ -96,6 +102,9 @@ ignore = [
 known-first-party = ["swe"]
 
 [tool.mypy]
+# Check against the minimum supported interpreter. NumPy's stubs are version
+# sensitive, so the CI lint job pins numpy to the 2.4 line (see ci.yml); the 2.5+
+# stubs use PEP 695 syntax that mypy rejects under this target.
 python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true

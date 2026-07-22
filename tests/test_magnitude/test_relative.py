@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import pytest
-from obspy import Stream, UTCDateTime
+from obspy import Stream
 
 from swe.magnitude.relative import (
     RelativeMomentResult,
@@ -14,7 +13,7 @@ from swe.magnitude.relative import (
     relative_moments_from_streams,
 )
 
-from .conftest import _make_party, _make_trace
+from .conftest import _make_trace
 
 
 class TestRelativeMomentsFromParty:
@@ -47,9 +46,7 @@ class TestRelativeMomentsFromParty:
     def test_min_cc_filter(self, mock_party):
         results_all = relative_moments_from_party(mock_party, min_cc=0.0)
         results_filtered = relative_moments_from_party(mock_party, min_cc=1.0)
-        assert len(results_filtered[0].relative_moments) <= len(
-            results_all[0].relative_moments
-        )
+        assert len(results_filtered[0].relative_moments) <= len(results_all[0].relative_moments)
 
     def test_high_min_cc_empty(self, mock_party):
         results = relative_moments_from_party(mock_party, min_cc=100.0)
@@ -90,13 +87,17 @@ class TestRelativeMomentsFromStreams:
         assert len(result.relative_moments) == 10
         # All ratios should be ~2.0 (same rng seed means same shape)
         np.testing.assert_allclose(
-            result.relative_moments, 2.0, atol=0.1,
+            result.relative_moments,
+            2.0,
+            atol=0.1,
         )
 
     def test_min_cc_filter(self, mock_family):
         det_streams = [Stream() for _ in mock_family.detections]
         result = relative_moments_from_streams(
-            mock_family, det_streams, min_cc=100.0,
+            mock_family,
+            det_streams,
+            min_cc=100.0,
         )
         assert len(result.relative_moments) == 0
 

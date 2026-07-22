@@ -3,5 +3,4 @@
 
 .. automodule:: swe.magnitude
    :members:
-   :undoc-members:
    :show-inheritance:

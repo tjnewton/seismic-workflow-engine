@@ -27,7 +27,7 @@ log_level : str
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +35,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["SWEConfig", "load_config", "get_config_path"]
+__all__ = ["SWEConfig", "get_config_path", "load_config"]
 
 _DEFAULT_CONFIG_DIR = Path.home() / ".swe"
 _DEFAULT_CONFIG_FILE = _DEFAULT_CONFIG_DIR / "config.yml"

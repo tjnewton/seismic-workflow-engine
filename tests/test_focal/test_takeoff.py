@@ -113,9 +113,7 @@ class TestComputeTakeoffAngles1d:
         source = {"x": 0.0, "y": 0.0, "z": 10.0}
         stations = {"STA1": [0.0, 0.0, 0.0]}
         profile = [[0.0, 5.0], [20.0, 6.5]]
-        result = compute_takeoff_angles_1d(
-            source, stations, velocity_profile=profile
-        )
+        result = compute_takeoff_angles_1d(source, stations, velocity_profile=profile)
         assert isinstance(result, RayParameters)
 
     def test_homogeneous_matches_straight_ray(self):
@@ -125,9 +123,7 @@ class TestComputeTakeoffAngles1d:
         profile = [[0.0, 6.0]]  # Single layer
 
         result_homo = compute_takeoff_angles(source, stations, velocity=6.0)
-        result_1d = compute_takeoff_angles_1d(
-            source, stations, velocity_profile=profile
-        )
+        result_1d = compute_takeoff_angles_1d(source, stations, velocity_profile=profile)
 
         np.testing.assert_allclose(
             result_1d.takeoff_angles[0],
@@ -140,9 +136,7 @@ class TestComputeTakeoffAngles1d:
         source = {"x": 0.0, "y": 0.0, "z": 10.0}
         stations = {"STA1": [0.0, 0.0, 0.0]}
         with pytest.raises(ValueError, match="shape"):
-            compute_takeoff_angles_1d(
-                source, stations, velocity_profile=[[1.0, 2.0, 3.0]]
-            )
+            compute_takeoff_angles_1d(source, stations, velocity_profile=[[1.0, 2.0, 3.0]])
 
     def test_azimuths_match_homogeneous(self):
         """Azimuths should be identical regardless of velocity model."""
@@ -151,9 +145,7 @@ class TestComputeTakeoffAngles1d:
         profile = [[0.0, 4.0], [5.0, 6.0], [15.0, 8.0]]
 
         result_homo = compute_takeoff_angles(source, stations)
-        result_1d = compute_takeoff_angles_1d(
-            source, stations, velocity_profile=profile
-        )
+        result_1d = compute_takeoff_angles_1d(source, stations, velocity_profile=profile)
 
         np.testing.assert_allclose(
             result_1d.azimuths[0],

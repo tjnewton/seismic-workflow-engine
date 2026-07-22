@@ -6,9 +6,9 @@ import logging
 from collections import Counter
 from pathlib import Path
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.figure import Figure
 
 logger = logging.getLogger(__name__)
@@ -134,9 +134,7 @@ def plot_noise_time_histogram(
 
     _X_LIMITS = {
         "hour": {
-            "start": start_time.datetime.replace(
-                microsecond=0, second=0, minute=0
-            ),
+            "start": start_time.datetime.replace(microsecond=0, second=0, minute=0),
             "end": end_time.datetime.replace(
                 microsecond=999999,
                 second=59,

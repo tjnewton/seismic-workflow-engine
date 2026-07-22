@@ -15,7 +15,7 @@ Sato, H. & Fehler, M. (1998). Seismic Wave Propagation and Scattering
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from scipy.signal import hilbert
@@ -128,9 +128,7 @@ def estimate_coda_q(
     CodaQResult
         Coda-Q estimate with fit statistics.
     """
-    station = (
-        f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
-    )
+    station = f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
     central_freq = np.sqrt(freq_min * freq_max)
 
     nan_result = CodaQResult(
@@ -178,9 +176,7 @@ def estimate_coda_q(
     noise_end_idx = max(0, int(max(origin_rel, 0.0) * sr))
     noise_start_idx = max(0, int((max(origin_rel, 0.0) - noise_window) * sr))
     if noise_end_idx > noise_start_idx:
-        noise_rms = np.sqrt(
-            np.mean(envelope[noise_start_idx:noise_end_idx] ** 2)
-        )
+        noise_rms = np.sqrt(np.mean(envelope[noise_start_idx:noise_end_idx] ** 2))
     else:
         noise_rms = np.median(envelope) * 0.1
 
@@ -235,7 +231,7 @@ def estimate_coda_q(
 
     reg = linregress(x, y)
     slope = reg.slope
-    r_squared = reg.rvalue ** 2
+    r_squared = reg.rvalue**2
 
     # Qc = -pi * f / slope
     if slope >= 0:
@@ -307,9 +303,7 @@ def coda_q_frequency_bands(
     CodaQFrequencyResult
         Multi-band Qc results with power-law fit parameters.
     """
-    station = (
-        f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
-    )
+    station = f"{trace.stats.network}.{trace.stats.station}.{trace.stats.channel}"
 
     if frequency_bands is None:
         frequency_bands = _DEFAULT_BANDS
@@ -352,7 +346,7 @@ def coda_q_frequency_bands(
         log_f = np.log10(freq_arr[valid])
         log_q = np.log10(qc_arr[valid])
         reg = linregress(log_f, log_q)
-        q0 = 10.0 ** reg.intercept
+        q0 = 10.0**reg.intercept
         eta = reg.slope
     else:
         q0 = float("nan")

@@ -80,7 +80,7 @@ def _build_gamma_config(
     if center is None:
         lons = [c[0] for c in location_dict.values()]
         lats = [c[1] for c in location_dict.values()]
-        center = (np.mean(lons), np.mean(lats))
+        center = (float(np.mean(lons)), float(np.mean(lats)))
 
     return {
         "center": center,

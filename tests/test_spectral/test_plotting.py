@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 from matplotlib.figure import Figure
-from obspy import UTCDateTime
 
 from swe.spectral._plotting import (
     plot_brune_fit,
@@ -15,8 +13,8 @@ from swe.spectral._plotting import (
     plot_ssr,
     plot_stress_drop_summary,
 )
-from swe.spectral.coda import estimate_coda_q, coda_q_frequency_bands
-from swe.spectral.fitting import fit_brune_model, compute_stress_drop
+from swe.spectral.coda import coda_q_frequency_bands, estimate_coda_q
+from swe.spectral.fitting import compute_stress_drop, fit_brune_model
 from swe.spectral.ratios import compute_hvsr, compute_ssr
 
 
@@ -51,9 +49,7 @@ def brune_fit_result(brune_trace):
 @pytest.fixture()
 def stress_drop_results(brune_trace):
     fit = fit_brune_model(brune_trace, freq_min=0.5, freq_max=45.0)
-    return [
-        compute_stress_drop(fit, magnitude=m) for m in [1.0, 2.0, 3.0]
-    ]
+    return [compute_stress_drop(fit, magnitude=m) for m in [1.0, 2.0, 3.0]]
 
 
 class TestPlotHVSR:

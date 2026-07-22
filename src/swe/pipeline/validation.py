@@ -10,7 +10,7 @@ import importlib
 import logging
 import re
 
-from swe.pipeline.core import Pipeline, PipelineStep
+from swe.pipeline.core import Pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -70,23 +70,18 @@ def validate_pipeline(
         module_path, _, func_name = step.function.rpartition(".")
         if not module_path:
             errors.append(
-                f"Step {step.name!r}: invalid function path "
-                f"{step.function!r} (no module)."
+                f"Step {step.name!r}: invalid function path {step.function!r} (no module)."
             )
             continue
         try:
             module = importlib.import_module(module_path)
         except ImportError as exc:
-            errors.append(
-                f"Step {step.name!r}: cannot import module "
-                f"{module_path!r}: {exc}"
-            )
+            errors.append(f"Step {step.name!r}: cannot import module {module_path!r}: {exc}")
             continue
 
         if not hasattr(module, func_name):
             errors.append(
-                f"Step {step.name!r}: module {module_path!r} has no "
-                f"attribute {func_name!r}."
+                f"Step {step.name!r}: module {module_path!r} has no attribute {func_name!r}."
             )
             continue
 
@@ -103,10 +98,7 @@ def validate_pipeline(
         refs = _extract_step_refs(step.params)
         for ref_name in refs:
             if ref_name not in seen_names:
-                errors.append(
-                    f"Step {step.name!r}: references unknown step "
-                    f"{ref_name!r}."
-                )
+                errors.append(f"Step {step.name!r}: references unknown step {ref_name!r}.")
             elif ref_name not in step_names_ordered:
                 errors.append(
                     f"Step {step.name!r}: references step "

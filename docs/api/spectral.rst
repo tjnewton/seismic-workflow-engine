@@ -3,5 +3,4 @@
 
 .. automodule:: swe.spectral
    :members:
-   :undoc-members:
    :show-inheritance:

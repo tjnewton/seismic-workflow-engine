@@ -11,7 +11,7 @@ matching the convention in :mod:`swe.stress.inversion`.
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
@@ -169,13 +169,11 @@ def compute_takeoff_angles_1d(
         sta_depth = sta[2]
 
         # Get velocity at source depth
-        src_vel = _velocity_at_depth(src_depth, depths, velocities)
+        _velocity_at_depth(src_depth, depths, velocities)
 
         # Binary search for the ray parameter p that matches the
         # horizontal distance
-        takeoff = _trace_ray_1d(
-            src_depth, sta_depth, horiz_dist, depths, velocities
-        )
+        takeoff = _trace_ray_1d(src_depth, sta_depth, horiz_dist, depths, velocities)
 
         stations.append(name)
         azimuths_out.append(float(azimuth))
@@ -231,7 +229,7 @@ def _trace_ray_1d(
         theta_low = 90.01
         theta_high = 179.99
 
-    src_vel = _velocity_at_depth(src_depth, layer_depths, layer_velocities)
+    _velocity_at_depth(src_depth, layer_depths, layer_velocities)
 
     for _ in range(n_iter):
         theta_mid = (theta_low + theta_high) / 2.0
@@ -292,12 +290,10 @@ def _compute_horizontal_distance(
         # Traverse layers upward
         boundaries = layer_depths[(layer_depths > z_end) & (layer_depths < z_start)]
         boundaries = np.sort(boundaries)[::-1]  # descending
-        targets = list(boundaries) + [z_end]
+        targets = [*list(boundaries), z_end]
 
         for z_next in targets:
-            v = _velocity_at_depth(
-                min(z_current, z_next) + 1e-10, layer_depths, layer_velocities
-            )
+            v = _velocity_at_depth(min(z_current, z_next) + 1e-10, layer_depths, layer_velocities)
             dz = abs(z_current - z_next)
             sin_theta = p * v
             if abs(sin_theta) >= 1.0:
@@ -312,7 +308,7 @@ def _compute_horizontal_distance(
         # Traverse layers downward
         boundaries = layer_depths[(layer_depths > z_start) & (layer_depths < z_end)]
         boundaries = np.sort(boundaries)
-        targets = list(boundaries) + [z_end]
+        targets = [*list(boundaries), z_end]
 
         for z_next in targets:
             v = _velocity_at_depth(z_current + 1e-10, layer_depths, layer_velocities)

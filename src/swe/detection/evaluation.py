@@ -11,7 +11,8 @@ vice versa); the routines here avoid that.
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, Sequence
+from collections.abc import Sequence
+from typing import NamedTuple
 
 from obspy import UTCDateTime
 

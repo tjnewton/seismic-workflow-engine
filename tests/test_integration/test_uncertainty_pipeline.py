@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
-import pytest
 from obspy import Stream, Trace, UTCDateTime
 
 from swe.pipeline.core import Pipeline, PipelineStep
@@ -40,20 +39,26 @@ class TestUncertaintyPipelineIntegration:
         # Step 1: Mock pick function returning picks with time_uncertainty_s
         def mock_pick(**kwargs):
             from swe.picks import SWEPick
+
             return [
-                SWEPick("ST00", "P", UTCDateTime(2024, 1, 1, 0, 0, 10), 0.9,
-                        time_uncertainty_s=0.05),
-                SWEPick("ST01", "P", UTCDateTime(2024, 1, 1, 0, 0, 10.5), 0.85,
-                        time_uncertainty_s=0.075),
-                SWEPick("ST02", "P", UTCDateTime(2024, 1, 1, 0, 0, 11), 0.8,
-                        time_uncertainty_s=0.1),
-                SWEPick("ST03", "P", UTCDateTime(2024, 1, 1, 0, 0, 12), 0.7,
-                        time_uncertainty_s=0.15),
+                SWEPick(
+                    "ST00", "P", UTCDateTime(2024, 1, 1, 0, 0, 10), 0.9, time_uncertainty_s=0.05
+                ),
+                SWEPick(
+                    "ST01", "P", UTCDateTime(2024, 1, 1, 0, 0, 10.5), 0.85, time_uncertainty_s=0.075
+                ),
+                SWEPick(
+                    "ST02", "P", UTCDateTime(2024, 1, 1, 0, 0, 11), 0.8, time_uncertainty_s=0.1
+                ),
+                SWEPick(
+                    "ST03", "P", UTCDateTime(2024, 1, 1, 0, 0, 12), 0.7, time_uncertainty_s=0.15
+                ),
             ]
 
         # Step 2: Mock location function returning LocationResult with uncertainty
         def mock_locate(**kwargs):
             from swe.location.amplitude import LocationResult
+
             lu = LocationUncertainty(
                 horiz_uncertainty_m=500.0,
                 depth_uncertainty_m=200.0,
@@ -61,8 +66,7 @@ class TestUncertaintyPipelineIntegration:
                 n_samples=100,
                 method="monte_carlo",
             )
-            return LocationResult(x=100.0, y=200.0, z=5000.0, misfit=0.05,
-                                  uncertainty=lu)
+            return LocationResult(x=100.0, y=200.0, z=5000.0, misfit=0.05, uncertainty=lu)
 
         # Step 3: Mock magnitude function that uses location uncertainty
         def mock_magnitude(**kwargs):
@@ -70,6 +74,7 @@ class TestUncertaintyPipelineIntegration:
             mu = None
             if location_uncertainty is not None:
                 from swe.uncertainty.magnitude import propagate_location_to_magnitude
+
                 mu = propagate_location_to_magnitude(
                     ml_std=0.15,
                     ml_stderr=0.07,
@@ -83,28 +88,30 @@ class TestUncertaintyPipelineIntegration:
                 "magnitude_uncertainty": mu,
             }
 
-        pipeline = Pipeline(steps=[
-            PipelineStep(
-                name="pick_phases",
-                function="mock.pick",
-                params={},
-                propagate_uncertainty=True,
-            ),
-            PipelineStep(
-                name="locate_events",
-                function="mock.locate",
-                params={},
-                propagate_uncertainty=True,
-            ),
-            PipelineStep(
-                name="estimate_magnitudes",
-                function="mock.magnitude",
-                params={
-                    "location_uncertainty": "${locate_events.uncertainty}",
-                },
-                propagate_uncertainty=True,
-            ),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                PipelineStep(
+                    name="pick_phases",
+                    function="mock.pick",
+                    params={},
+                    propagate_uncertainty=True,
+                ),
+                PipelineStep(
+                    name="locate_events",
+                    function="mock.locate",
+                    params={},
+                    propagate_uncertainty=True,
+                ),
+                PipelineStep(
+                    name="estimate_magnitudes",
+                    function="mock.magnitude",
+                    params={
+                        "location_uncertainty": "${locate_events.uncertainty}",
+                    },
+                    propagate_uncertainty=True,
+                ),
+            ]
+        )
 
         call_count = [0]
 

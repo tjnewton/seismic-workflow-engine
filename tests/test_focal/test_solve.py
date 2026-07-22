@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from swe.focal.solve import (
-    FocalMechanism,
     FocalMechanismResult,
     _auxiliary_plane,
     _radiation_pattern,
@@ -74,7 +73,7 @@ class TestAuxiliaryPlane:
 
     def test_vertical_strike_slip(self):
         """Auxiliary plane for vertical strike-slip."""
-        s2, d2, r2 = _auxiliary_plane(0.0, 90.0, 0.0)
+        _s2, d2, _r2 = _auxiliary_plane(0.0, 90.0, 0.0)
         # For strike=0, dip=90, rake=0: auxiliary should be strike=90, dip=90, rake=180 (or equivalent)
         assert 0.0 <= d2 <= 90.0
 
@@ -106,8 +105,12 @@ class TestFocalMechanismGridsearch:
         az, to, pol = _synthetic_polarities(true_strike, true_dip, true_rake, n_stations=30)
 
         result = focal_mechanism_gridsearch(
-            az, to, pol,
-            strike_step=5.0, dip_step=5.0, rake_step=5.0,
+            az,
+            to,
+            pol,
+            strike_step=5.0,
+            dip_step=5.0,
+            rake_step=5.0,
             max_misfit=0.1,
         )
 
@@ -140,9 +143,7 @@ class TestFocalMechanismGridsearch:
         to = np.array([45.0, 45.0])
         pol = np.array([1, -1])
 
-        result = focal_mechanism_gridsearch(
-            az, to, pol, min_polarities=8
-        )
+        result = focal_mechanism_gridsearch(az, to, pol, min_polarities=8)
         assert result.best is None
         assert len(result.mechanisms) == 0
         assert result.focal_data.shape == (0, 3)
@@ -156,8 +157,12 @@ class TestFocalMechanismGridsearch:
         pol = np.concatenate([pol, [0, 0, 0]])
 
         result = focal_mechanism_gridsearch(
-            az, to, pol,
-            strike_step=10.0, dip_step=10.0, rake_step=10.0,
+            az,
+            to,
+            pol,
+            strike_step=10.0,
+            dip_step=10.0,
+            rake_step=10.0,
         )
         if result.best is not None:
             # n_polarities should not count the zero-polarity stations
@@ -170,8 +175,12 @@ class TestFocalMechanismGridsearch:
         weights[:5] = 2.0  # Weight first 5 stations more
 
         result = focal_mechanism_gridsearch(
-            az, to, pol,
-            strike_step=10.0, dip_step=10.0, rake_step=10.0,
+            az,
+            to,
+            pol,
+            strike_step=10.0,
+            dip_step=10.0,
+            rake_step=10.0,
             weights=weights,
         )
         assert isinstance(result, FocalMechanismResult)
@@ -180,8 +189,12 @@ class TestFocalMechanismGridsearch:
         """all_misfits should contain values for the full grid."""
         az, to, pol = _synthetic_polarities(45.0, 60.0, -90.0)
         result = focal_mechanism_gridsearch(
-            az, to, pol,
-            strike_step=30.0, dip_step=30.0, rake_step=30.0,
+            az,
+            to,
+            pol,
+            strike_step=30.0,
+            dip_step=30.0,
+            rake_step=30.0,
         )
         assert len(result.all_misfits) > 0
         assert all(0.0 <= m <= 1.0 for m in result.all_misfits)
@@ -190,8 +203,12 @@ class TestFocalMechanismGridsearch:
         """strike_std, dip_std, rake_std should be > 0 with multiple accepted."""
         az, to, pol = _synthetic_polarities(45.0, 60.0, -90.0, n_stations=15)
         result = focal_mechanism_gridsearch(
-            az, to, pol,
-            strike_step=10.0, dip_step=10.0, rake_step=10.0,
+            az,
+            to,
+            pol,
+            strike_step=10.0,
+            dip_step=10.0,
+            rake_step=10.0,
             max_misfit=0.3,
         )
         if len(result.mechanisms) > 1:
@@ -203,7 +220,12 @@ class TestFocalMechanismGridsearch:
         """focal_mechanism_uncertainty should return a dict."""
         az, to, pol = _synthetic_polarities(45.0, 60.0, -90.0)
         result = focal_mechanism_gridsearch(
-            az, to, pol, strike_step=10.0, dip_step=10.0, rake_step=10.0,
+            az,
+            to,
+            pol,
+            strike_step=10.0,
+            dip_step=10.0,
+            rake_step=10.0,
         )
         summary = focal_mechanism_uncertainty(result)
         assert "strike_std" in summary
@@ -219,11 +241,13 @@ class TestFocalMechanismsBatch:
         events = []
         for strike in [45.0, 90.0, 180.0]:
             az, to, pol = _synthetic_polarities(strike, 60.0, -90.0)
-            events.append({
-                "azimuths": az,
-                "takeoff_angles": to,
-                "polarities": pol,
-            })
+            events.append(
+                {
+                    "azimuths": az,
+                    "takeoff_angles": to,
+                    "polarities": pol,
+                }
+            )
 
         results, focal_data = focal_mechanisms_batch(
             events, strike_step=10.0, dip_step=10.0, rake_step=10.0
@@ -238,13 +262,15 @@ class TestFocalMechanismsBatch:
         events = []
         for strike in [30.0, 60.0, 90.0, 120.0, 150.0]:
             az, to, pol = _synthetic_polarities(strike, 50.0, -90.0, n_stations=25)
-            events.append({
-                "azimuths": az,
-                "takeoff_angles": to,
-                "polarities": pol,
-            })
+            events.append(
+                {
+                    "azimuths": az,
+                    "takeoff_angles": to,
+                    "polarities": pol,
+                }
+            )
 
-        results, focal_data = focal_mechanisms_batch(
+        _results, focal_data = focal_mechanisms_batch(
             events, strike_step=10.0, dip_step=10.0, rake_step=10.0
         )
 
@@ -300,7 +326,9 @@ class TestPolarityResultToEventDict:
             confidences=np.array([0.9]),
         )
         event = polarity_result_to_event_dict(
-            pr, np.array([0.0]), np.array([45.0]),
+            pr,
+            np.array([0.0]),
+            np.array([45.0]),
             use_confidence_as_weights=False,
         )
         assert "weights" not in event
@@ -318,16 +346,16 @@ class TestIntegrationWithStress:
         # (sigma1 vertical, sigma3 horizontal)
         events = []
         for strike in [0.0, 45.0, 90.0, 135.0, 180.0]:
-            az, to, pol = _synthetic_polarities(
-                strike, 45.0, -90.0, n_stations=25
+            az, to, pol = _synthetic_polarities(strike, 45.0, -90.0, n_stations=25)
+            events.append(
+                {
+                    "azimuths": az,
+                    "takeoff_angles": to,
+                    "polarities": pol,
+                }
             )
-            events.append({
-                "azimuths": az,
-                "takeoff_angles": to,
-                "polarities": pol,
-            })
 
-        results, focal_data = focal_mechanisms_batch(
+        _results, focal_data = focal_mechanisms_batch(
             events, strike_step=10.0, dip_step=10.0, rake_step=10.0
         )
 

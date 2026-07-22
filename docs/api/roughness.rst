@@ -3,5 +3,4 @@
 
 .. automodule:: swe.roughness
    :members:
-   :undoc-members:
    :show-inheritance:

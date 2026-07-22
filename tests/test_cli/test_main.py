@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -127,9 +126,7 @@ class TestDryRun:
     def test_dry_run_valid_pipeline(self, tmp_path):
         config = tmp_path / "valid.yml"
         config.write_text(
-            "steps:\n"
-            "  - name: step1\n"
-            "    function: swe.moment_tensor.tensor.scalar_moment\n"
+            "steps:\n  - name: step1\n    function: swe.moment_tensor.tensor.scalar_moment\n"
         )
         runner = CliRunner()
         result = runner.invoke(cli, ["run", "--dry-run", str(config)])
@@ -138,11 +135,7 @@ class TestDryRun:
 
     def test_dry_run_invalid_function(self, tmp_path):
         config = tmp_path / "invalid.yml"
-        config.write_text(
-            "steps:\n"
-            "  - name: step1\n"
-            "    function: swe.nonexistent.module.func\n"
-        )
+        config.write_text("steps:\n  - name: step1\n    function: swe.nonexistent.module.func\n")
         runner = CliRunner()
         result = runner.invoke(cli, ["run", "--dry-run", str(config)])
         assert result.exit_code != 0

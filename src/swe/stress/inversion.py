@@ -85,18 +85,22 @@ def _strike_dip_rake_to_fault_slip(
     r = _deg2rad(rake)
 
     # Nodal plane 1: fault normal
-    n1 = np.array([
-        -np.sin(d) * np.sin(s),
-        np.sin(d) * np.cos(s),
-        -np.cos(d),
-    ])
+    n1 = np.array(
+        [
+            -np.sin(d) * np.sin(s),
+            np.sin(d) * np.cos(s),
+            -np.cos(d),
+        ]
+    )
 
     # Nodal plane 1: slip direction
-    d1 = np.array([
-        np.cos(r) * np.cos(s) + np.sin(r) * np.cos(d) * np.sin(s),
-        np.cos(r) * np.sin(s) - np.sin(r) * np.cos(d) * np.cos(s),
-        -np.sin(r) * np.sin(d),
-    ])
+    d1 = np.array(
+        [
+            np.cos(r) * np.cos(s) + np.sin(r) * np.cos(d) * np.sin(s),
+            np.cos(r) * np.sin(s) - np.sin(r) * np.cos(d) * np.cos(s),
+            -np.sin(r) * np.sin(d),
+        ]
+    )
 
     # Nodal plane 2 (auxiliary): normal is the slip direction of plane 1,
     # and slip direction is the normal of plane 1
@@ -137,7 +141,7 @@ def _build_design_matrix(
     A = np.zeros((3 * n_mechs, 5))
     for k in range(n_mechs):
         n = normals[k]
-        nx, ny, nz = n[0], n[1], n[2]
+        _nx, _ny, _nz = n[0], n[1], n[2]
         row = 3 * k
 
         # Traction T_i = sum_j sigma_ij * n_j
@@ -158,7 +162,7 @@ def _build_design_matrix(
         for p in range(5):
             # Build a sigma matrix with only param p = 1
             sig = np.zeros((3, 3))
-            if p == 0:   # s11
+            if p == 0:  # s11
                 sig[0, 0] = 1.0
                 sig[2, 2] = -1.0
             elif p == 1:  # s12
@@ -200,11 +204,13 @@ def _stress_from_params(params: np.ndarray) -> np.ndarray:
     """
     s11, s12, s13, s22, s23 = params
     s33 = -(s11 + s22)
-    return np.array([
-        [s11, s12, s13],
-        [s12, s22, s23],
-        [s13, s23, s33],
-    ])
+    return np.array(
+        [
+            [s11, s12, s13],
+            [s12, s22, s23],
+            [s13, s23, s33],
+        ]
+    )
 
 
 def _principal_stresses(
@@ -276,7 +282,7 @@ def _vector_to_azimuth_plunge(v: np.ndarray) -> tuple[float, float]:
 def _select_fault_planes(
     focal_mechanisms: np.ndarray,
     sigma: np.ndarray,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     """Select the fault plane (of two nodal planes) most consistent with stress.
 
     For each mechanism, the nodal plane whose predicted slip direction
@@ -405,6 +411,7 @@ def _invert(focal_mechanisms: np.ndarray) -> tuple[dict, dict]:
         )
 
     # Decompose final stress tensor
+    assert sigma is not None
     eigenvalues, eigenvectors, stress_ratio = _principal_stresses(sigma)
 
     # Convert principal axes to azimuth/plunge
@@ -469,9 +476,7 @@ def stress_inversion(
                 s, d, r = tensor_to_strike_dip_rake(item)
                 rows.append([s, d, r])
             else:
-                raise TypeError(
-                    f"Expected MomentTensor, got {type(item).__name__}"
-                )
+                raise TypeError(f"Expected MomentTensor, got {type(item).__name__}")
         data = np.array(rows, dtype=np.float64)
     unique_labels = np.unique(labels)
     results: list[dict] = []
@@ -542,9 +547,7 @@ def stress_inversion_with_bootstrap(
                 s, d, r = tensor_to_strike_dip_rake(item)
                 rows.append([s, d, r])
             else:
-                raise TypeError(
-                    f"Expected MomentTensor, got {type(item).__name__}"
-                )
+                raise TypeError(f"Expected MomentTensor, got {type(item).__name__}")
         data = np.array(rows, dtype=np.float64)
 
     # Run original inversion
@@ -683,9 +686,7 @@ def split_focal_data(
                 np.full(n, str(label)),
             ]
         )
-        cluster_data_out = np.hstack(
-            (cluster_data.astype(str), x_y_id)
-        )
+        cluster_data_out = np.hstack((cluster_data.astype(str), x_y_id))
 
         output_file = output_dir / f"events_{label}.txt"
         np.savetxt(str(output_file), cluster_data_out, delimiter=" ", fmt="%s")

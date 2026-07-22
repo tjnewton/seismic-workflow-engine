@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from obspy import Catalog, Stream, Trace, UTCDateTime
-from obspy.core.event import Event, Origin, Pick, WaveformStreamID
+from obspy.core.event import Event, Origin
 
 from swe.magnitude.catalog import (
     attach_duration_magnitudes,
@@ -36,9 +36,7 @@ def _make_trace(
         t = np.arange(npts) / sampling_rate
         for i in range(onset_idx, npts):
             elapsed = (i - onset_idx) / sampling_rate
-            data[i] += amplitude * np.exp(-elapsed / 10.0) * np.sin(
-                2.0 * np.pi * 5.0 * t[i]
-            )
+            data[i] += amplitude * np.exp(-elapsed / 10.0) * np.sin(2.0 * np.pi * 5.0 * t[i])
 
     header = {
         "network": network,
@@ -72,10 +70,12 @@ class TestAttachLocalMagnitudes:
     def test_attaches_magnitude(self):
         """Should add a Magnitude to the event."""
         event = _make_event()
-        st = Stream([
-            _make_trace(station="STA1"),
-            _make_trace(station="STA2"),
-        ])
+        st = Stream(
+            [
+                _make_trace(station="STA1"),
+                _make_trace(station="STA2"),
+            ]
+        )
         distances = [10.0, 20.0]
 
         result = attach_local_magnitudes(event, st, distances)
@@ -96,10 +96,12 @@ class TestAttachLocalMagnitudes:
     def test_station_magnitudes_created(self):
         """Should create StationMagnitude objects."""
         event = _make_event()
-        st = Stream([
-            _make_trace(station="STA1"),
-            _make_trace(station="STA2"),
-        ])
+        st = Stream(
+            [
+                _make_trace(station="STA1"),
+                _make_trace(station="STA2"),
+            ]
+        )
         attach_local_magnitudes(event, st, [10.0, 20.0])
 
         # station_magnitudes may have some NaN entries filtered
@@ -108,11 +110,13 @@ class TestAttachLocalMagnitudes:
     def test_station_count(self):
         """Magnitude station_count should match valid stations."""
         event = _make_event()
-        st = Stream([
-            _make_trace(station="STA1"),
-            _make_trace(station="STA2"),
-            _make_trace(station="STA3"),
-        ])
+        st = Stream(
+            [
+                _make_trace(station="STA1"),
+                _make_trace(station="STA2"),
+                _make_trace(station="STA3"),
+            ]
+        )
         attach_local_magnitudes(event, st, [10.0, 20.0, 30.0])
 
         if event.magnitudes:
@@ -133,9 +137,11 @@ class TestAttachDurationMagnitudes:
         """Should add an Md magnitude to the event."""
         event = _make_event()
         t0 = UTCDateTime(2024, 1, 1)
-        st = Stream([
-            _make_trace(station="STA1", signal_onset=10.0, amplitude=5.0),
-        ])
+        st = Stream(
+            [
+                _make_trace(station="STA1", signal_onset=10.0, amplitude=5.0),
+            ]
+        )
         p_times = {"STA1": t0 + 10.0}
 
         attach_duration_magnitudes(event, st, p_times)
@@ -147,9 +153,11 @@ class TestAttachDurationMagnitudes:
         """Should set preferred_magnitude_id."""
         event = _make_event()
         t0 = UTCDateTime(2024, 1, 1)
-        st = Stream([
-            _make_trace(station="STA1", signal_onset=10.0, amplitude=5.0),
-        ])
+        st = Stream(
+            [
+                _make_trace(station="STA1", signal_onset=10.0, amplitude=5.0),
+            ]
+        )
         p_times = {"STA1": t0 + 10.0}
 
         attach_duration_magnitudes(event, st, p_times)
@@ -160,9 +168,11 @@ class TestAttachDurationMagnitudes:
         """Should accept optional distances_km."""
         event = _make_event()
         t0 = UTCDateTime(2024, 1, 1)
-        st = Stream([
-            _make_trace(station="STA1", signal_onset=10.0, amplitude=5.0),
-        ])
+        st = Stream(
+            [
+                _make_trace(station="STA1", signal_onset=10.0, amplitude=5.0),
+            ]
+        )
         p_times = {"STA1": t0 + 10.0}
         distances = {"STA1": 15.0}
 
@@ -224,10 +234,7 @@ class TestMagErrors:
     def test_ml_mag_errors_set(self):
         """attach_local_magnitudes should set mag_errors when stderr > 0."""
         event = _make_event()
-        st = Stream([
-            _make_trace(station=f"STA{i}", amplitude=float(i + 1))
-            for i in range(4)
-        ])
+        st = Stream([_make_trace(station=f"STA{i}", amplitude=float(i + 1)) for i in range(4)])
         distances = [10.0, 20.0, 30.0, 40.0]
         attach_local_magnitudes(event, st, distances)
 
@@ -241,10 +248,12 @@ class TestMagErrors:
         """attach_duration_magnitudes should set mag_errors for multi-station Md."""
         event = _make_event()
         t0 = UTCDateTime(2024, 1, 1)
-        st = Stream([
-            _make_trace(station="STA1", signal_onset=10.0, amplitude=5.0),
-            _make_trace(station="STA2", signal_onset=10.0, amplitude=3.0),
-        ])
+        st = Stream(
+            [
+                _make_trace(station="STA1", signal_onset=10.0, amplitude=5.0),
+                _make_trace(station="STA2", signal_onset=10.0, amplitude=3.0),
+            ]
+        )
         p_times = {"STA1": t0 + 10.0, "STA2": t0 + 10.0}
         attach_duration_magnitudes(event, st, p_times)
 

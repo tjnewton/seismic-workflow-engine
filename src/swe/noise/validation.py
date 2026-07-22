@@ -69,9 +69,7 @@ def verify_noise_windows(
     for idx in sorted(false_indices, reverse=True):
         del verified_times[idx]
 
-    logger.info(
-        "Found %d false noise windows containing picks.", len(false_indices)
-    )
+    logger.info("Found %d false noise windows containing picks.", len(false_indices))
     return verified_windows, verified_times
 
 
@@ -127,7 +125,7 @@ def explore_noise_windows(
     verified_times = None
 
     if progress_file is not None:
-        with open(progress_file, "r") as f:
+        with open(progress_file) as f:
             priors = json.load(f)
         start_index = priors["start_index"]
         removal_indices = priors["removal_indices"]
@@ -146,8 +144,7 @@ def explore_noise_windows(
         )
 
         user_input = input(
-            "Enter 'quit', nothing, or space-separated indices to flag for "
-            "removal: "
+            "Enter 'quit', nothing, or space-separated indices to flag for removal: "
         )
 
         if user_input.lower() == "quit":

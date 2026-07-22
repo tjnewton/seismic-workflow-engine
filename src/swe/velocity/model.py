@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Data types
 # ---------------------------------------------------------------------------
 
+
 class VelocityModel(NamedTuple):
     """Grid-based velocity model stored as slowness.
 
@@ -73,6 +74,7 @@ class TravelTimeGrid(NamedTuple):
 # ---------------------------------------------------------------------------
 # I/O functions
 # ---------------------------------------------------------------------------
+
 
 def read_velocity_model_1d(
     model_path: str | Path,
@@ -140,11 +142,18 @@ def read_velocity_model_1d(
 
     logger.info(
         "Read 1-D velocity model from %s: grid %d x %d x %d cells",
-        model_path, len(x) - 1, len(y) - 1, len(z) - 1,
+        model_path,
+        len(x) - 1,
+        len(y) - 1,
+        len(z) - 1,
     )
 
     return VelocityModel(
-        x=x, y=y, z=z, slowness=slowness, model_type="1d",
+        x=x,
+        y=y,
+        z=z,
+        slowness=slowness,
+        model_type="1d",
     )
 
 
@@ -202,8 +211,7 @@ def build_velocity_model_3d(
     expected = (len(x) - 1, len(y) - 1, len(z) - 1)
     if slowness.shape != expected:
         raise ValueError(
-            f"slowness shape {slowness.shape} does not match expected "
-            f"{expected} from grid axes."
+            f"slowness shape {slowness.shape} does not match expected {expected} from grid axes."
         )
     return VelocityModel(
         x=np.asarray(x, dtype=np.float64),

@@ -79,8 +79,7 @@ def load_point_cloud(
         import laspy
     except ImportError as exc:
         raise ImportError(
-            "laspy is required for load_point_cloud(). "
-            "Install it with: pip install laspy"
+            "laspy is required for load_point_cloud(). Install it with: pip install laspy"
         ) from exc
 
     las = laspy.read(las_path)
@@ -143,9 +142,13 @@ def load_point_cloud(
             classification = classification[::subsample]
 
     logger.info(
-        "Loaded %d points from %s", len(points), las_path,
+        "Loaded %d points from %s",
+        len(points),
+        las_path,
     )
 
     return PointCloud(
-        points=points, colors=colors, classification=classification,
+        points=points,
+        colors=colors,
+        classification=classification,
     )

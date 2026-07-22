@@ -14,23 +14,25 @@ from swe.location.amplitude import (
     synthetic_event,
 )
 
-
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def station_coords() -> np.ndarray:
     """Seven stations with 3-D spread to constrain depth."""
-    return np.array([
-        [0.0, 0.0, 0.0],
-        [200.0, 0.0, 0.0],
-        [0.0, 200.0, 0.0],
-        [-200.0, 0.0, 0.0],
-        [0.0, -200.0, 0.0],
-        [100.0, 100.0, -50.0],
-        [-100.0, -100.0, 50.0],
-    ])
+    return np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [200.0, 0.0, 0.0],
+            [0.0, 200.0, 0.0],
+            [-200.0, 0.0, 0.0],
+            [0.0, -200.0, 0.0],
+            [100.0, 100.0, -50.0],
+            [-100.0, -100.0, 50.0],
+        ]
+    )
 
 
 @pytest.fixture()
@@ -42,6 +44,7 @@ def true_location() -> tuple[float, float, float]:
 # ---------------------------------------------------------------------------
 # Tests for _default_attenuation_params
 # ---------------------------------------------------------------------------
+
 
 class TestDefaultAttenuationParams:
     def test_returns_dict(self):
@@ -68,6 +71,7 @@ class TestDefaultAttenuationParams:
 # Tests for synthetic_event
 # ---------------------------------------------------------------------------
 
+
 class TestSyntheticEvent:
     def test_output_shapes(self, station_coords, true_location):
         tt, amps = synthetic_event(true_location, station_coords)
@@ -86,10 +90,15 @@ class TestSyntheticEvent:
     def test_noise_increases_variance(self, station_coords, true_location):
         rng = np.random.default_rng(42)
         _, amps_clean = synthetic_event(
-            true_location, station_coords, noise_level=0.0,
+            true_location,
+            station_coords,
+            noise_level=0.0,
         )
         _, amps_noisy = synthetic_event(
-            true_location, station_coords, noise_level=0.1, rng=rng,
+            true_location,
+            station_coords,
+            noise_level=0.1,
+            rng=rng,
         )
         # The noisy amplitudes should differ from the clean ones.
         assert not np.allclose(amps_clean, amps_noisy)
@@ -98,10 +107,16 @@ class TestSyntheticEvent:
         rng1 = np.random.default_rng(99)
         rng2 = np.random.default_rng(99)
         tt1, a1 = synthetic_event(
-            true_location, station_coords, noise_level=0.05, rng=rng1,
+            true_location,
+            station_coords,
+            noise_level=0.05,
+            rng=rng1,
         )
         tt2, a2 = synthetic_event(
-            true_location, station_coords, noise_level=0.05, rng=rng2,
+            true_location,
+            station_coords,
+            noise_level=0.05,
+            rng=rng2,
         )
         np.testing.assert_array_equal(tt1, tt2)
         np.testing.assert_array_equal(a1, a2)
@@ -110,6 +125,7 @@ class TestSyntheticEvent:
 # ---------------------------------------------------------------------------
 # Tests for amplocate
 # ---------------------------------------------------------------------------
+
 
 class TestAmplocate:
     def test_recovers_synthetic_location(self, station_coords, true_location):
@@ -135,7 +151,9 @@ class TestAmplocate:
 
     def test_predicted_amplitudes_shape(self, station_coords, true_location):
         _, observed_amps = synthetic_event(
-            true_location, station_coords, source_amplitude=1.0,
+            true_location,
+            station_coords,
+            source_amplitude=1.0,
         )
         result = amplocate(
             observed_amps,
@@ -147,7 +165,9 @@ class TestAmplocate:
 
     def test_misfit_value_is_nonnegative(self, station_coords, true_location):
         _, observed_amps = synthetic_event(
-            true_location, station_coords, source_amplitude=1.0,
+            true_location,
+            station_coords,
+            source_amplitude=1.0,
         )
         result = amplocate(
             observed_amps,
@@ -186,7 +206,9 @@ class TestAmplocate:
             distance_grids[ii] = np.sqrt(dx**2 + dy**2 + dz**2)
 
         _, observed_amps = synthetic_event(
-            true_location, station_coords, source_amplitude=5.0,
+            true_location,
+            station_coords,
+            source_amplitude=5.0,
         )
 
         result = amplocate(
@@ -202,6 +224,7 @@ class TestAmplocate:
 # ---------------------------------------------------------------------------
 # Tests for locate_by_travel_time
 # ---------------------------------------------------------------------------
+
 
 class TestLocateByTravelTime:
     def test_recovers_synthetic_location(self, station_coords, true_location):
@@ -228,7 +251,9 @@ class TestLocateByTravelTime:
     def test_residual_nonnegative(self, station_coords, true_location):
         velocity = 1020.0
         tt, _ = synthetic_event(
-            true_location, station_coords, velocity=velocity,
+            true_location,
+            station_coords,
+            velocity=velocity,
         )
         result = locate_by_travel_time(
             tt,
@@ -252,7 +277,9 @@ class TestLocateByTravelTime:
     def test_reference_station_index(self, station_coords, true_location):
         velocity = 1020.0
         tt, _ = synthetic_event(
-            true_location, station_coords, velocity=velocity,
+            true_location,
+            station_coords,
+            velocity=velocity,
         )
         # Use a different reference station.
         result = locate_by_travel_time(

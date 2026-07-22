@@ -1,5 +1,5 @@
 Seismic Workflow Engine
-======================
+=======================
 
 **SWE** is a modular seismic analysis toolkit covering noise classification,
 phase picking, association, matched-filter detection, hypocenter location,

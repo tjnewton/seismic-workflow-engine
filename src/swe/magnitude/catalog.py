@@ -30,8 +30,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "attach_local_magnitudes",
     "attach_duration_magnitudes",
+    "attach_local_magnitudes",
     "attach_magnitudes_to_catalog",
 ]
 
@@ -70,9 +70,7 @@ def attach_local_magnitudes(
     Event
         The same event with magnitudes appended.
     """
-    result = local_magnitude(
-        stream, distances_km, a=a, b=b, c=c, water_level=water_level
-    )
+    result = local_magnitude(stream, distances_km, a=a, b=b, c=c, water_level=water_level)
 
     if np.isnan(result.ml):
         logger.warning("ML computation returned NaN, skipping attachment")
@@ -102,15 +100,11 @@ def attach_local_magnitudes(
     mag = Magnitude(
         mag=result.ml,
         magnitude_type="ML",
-        station_count=sum(
-            1 for m in result.ml_per_station if not np.isnan(m)
-        ),
+        station_count=sum(1 for m in result.ml_per_station if not np.isnan(m)),
         station_magnitude_contributions=contributions,
     )
     if result.magnitude_uncertainty is not None:
-        mag.mag_errors = QuantityError(
-            uncertainty=result.magnitude_uncertainty.mag_uncertainty
-        )
+        mag.mag_errors = QuantityError(uncertainty=result.magnitude_uncertainty.mag_uncertainty)
     elif result.ml_stderr > 0:
         mag.mag_errors = QuantityError(uncertainty=result.ml_stderr)
     event.magnitudes.append(mag)

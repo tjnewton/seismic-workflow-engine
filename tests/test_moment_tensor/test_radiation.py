@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from swe.moment_tensor.radiation import (
     _direction_cosines,
@@ -11,7 +10,7 @@ from swe.moment_tensor.radiation import (
     radiation_pattern_sh,
     radiation_pattern_sv,
 )
-from swe.moment_tensor.tensor import strike_dip_rake_to_tensor, to_matrix
+from swe.moment_tensor.tensor import strike_dip_rake_to_tensor
 
 
 class TestDirectionCosines:
@@ -24,7 +23,8 @@ class TestDirectionCosines:
     def test_takeoff_zero(self):
         """takeoff=0 (straight up) should give gamma = (0, 0, +1)."""
         gx, gy, gz = _direction_cosines(
-            np.array([0.0]), np.array([0.0]),
+            np.array([0.0]),
+            np.array([0.0]),
         )
         np.testing.assert_allclose(gx, 0.0, atol=1e-15)
         np.testing.assert_allclose(gy, 0.0, atol=1e-15)
@@ -33,7 +33,8 @@ class TestDirectionCosines:
     def test_takeoff_pi(self):
         """takeoff=pi (straight down) should give gamma = (0, 0, -1)."""
         gx, gy, gz = _direction_cosines(
-            np.array([0.0]), np.array([np.pi]),
+            np.array([0.0]),
+            np.array([np.pi]),
         )
         np.testing.assert_allclose(gx, 0.0, atol=1e-15)
         np.testing.assert_allclose(gy, 0.0, atol=1e-15)
@@ -42,7 +43,8 @@ class TestDirectionCosines:
     def test_horizontal_ray_north(self):
         """takeoff=pi/2, azimuth=0 should give (1, 0, 0) - due North."""
         gx, gy, gz = _direction_cosines(
-            np.array([0.0]), np.array([np.pi / 2]),
+            np.array([0.0]),
+            np.array([np.pi / 2]),
         )
         np.testing.assert_allclose(gx, 1.0, atol=1e-15)
         np.testing.assert_allclose(gy, 0.0, atol=1e-15)
@@ -61,8 +63,11 @@ class TestDirectionCosines:
 
         rad_new = radiation_pattern_p(mt, azimuths, takeoffs)
         rad_old = _radiation_pattern(
-            np.radians(strike), np.radians(dip), np.radians(rake),
-            np.radians(azimuths), np.radians(takeoffs),
+            np.radians(strike),
+            np.radians(dip),
+            np.radians(rake),
+            np.radians(azimuths),
+            np.radians(takeoffs),
         )
         np.testing.assert_array_equal(np.sign(rad_new), np.sign(rad_old))
 
@@ -119,9 +124,7 @@ class TestPRadiation:
     def test_scalar_output(self):
         """Single azimuth/takeoff pair should return a scalar-like value."""
         mt = strike_dip_rake_to_tensor(0.0, 45.0, 90.0)
-        rad = radiation_pattern_p(
-            mt, np.array([90.0]), np.array([45.0])
-        )
+        rad = radiation_pattern_p(mt, np.array([90.0]), np.array([45.0]))
         assert rad.shape == (1,)
 
     def test_zero_tensor_zero_radiation(self):

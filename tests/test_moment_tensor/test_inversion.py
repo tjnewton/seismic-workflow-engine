@@ -11,11 +11,6 @@ from swe.moment_tensor.inversion import (
     moment_tensor_from_polarities,
     moment_tensor_uncertainty,
 )
-from swe.moment_tensor.tensor import (
-    decompose_moment_tensor,
-    tensor_to_strike_dip_rake,
-    to_matrix,
-)
 
 
 class TestMomentTensorFromPolarities:

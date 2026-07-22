@@ -8,7 +8,8 @@ times, and computes scatter-cloud statistics.
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -18,8 +19,8 @@ from swe.uncertainty.types import LocationUncertainty
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "monte_carlo_location_uncertainty",
     "hypocenters_to_location_uncertainty",
+    "monte_carlo_location_uncertainty",
 ]
 
 
@@ -92,8 +93,7 @@ def monte_carlo_location_uncertainty(
 
     if len(xs) < 2:
         logger.warning(
-            "Monte Carlo location: only %d successful relocations "
-            "(need >= 2 for uncertainty)",
+            "Monte Carlo location: only %d successful relocations (need >= 2 for uncertainty)",
             len(xs),
         )
         return LocationUncertainty(method="monte_carlo", n_samples=len(xs))

@@ -34,11 +34,17 @@ def _synthetic_s_p(strike, dip, rake, *, n=24, seed=1):
 class TestMomentTensorFromSPRatios:
     def test_recovers_strike_slip_mechanism(self):
         """Synthetic recovery: a strike-slip input should be well fit."""
-        az, to, ratios, true_mt = _synthetic_s_p(315.0, 80.0, 170.0)
+        az, to, ratios, _true_mt = _synthetic_s_p(315.0, 80.0, 170.0)
         result = moment_tensor_from_s_p_ratios(
-            az, to, ratios,
-            constraint="dc", max_misfit=0.5, min_observations=6,
-            strike_step=15.0, dip_step=15.0, rake_step=15.0,
+            az,
+            to,
+            ratios,
+            constraint="dc",
+            max_misfit=0.5,
+            min_observations=6,
+            strike_step=15.0,
+            dip_step=15.0,
+            rake_step=15.0,
         )
         assert isinstance(result, AmplitudeMTResult)
         assert result.best is not None
@@ -69,8 +75,13 @@ class TestMomentTensorFromSPRatios:
         ratios[1] = -1.0
         ratios[2] = 0.0
         result = moment_tensor_from_s_p_ratios(
-            az, to, ratios, min_observations=6,
-            strike_step=30, dip_step=30, rake_step=30,
+            az,
+            to,
+            ratios,
+            min_observations=6,
+            strike_step=30,
+            dip_step=30,
+            rake_step=30,
         )
         assert result.n_observations == 7  # 10 - 3 dropped
 
@@ -83,7 +94,12 @@ class TestMomentTensorFromSPRatios:
         """VR is defined against variance about the mean (not raw mean-square)."""
         az, to, ratios, _ = _synthetic_s_p(315.0, 80.0, 170.0)
         result = moment_tensor_from_s_p_ratios(
-            az, to, ratios, max_misfit=2.0,
-            strike_step=20, dip_step=20, rake_step=20,
+            az,
+            to,
+            ratios,
+            max_misfit=2.0,
+            strike_step=20,
+            dip_step=20,
+            rake_step=20,
         )
         assert 0.0 <= result.variance_reduction <= 1.0

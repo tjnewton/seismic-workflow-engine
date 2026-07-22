@@ -3,5 +3,4 @@
 
 .. automodule:: swe.topo
    :members:
-   :undoc-members:
    :show-inheritance:

@@ -17,7 +17,6 @@ from swe.moment_tensor.tensor import (
     to_matrix,
 )
 
-
 # ---------------------------------------------------------------------------
 # Scalar moment and moment magnitude
 # ---------------------------------------------------------------------------
@@ -136,12 +135,15 @@ class TestDecomposition:
 class TestSDRConversion:
     """Tests for strike_dip_rake_to_tensor and tensor_to_strike_dip_rake."""
 
-    @pytest.mark.parametrize("strike,dip,rake", [
-        (0.0, 45.0, 90.0),    # thrust
-        (90.0, 90.0, 0.0),    # strike-slip
-        (180.0, 45.0, -90.0), # normal fault
-        (270.0, 30.0, 45.0),  # oblique
-    ])
+    @pytest.mark.parametrize(
+        "strike,dip,rake",
+        [
+            (0.0, 45.0, 90.0),  # thrust
+            (90.0, 90.0, 0.0),  # strike-slip
+            (180.0, 45.0, -90.0),  # normal fault
+            (270.0, 30.0, 45.0),  # oblique
+        ],
+    )
     def test_round_trip(self, strike, dip, rake):
         """strike/dip/rake -> MT -> strike/dip/rake should recover equivalent mechanism."""
         mt = strike_dip_rake_to_tensor(strike, dip, rake, m0=1.0)

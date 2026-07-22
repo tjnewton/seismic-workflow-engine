@@ -68,10 +68,12 @@ class TestLocalMagnitude:
         assert isinstance(result, LocalMagnitudeResult)
 
     def test_station_names(self):
-        st = Stream([
-            _make_trace(station="AAA"),
-            _make_trace(station="BBB"),
-        ])
+        st = Stream(
+            [
+                _make_trace(station="AAA"),
+                _make_trace(station="BBB"),
+            ]
+        )
         result = local_magnitude(st, [10.0, 20.0])
         assert "XX.AAA.BHZ" in result.station_names
         assert "XX.BBB.BHZ" in result.station_names
@@ -103,10 +105,7 @@ class TestLocalMagnitude:
 
     def test_ml_stderr_computed(self):
         """ml_stderr should be > 0 with multiple valid stations."""
-        st = Stream([
-            _make_trace(station=f"ST{i}", amplitude=float(i + 1))
-            for i in range(4)
-        ])
+        st = Stream([_make_trace(station=f"ST{i}", amplitude=float(i + 1)) for i in range(4)])
         result = local_magnitude(st, [10.0, 20.0, 30.0, 40.0])
         if result.n_valid_stations > 1:
             assert result.ml_std > 0

@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import numpy as np
-import pytest
 from matplotlib.figure import Figure
 
 from swe.viz.statistics import (
@@ -14,7 +14,6 @@ from swe.viz.statistics import (
     plot_distribution,
     plot_moment_distribution,
 )
-
 
 # ---------------------------------------------------------------------------
 # plot_distribution edge cases

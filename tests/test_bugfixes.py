@@ -10,7 +10,7 @@ import threading
 import time
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -110,13 +110,18 @@ class TestBug1HmacSigning:
         pkl_path = tmp_path / "s1.output.pkl"
         meta_path = tmp_path / "s1.output.pkl.meta"
         with open(pkl_path, "wb") as fh:
-            pickle.dump(_PicklableForHmacTest(), fh)  # noqa: S301
+            pickle.dump(_PicklableForHmacTest(), fh)
 
         import swe
-        meta_path.write_text(json.dumps({
-            "swe_version": swe.__version__,
-            "python_version": "3.x",
-        }))
+
+        meta_path.write_text(
+            json.dumps(
+                {
+                    "swe_version": swe.__version__,
+                    "python_version": "3.x",
+                }
+            )
+        )
 
         with pytest.raises(FileNotFoundError, match="Unsigned or tampered"):
             deserialize_output(tmp_path, "s1")
@@ -169,11 +174,13 @@ class TestBug2And3RaceConditions:
         from swe.pipeline.core import Pipeline, PipelineStep
 
         # 3 steps with no dependencies (all in same tier)
-        pipeline = Pipeline(steps=[
-            PipelineStep(name="a", function="os.getcwd", params={}),
-            PipelineStep(name="b", function="os.getcwd", params={}),
-            PipelineStep(name="c", function="os.getcwd", params={}),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                PipelineStep(name="a", function="os.getcwd", params={}),
+                PipelineStep(name="b", function="os.getcwd", params={}),
+                PipelineStep(name="c", function="os.getcwd", params={}),
+            ]
+        )
 
         call_count = {"n": 0}
         lock = threading.Lock()
@@ -186,9 +193,7 @@ class TestBug2And3RaceConditions:
             return {"result": n}
 
         with patch("swe.pipeline.core._import_callable", return_value=_slow_fn):
-            outputs = pipeline.execute(
-                run_dir=tmp_path / "runs", parallel=True
-            )
+            outputs = pipeline.execute(run_dir=tmp_path / "runs", parallel=True)
 
         assert "a" in outputs
         assert "b" in outputs
@@ -254,7 +259,7 @@ class TestBug5ParameterResolutionErrors:
         from swe.pipeline.core import _resolve_params
 
         outputs = {"s1": {"a": 1}}
-        with pytest.raises(KeyError, match="key 'missing'.*not found"):
+        with pytest.raises(KeyError, match=r"key 'missing'.*not found"):
             _resolve_params({"x": "${s1.missing}"}, outputs)
 
     def test_missing_attr_raises_attributeerror(self):
@@ -284,13 +289,13 @@ class TestBug6NanPropagation:
         # Template with known amplitude
         tmpl_tr = Trace(
             data=np.array([0.0, 1.0, -1.0, 0.5], dtype=np.float64),
-            header={"network": "XX", "station": "ST00", "channel": "BHZ",
-                    "sampling_rate": 100.0},
+            header={"network": "XX", "station": "ST00", "channel": "BHZ", "sampling_rate": 100.0},
         )
         template = SimpleNamespace(name="test", st=Stream([tmpl_tr]))
 
         detection = SimpleNamespace(
-            detect_val=0.8, no_chans=1,
+            detect_val=0.8,
+            no_chans=1,
             detect_time=UTCDateTime(2024, 1, 1),
             template_name="test",
         )
@@ -299,8 +304,7 @@ class TestBug6NanPropagation:
         # Detection stream with NaN data
         nan_tr = Trace(
             data=np.array([np.nan, np.nan, np.nan, np.nan], dtype=np.float64),
-            header={"network": "XX", "station": "ST00", "channel": "BHZ",
-                    "sampling_rate": 100.0},
+            header={"network": "XX", "station": "ST00", "channel": "BHZ", "sampling_rate": 100.0},
         )
         det_streams = [Stream([nan_tr])]
 
@@ -332,9 +336,7 @@ class TestBug7SignalMaxPoolLookup:
         pick_time = tr.stats.starttime + 10.0
 
         # Should not raise IndexError
-        dy, d2y, curvature, fits, mads = get_trace_properties(
-            tr, pick_time, duration=5.0
-        )
+        dy, _d2y, _curvature, _fits, mads = get_trace_properties(tr, pick_time, duration=5.0)
         assert len(dy) > 0
         assert len(mads) == 6
 
@@ -353,9 +355,7 @@ class TestBug8VelocityLookupSymmetry:
         velocities = np.array([4.0, 6.0])
 
         # Downward ray starting exactly at boundary (z=5.0)
-        h_down = _compute_horizontal_distance(
-            5.0, 10.0, 135.0, depths, velocities
-        )
+        h_down = _compute_horizontal_distance(5.0, 10.0, 135.0, depths, velocities)
         # Should use the below-boundary velocity (6.0), not total internal reflection
         assert h_down < 1e6
 
@@ -367,9 +367,7 @@ class TestBug8VelocityLookupSymmetry:
         stations = {"STA1": [10.0, 0.0, 10.0]}  # below
         profile = [[0.0, 4.0], [5.0, 6.0]]
 
-        result = compute_takeoff_angles_1d(
-            source, stations, velocity_profile=profile
-        )
+        result = compute_takeoff_angles_1d(source, stations, velocity_profile=profile)
         assert len(result.stations) == 1
         assert 90.0 < result.takeoff_angles[0] < 180.0  # downgoing
 
@@ -415,7 +413,7 @@ class TestBug9WindowBounds:
                 sampling_rate=sr,
             )
             # Should not crash with IndexError
-            for ws, we, sta, cha in result.times:
+            for ws, we, _sta, _cha in result.times:
                 assert we >= ws
         finally:
             Path(tmp_path).unlink(missing_ok=True)
@@ -476,7 +474,7 @@ class TestBug13CoordinateValidation:
             "STA1": [-122.0, 37.0],  # no elevation
             "STA2": [-122.1, 37.1, 0.5],  # with elevation
         }
-        local_coords, origin = geo_to_local(location_dict)
+        local_coords, _origin = geo_to_local(location_dict)
         assert "STA1" in local_coords
         assert "STA2" in local_coords
 
@@ -507,11 +505,11 @@ class TestBug14NamedConstant:
         from swe.location.nonlinloc import HypocenterResult, hypocenter_to_obspy_origin
 
         hyp = HypocenterResult(
-            x_km=1.0, y_km=2.0, z_m=3000.0,
+            x_km=1.0,
+            y_km=2.0,
+            z_m=3000.0,
             horiz_uncertainty_m=1000.0,
         )
-        origin = hypocenter_to_obspy_origin(
-            hyp, reference_lat=0.0, reference_lon=0.0
-        )
+        origin = hypocenter_to_obspy_origin(hyp, reference_lat=0.0, reference_lon=0.0)
         expected_deg = 1000.0 / 111_320.0
         assert abs(origin.latitude_errors.uncertainty - expected_deg) < 1e-10

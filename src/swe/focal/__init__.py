@@ -31,20 +31,20 @@ from swe.focal.takeoff import (
 )
 
 __all__ = [
+    # solve
+    "FocalMechanism",
+    "FocalMechanismResult",
     # polarity
     "PolarityObservation",
     "PolarityResult",
-    "measure_polarity",
-    "measure_polarities",
     # takeoff
     "RayParameters",
     "compute_takeoff_angles",
     "compute_takeoff_angles_1d",
-    # solve
-    "FocalMechanism",
-    "FocalMechanismResult",
     "focal_mechanism_gridsearch",
     "focal_mechanism_uncertainty",
     "focal_mechanisms_batch",
+    "measure_polarities",
+    "measure_polarity",
     "polarity_result_to_event_dict",
 ]

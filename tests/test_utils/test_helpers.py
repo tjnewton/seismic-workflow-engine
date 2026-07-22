@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from obspy import Trace, Stream
+from obspy import Stream, Trace
 
 from swe.utils.helpers import (
     ellipsoidal_distance,
@@ -147,7 +147,7 @@ class TestGeoToLocal:
 
     def test_empty_dict(self):
         """Empty input should return empty dict."""
-        coords, origin = geo_to_local({})
+        coords, _origin = geo_to_local({})
         assert coords == {}
 
     def test_returns_numpy_arrays(self):

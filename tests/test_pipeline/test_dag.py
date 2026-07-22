@@ -104,12 +104,8 @@ class TestTopologicalTiers:
         """a -> b -> c should produce 3 tiers."""
         steps = [
             PipelineStep(name="a", function="mod.fn", params={}),
-            PipelineStep(
-                name="b", function="mod.fn", params={"x": "${a.out}"}
-            ),
-            PipelineStep(
-                name="c", function="mod.fn", params={"x": "${b.out}"}
-            ),
+            PipelineStep(name="b", function="mod.fn", params={"x": "${a.out}"}),
+            PipelineStep(name="c", function="mod.fn", params={"x": "${b.out}"}),
         ]
         graph = build_dependency_graph(steps)
         tiers = topological_tiers(steps, graph)
@@ -122,12 +118,8 @@ class TestTopologicalTiers:
         """a -> (b, c) -> d produces 3 tiers; b and c are parallel."""
         steps = [
             PipelineStep(name="a", function="mod.fn", params={}),
-            PipelineStep(
-                name="b", function="mod.fn", params={"x": "${a.out}"}
-            ),
-            PipelineStep(
-                name="c", function="mod.fn", params={"x": "${a.out}"}
-            ),
+            PipelineStep(name="b", function="mod.fn", params={"x": "${a.out}"}),
+            PipelineStep(name="c", function="mod.fn", params={"x": "${a.out}"}),
             PipelineStep(
                 name="d",
                 function="mod.fn",

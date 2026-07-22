@@ -13,7 +13,7 @@ Shelly, D.R. et al. (2007). Non-volcanic tremor and low-frequency
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "RelativeMomentResult",
+    "relative_moment_dataframe",
     "relative_moments_from_party",
     "relative_moments_from_streams",
-    "relative_moment_dataframe",
 ]
 
 
@@ -178,7 +178,7 @@ def relative_moments_from_streams(
                     ratios.append(det_amp / tmpl_amp)
 
         if ratios:
-            rel_moment = float(np.median(ratios))
+            rel_moment = float(np.median(np.asarray(ratios, dtype=float)))
         else:
             rel_moment = cc / max(detection.no_chans, 1)
 
@@ -229,11 +229,13 @@ def relative_moment_dataframe(
     rows: list[dict] = []
     for result in results:
         for i in range(len(result.relative_moments)):
-            rows.append({
-                "template_name": result.template_name,
-                "detect_time": result.detect_times[i],
-                "relative_moment": result.relative_moments[i],
-                "relative_magnitude": result.relative_magnitudes[i],
-            })
+            rows.append(
+                {
+                    "template_name": result.template_name,
+                    "detect_time": result.detect_times[i],
+                    "relative_moment": result.relative_moments[i],
+                    "relative_magnitude": result.relative_magnitudes[i],
+                }
+            )
 
     return pd.DataFrame(rows)

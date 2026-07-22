@@ -26,7 +26,8 @@ logger = logging.getLogger(__name__)
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version=swe.__version__, prog_name="swe")
 @click.option(
-    "-v", "--verbose",
+    "-v",
+    "--verbose",
     count=True,
     help="Increase verbosity (-v for INFO, -vv for DEBUG).",
 )
@@ -121,9 +122,7 @@ def run(
         if errors:
             for e in errors:
                 click.echo(f"  ERROR: {e}")
-            raise click.ClickException(
-                f"Dry run failed with {len(errors)} error(s)"
-            )
+            raise click.ClickException(f"Dry run failed with {len(errors)} error(s)")
         click.echo("Dry run passed: pipeline is valid.")
         return
 
@@ -141,6 +140,7 @@ def run(
 
 
 # --- Pipeline management subgroup ---
+
 
 @cli.group()
 def pipeline() -> None:
@@ -179,8 +179,7 @@ def pipeline_template(workflow: str, output: str | None) -> None:
     out_path = Path(output)
     if out_path.exists():
         raise click.ClickException(
-            f"File already exists: {out_path}. "
-            "Use --output to specify a different path."
+            f"File already exists: {out_path}. Use --output to specify a different path."
         )
 
     out_path.write_text(content)
@@ -196,7 +195,7 @@ def pipeline_list() -> None:
     click.echo("Available pipeline templates:")
     for name in templates:
         click.echo(f"  {name}")
-    click.echo(f"\nUse 'swe pipeline template <name>' to scaffold a config.")
+    click.echo("\nUse 'swe pipeline template <name>' to scaffold a config.")
 
 
 cli.add_command(download)

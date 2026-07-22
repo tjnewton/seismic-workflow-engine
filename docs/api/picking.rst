@@ -3,5 +3,4 @@
 
 .. automodule:: swe.picking
    :members:
-   :undoc-members:
    :show-inheritance:

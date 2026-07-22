@@ -5,11 +5,9 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import numpy as np
-import pytest
 from obspy.core.utcdatetime import UTCDateTime
 
-from swe.noise.validation import verify_noise_windows, explore_noise_windows
-
+from swe.noise.validation import explore_noise_windows, verify_noise_windows
 
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
@@ -89,7 +87,7 @@ class TestVerifyNoiseWindows:
         mrkr.write_text(SAMPLE_MARKER_CONTENT)
 
         windows, times = _make_windows_and_times(4)
-        verified_w, verified_t = verify_noise_windows(windows, times, mrkr)
+        verified_w, _verified_t = verify_noise_windows(windows, times, mrkr)
 
         # Window 1 (index 1 in original) should now be first
         np.testing.assert_array_equal(verified_w[0], windows[1])
@@ -104,7 +102,7 @@ class TestVerifyNoiseWindows:
         )
 
         windows, times = _make_windows_and_times(4)
-        verified_w, verified_t = verify_noise_windows(windows, times, mrkr)
+        verified_w, _verified_t = verify_noise_windows(windows, times, mrkr)
 
         assert verified_w.shape[0] == 4
 
@@ -120,8 +118,10 @@ class TestExploreNoiseWindows:
     def test_no_removal(self, mock_input, mock_plot):
         """Empty input means no windows removed."""
         windows, times = _make_windows_and_times(3)
-        result_w, result_t = explore_noise_windows(
-            windows, times, batch_size=10,
+        result_w, _result_t = explore_noise_windows(
+            windows,
+            times,
+            batch_size=10,
         )
         # All windows processed, no removal
         assert result_w is None or result_w.shape[0] == 3
@@ -132,7 +132,9 @@ class TestExploreNoiseWindows:
         """User-specified indices should be removed."""
         windows, times = _make_windows_and_times(3)
         result_w, result_t = explore_noise_windows(
-            windows, times, batch_size=10,
+            windows,
+            times,
+            batch_size=10,
         )
         assert result_w is not None
         assert result_w.shape[0] == 1
@@ -153,7 +155,9 @@ class TestExploreNoiseWindows:
         os.chdir(tmp_path)
         try:
             result_w, result_t = explore_noise_windows(
-                windows, times, batch_size=2,
+                windows,
+                times,
+                batch_size=2,
             )
         finally:
             os.chdir(original_dir)
@@ -169,14 +173,21 @@ class TestExploreNoiseWindows:
         import json
 
         progress = tmp_path / "progress.json"
-        progress.write_text(json.dumps({
-            "start_index": 2,
-            "removal_indices": [0],
-        }))
+        progress.write_text(
+            json.dumps(
+                {
+                    "start_index": 2,
+                    "removal_indices": [0],
+                }
+            )
+        )
 
         windows, times = _make_windows_and_times(4)
-        result_w, result_t = explore_noise_windows(
-            windows, times, progress_file=progress, batch_size=10,
+        result_w, _result_t = explore_noise_windows(
+            windows,
+            times,
+            progress_file=progress,
+            batch_size=10,
         )
         # Removal indices: [0] from saved + [1] from user input = [0, 1]
         assert result_w is not None

@@ -56,9 +56,7 @@ class TestSWEJSONEncoder:
 
     def test_plain_dict_passthrough(self):
         """Plain dicts should serialize without custom encoding."""
-        result = json.loads(
-            json.dumps({"d": {"a": 1, "b": 2}}, cls=SWEJSONEncoder)
-        )
+        result = json.loads(json.dumps({"d": {"a": 1, "b": 2}}, cls=SWEJSONEncoder))
         assert result["d"] == {"a": 1, "b": 2}
 
 

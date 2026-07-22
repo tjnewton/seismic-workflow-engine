@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from swe.pipeline.core import Pipeline, PipelineStep, _resolve_params, _extract_uncertainty
+from swe.pipeline.core import Pipeline, PipelineStep, _extract_uncertainty, _resolve_params
 
 
 class TestPipelineFromYaml:
@@ -41,34 +41,21 @@ class TestPipelineFromYaml:
     def test_empty_params(self, tmp_path):
         """Steps without params should default to empty dict."""
         config = tmp_path / "noparam.yml"
-        config.write_text(
-            "steps:\n"
-            "  - name: step1\n"
-            "    function: os.getcwd\n"
-        )
+        config.write_text("steps:\n  - name: step1\n    function: os.getcwd\n")
         pipeline = Pipeline.from_yaml(config)
         assert pipeline.steps[0].params == {}
 
     def test_cache_flag_from_yaml(self, tmp_path):
         """Should parse ``cache: false`` from YAML."""
         config = tmp_path / "nocache.yml"
-        config.write_text(
-            "steps:\n"
-            "  - name: step1\n"
-            "    function: os.getcwd\n"
-            "    cache: false\n"
-        )
+        config.write_text("steps:\n  - name: step1\n    function: os.getcwd\n    cache: false\n")
         pipeline = Pipeline.from_yaml(config)
         assert pipeline.steps[0].cache is False
 
     def test_cache_defaults_true(self, tmp_path):
         """Steps without explicit cache key should default to True."""
         config = tmp_path / "default.yml"
-        config.write_text(
-            "steps:\n"
-            "  - name: step1\n"
-            "    function: os.getcwd\n"
-        )
+        config.write_text("steps:\n  - name: step1\n    function: os.getcwd\n")
         pipeline = Pipeline.from_yaml(config)
         assert pipeline.steps[0].cache is True
 
@@ -79,9 +66,11 @@ class TestPipelineExecute:
     def test_executes_steps(self, tmp_path):
         """Should call each step function with resolved params."""
         mock_fn = MagicMock(return_value={"result": 42})
-        pipeline = Pipeline(steps=[
-            PipelineStep(name="s1", function="os.getcwd", params={}),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                PipelineStep(name="s1", function="os.getcwd", params={}),
+            ]
+        )
 
         with patch("swe.pipeline.core._import_callable", return_value=mock_fn):
             outputs = pipeline.execute(run_dir=tmp_path / "runs")
@@ -92,10 +81,12 @@ class TestPipelineExecute:
     def test_skip_steps(self, tmp_path):
         """Skipped steps should not be executed."""
         mock_fn = MagicMock()
-        pipeline = Pipeline(steps=[
-            PipelineStep(name="s1", function="os.getcwd", params={}),
-            PipelineStep(name="s2", function="os.getcwd", params={}),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                PipelineStep(name="s1", function="os.getcwd", params={}),
+                PipelineStep(name="s2", function="os.getcwd", params={}),
+            ]
+        )
 
         with patch("swe.pipeline.core._import_callable", return_value=mock_fn):
             outputs = pipeline.execute(skip={"s1"}, run_dir=tmp_path / "runs")
@@ -109,14 +100,16 @@ class TestPipelineExecute:
         fn1 = MagicMock(return_value={"outpath": "/data/file.ms"})
         fn2 = MagicMock(return_value="done")
 
-        pipeline = Pipeline(steps=[
-            PipelineStep(name="s1", function="mod.fn1", params={}),
-            PipelineStep(
-                name="s2",
-                function="mod.fn2",
-                params={"input_file": "${s1.outpath}"},
-            ),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                PipelineStep(name="s1", function="mod.fn1", params={}),
+                PipelineStep(
+                    name="s2",
+                    function="mod.fn2",
+                    params={"input_file": "${s1.outpath}"},
+                ),
+            ]
+        )
 
         call_count = [0]
 
@@ -137,10 +130,12 @@ class TestPipelineExecute:
         run_dir = tmp_path / "runs"
         mock_fn = MagicMock(return_value={"val": 1})
 
-        pipeline = Pipeline(steps=[
-            PipelineStep(name="s1", function="os.getcwd", params={}),
-            PipelineStep(name="s2", function="os.getcwd", params={}),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                PipelineStep(name="s1", function="os.getcwd", params={}),
+                PipelineStep(name="s2", function="os.getcwd", params={}),
+            ]
+        )
 
         # First run: execute both steps
         with patch("swe.pipeline.core._import_callable", return_value=mock_fn):
@@ -164,9 +159,11 @@ class TestPipelineExecute:
         def _boom(**kwargs):
             raise RuntimeError("step failed")
 
-        pipeline = Pipeline(steps=[
-            PipelineStep(name="explode", function="os.getcwd", params={}),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                PipelineStep(name="explode", function="os.getcwd", params={}),
+            ]
+        )
 
         with (
             patch("swe.pipeline.core._import_callable", return_value=_boom),
@@ -183,9 +180,11 @@ class TestPipelineExecute:
             call_count[0] += 1
             return {"n": call_count[0]}
 
-        pipeline = Pipeline(steps=[
-            PipelineStep(name="s1", function="os.getcwd", params={}),
-        ])
+        pipeline = Pipeline(
+            steps=[
+                PipelineStep(name="s1", function="os.getcwd", params={}),
+            ]
+        )
 
         with patch("swe.pipeline.core._import_callable", return_value=_counter):
             pipeline.execute(run_dir=run_dir)

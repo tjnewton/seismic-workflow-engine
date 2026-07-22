@@ -59,9 +59,9 @@ def _direction_cosines(
     # takeoff=π -> straight down -> gamma_z = cos(π) = -1
     # This is consistent with the M tensor from strike_dip_rake_to_tensor
     # and with Aki & Richards eq. 4.88 in focal.solve._radiation_pattern.
-    gamma_x = sin_t * cos_a   # North component
-    gamma_y = sin_t * sin_a   # East component
-    gamma_z = cos_t            # Down component
+    gamma_x = sin_t * cos_a  # North component
+    gamma_y = sin_t * sin_a  # East component
+    gamma_z = cos_t  # Down component
 
     return gamma_x, gamma_y, gamma_z
 
@@ -106,7 +106,7 @@ def radiation_pattern_p(
     gamma = np.stack([gx, gy, gz], axis=-1)  # (..., 3)
     rad = np.einsum("...i,ij,...j->...", gamma, m, gamma)
 
-    return rad
+    return np.asarray(rad)
 
 
 def radiation_pattern_sv(
@@ -160,7 +160,7 @@ def radiation_pattern_sv(
     # A_SV = sv_i M_ij gamma_j
     rad = np.einsum("...i,ij,...j->...", sv, m, gamma)
 
-    return rad
+    return np.asarray(rad)
 
 
 def radiation_pattern_sh(
@@ -210,4 +210,4 @@ def radiation_pattern_sh(
     # A_SH = sh_i M_ij gamma_j
     rad = np.einsum("...i,ij,...j->...", sh, m, gamma)
 
-    return rad
+    return np.asarray(rad)

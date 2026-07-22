@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import numpy as np
-import pytest
 from matplotlib.figure import Figure
 from obspy import Stream, Trace, UTCDateTime
-from obspy.core.trace import Stats
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_trace(
     *,
@@ -51,6 +50,7 @@ def _make_stream(n_traces: int = 3, **kwargs) -> Stream:
 # ---------------------------------------------------------------------------
 # Waveform tests
 # ---------------------------------------------------------------------------
+
 
 class TestPlotStream:
     def test_returns_figure(self):
@@ -200,6 +200,7 @@ class TestPlotTemplateAndStack:
 # Statistics tests
 # ---------------------------------------------------------------------------
 
+
 class TestPlotDistribution:
     def test_returns_figure(self):
         from swe.viz.statistics import plot_distribution
@@ -241,9 +242,7 @@ class TestPlotDateDistribution:
     def test_with_utcdatetime(self):
         from swe.viz.statistics import plot_date_distribution
 
-        dates = [
-            UTCDateTime(2024, 1, d) for d in range(1, 20)
-        ]
+        dates = [UTCDateTime(2024, 1, d) for d in range(1, 20)]
         fig = plot_date_distribution(dates, bins=10, title="UTCDateTime test")
         assert isinstance(fig, Figure)
         plt_close(fig)
@@ -253,7 +252,9 @@ class TestPlotDateDistribution:
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def plt_close(fig: Figure) -> None:
     """Close a figure to free memory."""
     import matplotlib.pyplot as plt
+
     plt.close(fig)

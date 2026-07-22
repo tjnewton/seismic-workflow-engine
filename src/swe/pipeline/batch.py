@@ -10,12 +10,13 @@ CPU-bound operations (spectral analysis, matched-filter detection) or
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from concurrent.futures import (
     ProcessPoolExecutor,
     ThreadPoolExecutor,
     as_completed,
 )
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -110,14 +111,14 @@ def batch_process(
 
     func_kwargs = func_kwargs or {}
 
+    executor_cls: type[ProcessPoolExecutor] | type[ThreadPoolExecutor]
     if executor_type == "process":
         executor_cls = ProcessPoolExecutor
     elif executor_type == "thread":
         executor_cls = ThreadPoolExecutor
     else:
         raise ValueError(
-            f"Unknown executor_type: {executor_type!r}. "
-            f"Supported: 'process', 'thread'"
+            f"Unknown executor_type: {executor_type!r}. Supported: 'process', 'thread'"
         )
 
     logger.info(
@@ -132,8 +133,7 @@ def batch_process(
 
     with executor_cls(max_workers=max_workers) as pool:
         future_to_idx = {
-            pool.submit(_worker, func, item, func_kwargs): i
-            for i, item in enumerate(items)
+            pool.submit(_worker, func, item, func_kwargs): i for i, item in enumerate(items)
         }
 
         iterator = as_completed(future_to_idx)
@@ -156,9 +156,7 @@ def batch_process(
                 result = future.result()
                 results.append(result)
             except Exception as exc:
-                logger.warning(
-                    "Batch item %d failed: %s: %s", idx, type(exc).__name__, exc
-                )
+                logger.warning("Batch item %d failed: %s: %s", idx, type(exc).__name__, exc)
                 errors.append((idx, exc))
 
     logger.info(

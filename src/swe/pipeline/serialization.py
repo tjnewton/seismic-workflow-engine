@@ -27,7 +27,7 @@ import swe
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["serialize_output", "deserialize_output", "SWEJSONEncoder"]
+__all__ = ["SWEJSONEncoder", "deserialize_output", "serialize_output"]
 
 
 def _get_hmac_key() -> bytes:
@@ -145,7 +145,7 @@ def serialize_output(
     meta_path = steps_dir / f"{step_name}.output.pkl.meta"
     try:
         with open(pkl_path, "wb") as fh:
-            pickle.dump(output, fh, protocol=pickle.HIGHEST_PROTOCOL)  # noqa: S301
+            pickle.dump(output, fh, protocol=pickle.HIGHEST_PROTOCOL)
     except (pickle.PicklingError, AttributeError, TypeError) as exc:
         logger.warning(
             "Could not serialize step '%s' output (type: %s): %s; "
@@ -216,8 +216,7 @@ def deserialize_output(steps_dir: Path, step_name: str) -> Any:
         # Verify HMAC signature before loading
         if not _verify_file(pkl_path):
             logger.warning(
-                "Pickle for step '%s' has no valid HMAC signature; "
-                "rejecting as untrusted.",
+                "Pickle for step '%s' has no valid HMAC signature; rejecting as untrusted.",
                 step_name,
             )
             raise FileNotFoundError(
@@ -226,11 +225,9 @@ def deserialize_output(steps_dir: Path, step_name: str) -> Any:
             )
 
         with open(pkl_path, "rb") as fh:
-            return pickle.load(fh)  # noqa: S301
+            return pickle.load(fh)
 
-    raise FileNotFoundError(
-        f"No serialized output found for step '{step_name}' in {steps_dir}"
-    )
+    raise FileNotFoundError(f"No serialized output found for step '{step_name}' in {steps_dir}")
 
 
 class _VersionMismatchError(Exception):

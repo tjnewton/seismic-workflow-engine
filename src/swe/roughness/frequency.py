@@ -14,7 +14,7 @@ Candela, T. et al. (2012). Roughness of fault surfaces over nine
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -133,16 +133,13 @@ def compute_frequency_time_series(
     from swe.utils.signal import instantaneous_frequency
 
     if len(traces) != len(pick_times):
-        msg = (
-            f"Length mismatch: {len(traces)} traces vs "
-            f"{len(pick_times)} pick times"
-        )
+        msg = f"Length mismatch: {len(traces)} traces vs {len(pick_times)} pick times"
         raise ValueError(msg)
 
     all_freqs = []
     all_times = []
 
-    for trace, ptime in zip(traces, pick_times):
+    for trace, ptime in zip(traces, pick_times, strict=False):
         freq = instantaneous_frequency(trace, halfwin=halfwin)
         if np.isnan(freq):
             continue
@@ -242,19 +239,14 @@ def fit_scaling_law(
         "m/week": 1.0 / (7.0 * 86400.0),
     }
     if velocity_unit not in unit_factors:
-        msg = (
-            f"Unknown velocity_unit {velocity_unit!r}. "
-            f"Supported: {list(unit_factors)}"
-        )
+        msg = f"Unknown velocity_unit {velocity_unit!r}. Supported: {list(unit_factors)}"
         raise ValueError(msg)
 
     factor = unit_factors[velocity_unit]
     vel_ms = np.asarray(slip_velocity_values, dtype=np.float64) * factor
 
     # Use bins with valid data
-    valid = ~np.isnan(frequency_ts.median_frequency) & (
-        frequency_ts.count_per_bin > 0
-    )
+    valid = ~np.isnan(frequency_ts.median_frequency) & (frequency_ts.count_per_bin > 0)
     obs_times = frequency_ts.times[valid]
     obs_freq = frequency_ts.median_frequency[valid]
 
@@ -308,9 +300,7 @@ def fit_scaling_law(
     ss_tot = np.sum((obs_freq - np.mean(obs_freq)) ** 2)
     r_squared = 1.0 - ss_res / ss_tot if ss_tot > 0 else np.nan
 
-    logger.info(
-        "Scaling law fit: lambda_0=%.3e m, R^2=%.4f", lambda_0, r_squared
-    )
+    logger.info("Scaling law fit: lambda_0=%.3e m, R^2=%.4f", lambda_0, r_squared)
 
     return ScalingLawFitResult(
         lambda_0=lambda_0,

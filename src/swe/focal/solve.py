@@ -16,7 +16,7 @@ Hardebeck, J.L. & Shearer, P.M. (2002). A new method for determining
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
@@ -118,7 +118,7 @@ def _radiation_pattern(
     sin_2d = np.sin(2.0 * dip_rad)
     cos_2d = np.cos(2.0 * dip_rad)
     sin_2phi = np.sin(2.0 * phi)
-    cos_2phi = np.cos(2.0 * phi)
+    np.cos(2.0 * phi)
 
     # P-wave radiation pattern (Aki & Richards eq. 4.88)
     sin_2t = np.sin(2.0 * takeoff_rad)
@@ -130,12 +130,10 @@ def _radiation_pattern(
         + sin_r * cos_2d * sin_2t * sin_phi
     )
 
-    return rad
+    return np.asarray(rad)
 
 
-def _auxiliary_plane(
-    strike: float, dip: float, rake: float
-) -> tuple[float, float, float]:
+def _auxiliary_plane(strike: float, dip: float, rake: float) -> tuple[float, float, float]:
     """Compute the auxiliary nodal plane from the primary plane.
 
     Parameters
@@ -166,7 +164,9 @@ def _auxiliary_plane(
         return float(np.degrees(s + np.pi)), 0.0, 0.0
 
     # Strike of auxiliary plane
-    cos_s2_diff = -1.0 / (np.tan(d) * np.tan(dip2)) if abs(np.tan(d) * np.tan(dip2)) > 1e-10 else 0.0
+    cos_s2_diff = (
+        -1.0 / (np.tan(d) * np.tan(dip2)) if abs(np.tan(d) * np.tan(dip2)) > 1e-10 else 0.0
+    )
     cos_s2_diff = np.clip(cos_s2_diff, -1.0, 1.0)
     s2_diff = np.arccos(cos_s2_diff)
 
@@ -262,7 +262,8 @@ def focal_mechanism_gridsearch(
     if n_pol < min_polarities:
         logger.warning(
             "Only %d valid polarities (need %d), cannot solve",
-            n_pol, min_polarities,
+            n_pol,
+            min_polarities,
         )
         return FocalMechanismResult(
             mechanisms=[],
@@ -327,9 +328,7 @@ def focal_mechanism_gridsearch(
     best = mechanisms[0] if mechanisms else None
 
     if best is not None:
-        focal_data = np.array(
-            [[best.strike, best.dip, best.rake]], dtype=np.float64
-        )
+        focal_data = np.array([[best.strike, best.dip, best.rake]], dtype=np.float64)
     else:
         focal_data = np.empty((0, 3), dtype=np.float64)
 
@@ -340,9 +339,7 @@ def focal_mechanism_gridsearch(
     if len(mechanisms) > 1:
         strikes_rad = np.radians([m.strike for m in mechanisms])
         strike_std = float(
-            np.degrees(
-                np.sqrt(-2.0 * np.log(max(abs(np.mean(np.exp(1j * strikes_rad))), 1e-30)))
-            )
+            np.degrees(np.sqrt(-2.0 * np.log(max(abs(np.mean(np.exp(1j * strikes_rad))), 1e-30))))
         )
         dip_std = float(np.std([m.dip for m in mechanisms], ddof=1))
         rake_std = float(np.std([m.rake for m in mechanisms], ddof=1))

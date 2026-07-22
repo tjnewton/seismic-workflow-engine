@@ -16,10 +16,10 @@ from swe.velocity.model import (
     save_velocity_model,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_simple_model():
     """Build a minimal VelocityModel for reuse across tests."""
@@ -38,14 +38,18 @@ def _make_simple_ttg():
     stations = np.array([[10.0, 20.0, 0.0], [80.0, 70.0, 0.0]])
     tt = np.random.default_rng(42).random((2, 6, 6, 4))
     return TravelTimeGrid(
-        grid_x=gx, grid_y=gy, grid_z=gz,
-        station_coords=stations, travel_times=tt,
+        grid_x=gx,
+        grid_y=gy,
+        grid_z=gz,
+        station_coords=stations,
+        travel_times=tt,
     )
 
 
 # ---------------------------------------------------------------------------
 # TestReadVelocityModel1d
 # ---------------------------------------------------------------------------
+
 
 class TestReadVelocityModel1d:
     def test_shape_and_bounds(self, tmp_path):
@@ -90,9 +94,7 @@ class TestReadVelocityModel1d:
         # All x-y slices should be identical.
         for ix in range(model.slowness.shape[0]):
             for iy in range(model.slowness.shape[1]):
-                np.testing.assert_array_equal(
-                    model.slowness[ix, iy, :], model.slowness[0, 0, :]
-                )
+                np.testing.assert_array_equal(model.slowness[ix, iy, :], model.slowness[0, 0, :])
 
     def test_max_cells_per_axis_exceeded(self, tmp_path):
         """Should raise ValueError when grid is too large."""
@@ -112,6 +114,7 @@ class TestReadVelocityModel1d:
 # TestReadVelocityModel3d
 # ---------------------------------------------------------------------------
 
+
 class TestReadVelocityModel3d:
     def test_round_trip(self, tmp_path):
         """Save then load should recover the same arrays."""
@@ -130,6 +133,7 @@ class TestReadVelocityModel3d:
 # ---------------------------------------------------------------------------
 # TestBuildVelocityModel3d
 # ---------------------------------------------------------------------------
+
 
 class TestBuildVelocityModel3d:
     def test_assigns_3d_model_type(self):
@@ -163,6 +167,7 @@ class TestBuildVelocityModel3d:
 # TestSaveLoadVelocityModel
 # ---------------------------------------------------------------------------
 
+
 class TestSaveLoadVelocityModel:
     def test_round_trip_integrity(self, tmp_path):
         """Saved and reloaded arrays should be identical."""
@@ -182,6 +187,7 @@ class TestSaveLoadVelocityModel:
 # TestSaveLoadTravelTimeGrid
 # ---------------------------------------------------------------------------
 
+
 class TestSaveLoadTravelTimeGrid:
     def test_round_trip_integrity(self, tmp_path):
         """Saved and reloaded TravelTimeGrid should be identical."""
@@ -193,12 +199,8 @@ class TestSaveLoadTravelTimeGrid:
         np.testing.assert_array_equal(loaded.grid_x, original.grid_x)
         np.testing.assert_array_equal(loaded.grid_y, original.grid_y)
         np.testing.assert_array_equal(loaded.grid_z, original.grid_z)
-        np.testing.assert_array_equal(
-            loaded.station_coords, original.station_coords
-        )
-        np.testing.assert_array_equal(
-            loaded.travel_times, original.travel_times
-        )
+        np.testing.assert_array_equal(loaded.station_coords, original.station_coords)
+        np.testing.assert_array_equal(loaded.travel_times, original.travel_times)
 
     def test_returns_path(self, tmp_path):
         ttg = _make_simple_ttg()

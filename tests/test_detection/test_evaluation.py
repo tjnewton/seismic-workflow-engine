@@ -63,7 +63,7 @@ class TestMatchDetections:
         r = match_detections(det, cat, tolerance=1.0)
         assert r.true_positives == 1
         # The matched detection is index 1 (the 0.05 s one), residual ~0.05
-        (di, ci, resid), = r.matches
+        ((di, ci, resid),) = r.matches
         assert di == 1
         assert ci == 0
         assert abs(resid - 0.05) < 1e-6

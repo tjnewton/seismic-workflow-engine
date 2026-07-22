@@ -125,15 +125,17 @@ def plot_location_uncertainty(
     from matplotlib.patches import Ellipse
 
     fig, (ax_map, ax_depth) = plt.subplots(
-        1, 2, figsize=figsize or (12, 5),
+        1,
+        2,
+        figsize=figsize or (12, 5),
     )
 
-    lons = [loc[0] for loc in locations]
-    lats = [loc[1] for loc in locations]
-    depths = [loc[2] for loc in locations]
+    [loc[0] for loc in locations]
+    [loc[1] for loc in locations]
+    [loc[2] for loc in locations]
 
     # --- Map view ---
-    for i, (loc, unc) in enumerate(zip(locations, uncertainties)):
+    for _i, (loc, unc) in enumerate(zip(locations, uncertainties, strict=False)):
         ax_map.plot(loc[0], loc[1], "ko", markersize=4, zorder=3)
         if unc.horiz_uncertainty_m > 0:
             # Convert metres to approximate degrees
@@ -170,7 +172,7 @@ def plot_location_uncertainty(
     ax_map.set_aspect("equal")
 
     # --- Depth cross-section ---
-    for i, (loc, unc) in enumerate(zip(locations, uncertainties)):
+    for _i, (loc, unc) in enumerate(zip(locations, uncertainties, strict=False)):
         ax_depth.plot(loc[0], loc[2], "ko", markersize=4, zorder=3)
         if unc.depth_uncertainty_m > 0:
             d_km = unc.depth_uncertainty_m / 1000.0
@@ -239,7 +241,7 @@ def plot_magnitude_pdf(
 
     # Individual Gaussians
     combined = np.zeros_like(x)
-    for mag, sigma in zip(magnitudes, uncertainties):
+    for mag, sigma in zip(magnitudes, uncertainties, strict=False):
         pdf = np.exp(-0.5 * ((x - mag) / sigma) ** 2) / (sigma * np.sqrt(2 * np.pi))
         combined += pdf
         ax.plot(x, pdf, color="steelblue", alpha=0.15, linewidth=0.5)
@@ -330,7 +332,7 @@ def plot_uncertainty_summary(
     fig, ax = plt.subplots(figsize=figsize or (10, max(4, len(stages) * 0.5)))
 
     y_pos = np.arange(len(stages))
-    bars = ax.barh(
+    ax.barh(
         y_pos,
         values,
         xerr=errors if any(e > 0 for e in errors) else None,

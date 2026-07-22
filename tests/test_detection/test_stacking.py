@@ -1,8 +1,7 @@
 """Tests for swe.detection.stacking."""
 
 import numpy as np
-import pytest
-from obspy import Stream, Trace, UTCDateTime
+from obspy import Trace, UTCDateTime
 
 from swe.detection.stacking import Stack, time_shift
 
@@ -68,6 +67,4 @@ class TestTimeShift:
         # Interior samples should be roughly negated
         mid = len(data) // 4
         end = 3 * len(data) // 4
-        np.testing.assert_allclose(
-            result.data[mid:end], -data[mid:end], atol=0.15
-        )
+        np.testing.assert_allclose(result.data[mid:end], -data[mid:end], atol=0.15)

@@ -17,20 +17,21 @@ from swe.uncertainty.types import (
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "location_uncertainty_to_dict",
     "location_uncertainty_from_dict",
-    "magnitude_uncertainty_to_dict",
-    "magnitude_uncertainty_from_dict",
-    "uncertain_value_to_dict",
-    "uncertain_value_from_dict",
+    "location_uncertainty_to_dict",
     "location_uncertainty_to_quantity_errors",
+    "magnitude_uncertainty_from_dict",
+    "magnitude_uncertainty_to_dict",
     "quantity_error_to_uncertain_value",
+    "uncertain_value_from_dict",
+    "uncertain_value_to_dict",
 ]
 
 
 # ---------------------------------------------------------------------------
 # UncertainValue
 # ---------------------------------------------------------------------------
+
 
 def uncertain_value_to_dict(uv: UncertainValue) -> dict[str, Any]:
     """Convert an :class:`UncertainValue` to a JSON-safe dictionary.
@@ -81,6 +82,7 @@ def uncertain_value_from_dict(d: dict[str, Any]) -> UncertainValue:
 # ---------------------------------------------------------------------------
 # LocationUncertainty
 # ---------------------------------------------------------------------------
+
 
 def location_uncertainty_to_dict(lu: LocationUncertainty) -> dict[str, Any]:
     """Convert a :class:`LocationUncertainty` to a JSON-safe dictionary.
@@ -137,6 +139,7 @@ def location_uncertainty_from_dict(d: dict[str, Any]) -> LocationUncertainty:
 # MagnitudeUncertainty
 # ---------------------------------------------------------------------------
 
+
 def magnitude_uncertainty_to_dict(mu: MagnitudeUncertainty) -> dict[str, Any]:
     """Convert a :class:`MagnitudeUncertainty` to a JSON-safe dictionary.
 
@@ -184,6 +187,7 @@ def magnitude_uncertainty_from_dict(d: dict[str, Any]) -> MagnitudeUncertainty:
 # ---------------------------------------------------------------------------
 # ObsPy interop
 # ---------------------------------------------------------------------------
+
 
 def location_uncertainty_to_quantity_errors(
     lu: LocationUncertainty,

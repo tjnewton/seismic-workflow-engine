@@ -47,18 +47,14 @@ class TestForwardModelFrequency:
 
     def test_observed_frequency_ratio(self, simple_psd):
         """Frequency ratio should be computed when observed_frequency given."""
-        result = forward_model_frequency(
-            simple_psd, 1e-4, observed_frequency=34.5
-        )
+        result = forward_model_frequency(simple_psd, 1e-4, observed_frequency=34.5)
 
         assert not np.isnan(result.frequency_ratio)
         assert result.observed_frequency == 34.5
 
     def test_hertzian_model(self, simple_psd):
         """Hertzian model should also produce a valid prediction."""
-        result = forward_model_frequency(
-            simple_psd, 1e-4, contact_model="hertzian"
-        )
+        result = forward_model_frequency(simple_psd, 1e-4, contact_model="hertzian")
 
         assert result.model_type == "hertzian"
         assert not np.isnan(result.predicted_frequency)
@@ -66,9 +62,7 @@ class TestForwardModelFrequency:
     def test_invalid_model_raises(self, simple_psd):
         """Invalid contact model should raise ValueError."""
         with pytest.raises(ValueError, match="contact_model must be"):
-            forward_model_frequency(
-                simple_psd, 1e-4, contact_model="invalid"
-            )
+            forward_model_frequency(simple_psd, 1e-4, contact_model="invalid")
 
     def test_stress_spectrum_shape(self, simple_psd):
         """Stress spectrum should have same length as PSD."""

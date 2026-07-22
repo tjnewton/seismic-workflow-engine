@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import yaml
 
 from swe.config import SWEConfig, get_config_path, load_config, save_config

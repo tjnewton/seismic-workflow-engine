@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 import pytest
 from obspy import UTCDateTime
@@ -17,7 +16,6 @@ from swe.picks import (
     to_obspy_picks,
     to_station_picks,
 )
-
 
 # ---------------------------------------------------------------------------
 # SWEPick basics
@@ -206,7 +204,9 @@ class TestObspyRoundTrip:
         pick = Pick(
             time=t,
             waveform_id=WaveformStreamID(
-                network_code="XX", station_code="STA1", channel_code="HHZ",
+                network_code="XX",
+                station_code="STA1",
+                channel_code="HHZ",
             ),
             phase_hint="P",
         )
@@ -220,7 +220,9 @@ class TestObspyRoundTrip:
         pick = Pick(
             time=t,
             waveform_id=WaveformStreamID(
-                network_code="XX", station_code="STA1", channel_code="HHZ",
+                network_code="XX",
+                station_code="STA1",
+                channel_code="HHZ",
             ),
             phase_hint="P",
         )

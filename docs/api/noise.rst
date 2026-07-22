@@ -3,5 +3,4 @@
 
 .. automodule:: swe.noise
    :members:
-   :undoc-members:
    :show-inheritance:

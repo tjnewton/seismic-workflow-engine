@@ -222,9 +222,7 @@ class TestTraceSnr:
         signal[400:600] = 2.0
         single = _make_trace(signal + rng.normal(0, 1.0, n), sr=sr)
         # A "stack" of 25 -> noise down ~5x, same window
-        stacked = np.mean(
-            [signal + rng.normal(0, 1.0, n) for _ in range(25)], axis=0
-        )
+        stacked = np.mean([signal + rng.normal(0, 1.0, n) for _ in range(25)], axis=0)
         stack = _make_trace(stacked, sr=sr)
         sig_w, noise_w = (4.0, 6.0), (0.0, 2.0)
         snr_single = trace_snr(single, signal_window=sig_w, noise_window=noise_w)

@@ -3,5 +3,4 @@
 
 .. automodule:: swe.utils
    :members:
-   :undoc-members:
    :show-inheritance:

@@ -17,7 +17,7 @@ deliberate future extension gated on that validation, not implemented here.
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
@@ -107,9 +107,7 @@ def three_component_amplitudes(
         all from one station, or a window start is not before its end.
     """
     if len(stream) != 3:
-        raise ValueError(
-            f"expected exactly 3 component traces, got {len(stream)}"
-        )
+        raise ValueError(f"expected exactly 3 component traces, got {len(stream)}")
     stations = {tr.stats.station for tr in stream}
     if len(stations) != 1:
         raise ValueError(f"all traces must share one station, got {stations}")
@@ -118,18 +116,10 @@ def three_component_amplitudes(
     if s_window[0] >= s_window[1]:
         raise ValueError(f"s_window start must precede end: {s_window}")
 
-    ref = (
-        reference_time
-        if reference_time is not None
-        else min(tr.stats.starttime for tr in stream)
-    )
+    ref = reference_time if reference_time is not None else min(tr.stats.starttime for tr in stream)
 
-    p_amp = _vector_magnitude_peak(
-        stream, ref + p_window[0], ref + p_window[1]
-    )
-    s_amp = _vector_magnitude_peak(
-        stream, ref + s_window[0], ref + s_window[1]
-    )
+    p_amp = _vector_magnitude_peak(stream, ref + p_window[0], ref + p_window[1])
+    s_amp = _vector_magnitude_peak(stream, ref + s_window[0], ref + s_window[1])
     ratio = s_amp / p_amp if p_amp > 0 else float("nan")
 
     return ThreeComponentAmplitudes(

@@ -1,14 +1,13 @@
 """Tests for swe.location.nonlinloc."""
 
 import subprocess
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 from obspy import Catalog, UTCDateTime
 from obspy.core.event import (
     Event,
-    Origin,
     Pick,
     QuantityError,
     WaveformStreamID,
@@ -24,7 +23,6 @@ from swe.location.nonlinloc import (
     process_nll_hypocenters,
     run_nonlinloc,
 )
-
 
 # Minimal NonLinLoc .hyp file content for testing
 MINIMAL_HYP = """\
@@ -130,7 +128,7 @@ class TestProcessNllHypocenters:
 
         hypocenters = process_nll_hypocenters(hyp_file)
         h = hypocenters[0]
-        x, y, z, horiz = h[0], h[1], h[2], h[3]
+        x, _y, _z, horiz = h[0], h[1], h[2], h[3]
         assert x == pytest.approx(694.337)
         assert horiz == pytest.approx(30.0)
 
@@ -144,9 +142,7 @@ class TestHypocenterToObspyOrigin:
         hyp_file.write_text(MINIMAL_HYP)
 
         hypocenters = process_nll_hypocenters(hyp_file)
-        origin = hypocenter_to_obspy_origin(
-            hypocenters[0], reference_lat=45.0, reference_lon=7.0
-        )
+        origin = hypocenter_to_obspy_origin(hypocenters[0], reference_lat=45.0, reference_lon=7.0)
 
         assert origin.depth == pytest.approx(hypocenters[0].z_m)
         assert origin.depth_errors is not None
@@ -164,8 +160,10 @@ class TestHypocenterToObspyOrigin:
 def _make_pick(station, phase, time_str, uncertainty=None):
     """Create an ObsPy Pick with optional uncertainty."""
     wid = WaveformStreamID(
-        network_code="XX", station_code=station,
-        channel_code="BHZ", location_code="",
+        network_code="XX",
+        station_code=station,
+        channel_code="BHZ",
+        location_code="",
     )
     pick = Pick(
         waveform_id=wid,
@@ -193,13 +191,15 @@ def _make_catalog(events_data):
 class TestCatalogToObs:
     def test_single_event_p_and_s(self, tmp_path):
         """Event with P and S picks produces both lines."""
-        cat = _make_catalog([
+        cat = _make_catalog(
             [
-                ("STA1", "P", "2024-01-15T10:30:00.1234"),
-                ("STA1", "S", "2024-01-15T10:30:01.5678"),
-                ("STA2", "P", "2024-01-15T10:30:00.5000"),
-            ],
-        ])
+                [
+                    ("STA1", "P", "2024-01-15T10:30:00.1234"),
+                    ("STA1", "S", "2024-01-15T10:30:01.5678"),
+                    ("STA2", "P", "2024-01-15T10:30:00.5000"),
+                ],
+            ]
+        )
         obs_file = tmp_path / "test.obs"
         result = catalog_to_obs(cat, output_path=obs_file)
 
@@ -214,10 +214,12 @@ class TestCatalogToObs:
 
     def test_multiple_events(self, tmp_path):
         """Multiple events produce separate EQEVENT blocks."""
-        cat = _make_catalog([
-            [("STA1", "P", "2024-01-15T10:30:00")],
-            [("STA2", "P", "2024-01-15T11:00:00")],
-        ])
+        cat = _make_catalog(
+            [
+                [("STA1", "P", "2024-01-15T10:30:00")],
+                [("STA2", "P", "2024-01-15T11:00:00")],
+            ]
+        )
         obs_file = tmp_path / "multi.obs"
         catalog_to_obs(cat, output_path=obs_file)
 
@@ -226,9 +228,11 @@ class TestCatalogToObs:
 
     def test_custom_uncertainty(self, tmp_path):
         """Pick-level uncertainty is written to the GAU field."""
-        cat = _make_catalog([
-            [("STA1", "P", "2024-01-15T10:30:00", 0.05)],
-        ])
+        cat = _make_catalog(
+            [
+                [("STA1", "P", "2024-01-15T10:30:00", 0.05)],
+            ]
+        )
         obs_file = tmp_path / "unc.obs"
         catalog_to_obs(cat, output_path=obs_file)
 
@@ -237,9 +241,11 @@ class TestCatalogToObs:
 
     def test_default_uncertainty(self, tmp_path):
         """Picks without time_errors use default_uncertainty."""
-        cat = _make_catalog([
-            [("STA1", "P", "2024-01-15T10:30:00")],
-        ])
+        cat = _make_catalog(
+            [
+                [("STA1", "P", "2024-01-15T10:30:00")],
+            ]
+        )
         obs_file = tmp_path / "default_unc.obs"
         catalog_to_obs(cat, output_path=obs_file, default_uncertainty=0.2)
 
@@ -248,12 +254,14 @@ class TestCatalogToObs:
 
     def test_skips_duplicate_station_phase(self, tmp_path):
         """Duplicate station+phase combos within one event are skipped."""
-        cat = _make_catalog([
+        cat = _make_catalog(
             [
-                ("STA1", "P", "2024-01-15T10:30:00"),
-                ("STA1", "P", "2024-01-15T10:30:00.1"),
-            ],
-        ])
+                [
+                    ("STA1", "P", "2024-01-15T10:30:00"),
+                    ("STA1", "P", "2024-01-15T10:30:00.1"),
+                ],
+            ]
+        )
         obs_file = tmp_path / "dedup.obs"
         catalog_to_obs(cat, output_path=obs_file)
 
@@ -272,12 +280,14 @@ class TestCatalogToObs:
 
     def test_skips_unknown_phases(self, tmp_path):
         """Phases other than P/S are skipped."""
-        cat = _make_catalog([
+        cat = _make_catalog(
             [
-                ("STA1", "P", "2024-01-15T10:30:00"),
-                ("STA1", "Lg", "2024-01-15T10:30:05"),
-            ],
-        ])
+                [
+                    ("STA1", "P", "2024-01-15T10:30:00"),
+                    ("STA1", "Lg", "2024-01-15T10:30:05"),
+                ],
+            ]
+        )
         obs_file = tmp_path / "phases.obs"
         catalog_to_obs(cat, output_path=obs_file)
 
@@ -287,12 +297,14 @@ class TestCatalogToObs:
 
     def test_roundtrip_obs_to_hyp(self, tmp_path):
         """Write .obs, verify it's parseable NLL format."""
-        cat = _make_catalog([
+        cat = _make_catalog(
             [
-                ("STA1", "P", "2024-06-01T12:00:05.1234", 0.02),
-                ("STA2", "S", "2024-06-01T12:00:07.5678", 0.05),
-            ],
-        ])
+                [
+                    ("STA1", "P", "2024-06-01T12:00:05.1234", 0.02),
+                    ("STA2", "S", "2024-06-01T12:00:07.5678", 0.05),
+                ],
+            ]
+        )
         obs_file = tmp_path / "roundtrip.obs"
         catalog_to_obs(cat, output_path=obs_file)
 
@@ -345,14 +357,19 @@ class TestRunNonlinloc:
         ctrl.write_text("# NLL control file")
 
         mock_run.return_value = subprocess.CompletedProcess(
-            args=["NLLoc", str(ctrl)], returncode=0,
-            stdout="OK", stderr="",
+            args=["NLLoc", str(ctrl)],
+            returncode=0,
+            stdout="OK",
+            stderr="",
         )
 
         result = run_nonlinloc(ctrl)
         mock_run.assert_called_once_with(
             ["NLLoc", str(ctrl)],
-            capture_output=True, text=True, check=True, timeout=300.0,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=300.0,
         )
         assert result.returncode == 0
 
@@ -364,7 +381,10 @@ class TestRunNonlinloc:
         ctrl.write_text("# NLL control file")
 
         mock_run.return_value = subprocess.CompletedProcess(
-            args=[], returncode=0, stdout="", stderr="",
+            args=[],
+            returncode=0,
+            stdout="",
+            stderr="",
         )
 
         run_nonlinloc(ctrl, nll_binary="/opt/nll/bin/NLLoc")
@@ -378,9 +398,7 @@ class TestRunNonlinloc:
         ctrl = tmp_path / "test.nll_control"
         ctrl.write_text("# NLL control file")
 
-        mock_run.side_effect = subprocess.CalledProcessError(
-            1, "NLLoc", stderr="error"
-        )
+        mock_run.side_effect = subprocess.CalledProcessError(1, "NLLoc", stderr="error")
 
         with pytest.raises(subprocess.CalledProcessError):
             run_nonlinloc(ctrl)
@@ -422,7 +440,9 @@ class TestPicksToNonlinloc:
         marker_file.write_text(_SIMPLE_PHASE_MARKER)
 
         result = picks_to_nonlinloc(
-            marker_file, tmp_path, output_path=tmp_path / "out.obs",
+            marker_file,
+            tmp_path,
+            output_path=tmp_path / "out.obs",
         )
         content = result.read_text()
         assert "EQEVENT" in content
@@ -436,7 +456,9 @@ class TestPicksToNonlinloc:
         marker_file.write_text(_EVENT_LINE + _SIMPLE_PHASE_MARKER)
 
         result = picks_to_nonlinloc(
-            marker_file, tmp_path, output_path=tmp_path / "out.obs",
+            marker_file,
+            tmp_path,
+            output_path=tmp_path / "out.obs",
         )
         content = result.read_text()
         lines = [ln for ln in content.splitlines() if not ln.startswith("#")]
@@ -450,7 +472,9 @@ class TestPicksToNonlinloc:
         marker_file.write_text(_SIMPLE_PHASE_MARKER)
 
         result = picks_to_nonlinloc(
-            marker_file, tmp_path, output_path=tmp_path / "out.obs",
+            marker_file,
+            tmp_path,
+            output_path=tmp_path / "out.obs",
         )
         content = result.read_text()
         assert "0.00e+00" in content
@@ -467,7 +491,9 @@ class TestMeasureAmplitude:
     def test_returns_nan_on_missing_files(self, tmp_path):
         """Should return NaN when no day files exist."""
         amp, period = _measure_amplitude(
-            tmp_path, "STA1", "BHZ",
+            tmp_path,
+            "STA1",
+            "BHZ",
             UTCDateTime("2024-01-15T10:30:00"),
             UTCDateTime("2024-01-15T10:30:01"),
             UTCDateTime("2024-01-15T10:30:00.5"),
@@ -484,7 +510,9 @@ class TestMeasureAmplitude:
         mock_read.side_effect = OSError("corrupt file")
 
         amp, period = _measure_amplitude(
-            tmp_path, "STA1", "BHZ",
+            tmp_path,
+            "STA1",
+            "BHZ",
             UTCDateTime("2024-01-15T10:30:00"),
             UTCDateTime("2024-01-15T10:30:01"),
             UTCDateTime("2024-01-15T10:30:00.5"),

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from swe.picks import SWEPick, from_phase_arrivals, to_station_picks
 from swe.picking.deep_learning import PhaseArrival, pick_stream, predict_phase_arrivals
 from swe.picking.windows import (
     DeduplicatedPickResult,
@@ -12,6 +11,7 @@ from swe.picking.windows import (
     get_threshold_picks,
     remove_duplicate_picks,
 )
+from swe.picks import SWEPick, from_phase_arrivals, to_station_picks
 
 __all__ = [
     "DeduplicatedPickResult",

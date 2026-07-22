@@ -55,9 +55,7 @@ class TestComputeRoughnessPSD1D:
     def test_profile_direction_stored(self, synthetic_surface_profile):
         """Profile direction label is preserved."""
         x, z, _ = synthetic_surface_profile
-        result = compute_roughness_psd_1d(
-            x, z, profile_direction="along-strike"
-        )
+        result = compute_roughness_psd_1d(x, z, profile_direction="along-strike")
         assert result.profile_direction == "along-strike"
 
     def test_too_few_points_raises(self):

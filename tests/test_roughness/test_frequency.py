@@ -21,9 +21,7 @@ class TestComputeFrequencyTimeSeries:
     def test_basic_frequency_recovery(self, frequency_traces):
         """Recovered median frequency should be close to the true value."""
         traces, pick_times, freq_true = frequency_traces
-        result = compute_frequency_time_series(
-            traces, pick_times, halfwin=0.06
-        )
+        result = compute_frequency_time_series(traces, pick_times, halfwin=0.06)
 
         assert isinstance(result, FrequencyTimeSeriesResult)
         assert len(result.all_frequencies) > 0
@@ -35,9 +33,7 @@ class TestComputeFrequencyTimeSeries:
     def test_bin_counts(self, frequency_traces):
         """Each bin should have a reasonable count."""
         traces, pick_times, _ = frequency_traces
-        result = compute_frequency_time_series(
-            traces, pick_times, bin_width_days=2.0
-        )
+        result = compute_frequency_time_series(traces, pick_times, bin_width_days=2.0)
 
         assert len(result.times) > 0
         assert np.all(result.count_per_bin >= 0)
@@ -72,9 +68,7 @@ class TestComputeFrequencyTimeSeries:
             "starttime": UTCDateTime(2024, 1, 1),
         }
         trace = Trace(data=data, header=header)
-        result = compute_frequency_time_series(
-            [trace], [730120.0], halfwin=0.06
-        )
+        result = compute_frequency_time_series([trace], [730120.0], halfwin=0.06)
         assert len(result.all_frequencies) == 0
 
     def test_length_mismatch_raises(self, frequency_traces):
@@ -86,9 +80,7 @@ class TestComputeFrequencyTimeSeries:
     def test_bin_width_days_stored(self, frequency_traces):
         """bin_width_days is preserved in the result."""
         traces, pick_times, _ = frequency_traces
-        result = compute_frequency_time_series(
-            traces, pick_times, bin_width_days=3.0
-        )
+        result = compute_frequency_time_series(traces, pick_times, bin_width_days=3.0)
         assert result.bin_width_days == 3.0
 
 
@@ -157,8 +149,9 @@ class TestFitScalingLaw:
             all_times=np.array([0.0, 1.0]),
         )
         with pytest.raises(ValueError, match="Unknown velocity_unit"):
-            fit_scaling_law(ts, np.array([0.0, 1.0]), np.array([1.0, 2.0]),
-                            velocity_unit="furlongs/fortnight")
+            fit_scaling_law(
+                ts, np.array([0.0, 1.0]), np.array([1.0, 2.0]), velocity_unit="furlongs/fortnight"
+            )
 
     def test_too_few_bins(self):
         """Fewer than 2 valid bins returns NaN result."""

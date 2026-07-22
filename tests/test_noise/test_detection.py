@@ -1,16 +1,15 @@
 """Tests for swe.noise.detection."""
 
-import tempfile
 from pathlib import Path
 
 import numpy as np
 import pytest
-from obspy import Trace, Stream
+from obspy import Stream, Trace
 from obspy.core.utcdatetime import UTCDateTime
 
 from swe.noise.detection import (
-    find_noise_windows,
     _default_station_parser,
+    find_noise_windows,
 )
 
 

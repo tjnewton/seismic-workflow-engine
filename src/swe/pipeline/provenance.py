@@ -18,7 +18,7 @@ import swe
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["StepProvenance", "save_provenance", "load_provenance"]
+__all__ = ["StepProvenance", "load_provenance", "save_provenance"]
 
 
 @dataclass
@@ -93,7 +93,8 @@ def load_provenance(run_dir: Path) -> list[dict[str, Any]]:
     prov_path = run_dir / "provenance.json"
     if not prov_path.exists():
         return []
-    return json.loads(prov_path.read_text())
+    records: list[dict[str, Any]] = json.loads(prov_path.read_text())
+    return records
 
 
 def format_provenance(records: list[dict[str, Any]]) -> str:

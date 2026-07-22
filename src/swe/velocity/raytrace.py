@@ -23,8 +23,7 @@ def _require_ttcrpy():
         from ttcrpy.rgrid import Grid3d
     except ImportError as exc:
         raise ImportError(
-            "ttcrpy is required for ray tracing. "
-            "Install it with: pip install ttcrpy"
+            "ttcrpy is required for ray tracing. Install it with: pip install ttcrpy"
         ) from exc
     return Grid3d
 
@@ -114,7 +113,7 @@ def compute_travel_times(
 
         # Grid resolution: use the minimum layer thickness
         if len(depths) > 1:
-            dz = np.min(np.diff(depths))
+            dz = float(np.min(np.diff(depths)))
             dz = max(dz, 0.01)
         else:
             dz = 1.0
@@ -204,9 +203,7 @@ def compute_travel_time_grid(
 
     # Build receiver grid: all node positions.
     gx, gy, gz = np.meshgrid(x, y, z, indexing="ij")
-    all_nodes = np.column_stack(
-        [gx.ravel(), gy.ravel(), gz.ravel()]
-    )
+    all_nodes = np.column_stack([gx.ravel(), gy.ravel(), gz.ravel()])
 
     nx, ny, nz = len(x), len(y), len(z)
     n_stations = station_coords.shape[0]
@@ -215,13 +212,18 @@ def compute_travel_time_grid(
     for idx in range(n_stations):
         src = station_coords[idx : idx + 1, :]
         tt, _ = grid.raytrace(
-            src, all_nodes, slowness=slow_flat,
+            src,
+            all_nodes,
+            slowness=slow_flat,
         )
         travel_times[idx] = tt.reshape(nx, ny, nz)
 
     logger.info(
         "Computed travel-time grid: %d stations, %d x %d x %d nodes",
-        n_stations, nx, ny, nz,
+        n_stations,
+        nx,
+        ny,
+        nz,
     )
 
     return TravelTimeGrid(

@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from swe.pipeline.run_context import RunContext, _find_latest_run, _generate_run_id
+from swe.pipeline.run_context import RunContext, _generate_run_id
 
 
 class TestRunContext:
@@ -39,15 +39,11 @@ class TestRunContext:
         # Create two runs with deterministic ordering
         run1_dir = tmp_path / "20240101T000000_aaaaaaaa"
         (run1_dir / "steps").mkdir(parents=True)
-        (run1_dir / "manifest.json").write_text(
-            json.dumps({"run_id": "20240101T000000_aaaaaaaa"})
-        )
+        (run1_dir / "manifest.json").write_text(json.dumps({"run_id": "20240101T000000_aaaaaaaa"}))
 
         run2_dir = tmp_path / "20240102T000000_bbbbbbbb"
         (run2_dir / "steps").mkdir(parents=True)
-        (run2_dir / "manifest.json").write_text(
-            json.dumps({"run_id": "20240102T000000_bbbbbbbb"})
-        )
+        (run2_dir / "manifest.json").write_text(json.dumps({"run_id": "20240102T000000_bbbbbbbb"}))
 
         loaded = RunContext.load(tmp_path, "latest")
         assert loaded.run_id == "20240102T000000_bbbbbbbb"

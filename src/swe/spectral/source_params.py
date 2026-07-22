@@ -22,7 +22,7 @@ Supino, M., Poiata, N., Festa, G., et al. (2020). Self-similarity of low-
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -109,8 +109,7 @@ def _to_displacement(trace: Trace, *, water_level: float) -> Trace:
             tr.remove_response(output="DISP", water_level=water_level)
         except (ValueError, TypeError, OSError) as exc:
             logger.warning(
-                "Failed to remove response for %s.%s.%s: %s; "
-                "assuming data is already displacement",
+                "Failed to remove response for %s.%s.%s: %s; assuming data is already displacement",
                 tr.stats.network,
                 tr.stats.station,
                 tr.stats.channel,
@@ -118,8 +117,7 @@ def _to_displacement(trace: Trace, *, water_level: float) -> Trace:
             )
     else:
         logger.debug(
-            "No response metadata for %s.%s.%s; "
-            "assuming data is already displacement",
+            "No response metadata for %s.%s.%s; assuming data is already displacement",
             tr.stats.network,
             tr.stats.station,
             tr.stats.channel,
@@ -219,8 +217,7 @@ def moment_from_spectral_level(
     mask = (freqs >= plateau_freq_min) & (freqs <= plateau_freq_max)
     if not np.any(mask):
         raise ValueError(
-            f"No spectral samples in plateau band "
-            f"[{plateau_freq_min}, {plateau_freq_max}] Hz"
+            f"No spectral samples in plateau band [{plateau_freq_min}, {plateau_freq_max}] Hz"
         )
     omega_0 = float(np.mean(density[mask]))
 
@@ -242,7 +239,7 @@ def moment_from_spectral_level(
 
 
 def _gaussian(t: NDArray[np.floating], amp: float, t0: float, sigma: float) -> NDArray[np.floating]:
-    return amp * np.exp(-0.5 * ((t - t0) / sigma) ** 2)
+    return np.asarray(amp * np.exp(-0.5 * ((t - t0) / sigma) ** 2))
 
 
 def source_time_function_width(
@@ -283,8 +280,8 @@ def source_time_function_width(
     sr = tr.stats.sampling_rate
     data = tr.data.astype(np.float64)
     if signal_window is not None:
-        s = max(0, int(round(signal_window[0] * sr)))
-        e = min(len(data), int(round(signal_window[1] * sr)))
+        s = max(0, round(signal_window[0] * sr))
+        e = min(len(data), round(signal_window[1] * sr))
         if e <= s:
             raise ValueError(f"signal_window {signal_window} is empty for this trace")
         data = data[s:e]
@@ -309,7 +306,9 @@ def source_time_function_width(
     sigma_guess = max(len(envelope) / 6.0 / sr, 1.0 / sr)
     try:
         popt, _ = curve_fit(
-            _gaussian, t, envelope,
+            _gaussian,
+            t,
+            envelope,
             p0=[peak, t0_guess, sigma_guess],
             bounds=([0.0, t[0], 1.0 / sr], [np.inf, t[-1], t[-1] - t[0] + 1.0 / sr]),
             maxfev=10000,

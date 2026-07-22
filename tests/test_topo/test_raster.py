@@ -24,6 +24,7 @@ class TestElevationsFromRaster:
     def test_basic_sampling(self, mock_rasterio_module):
         """Should return elevation values from raster sampling."""
         import importlib
+
         import swe.topo.raster as mod
 
         mock_src = self._make_mock_src(sample_values=[100.0, 200.0, 300.0])
@@ -42,6 +43,7 @@ class TestElevationsFromRaster:
     def test_single_coordinate(self, mock_rasterio_module):
         """Should handle a single (1, 2) coordinate array."""
         import importlib
+
         import swe.topo.raster as mod
 
         mock_src = self._make_mock_src(sample_values=[42.0])
@@ -59,7 +61,7 @@ class TestElevationsFromRaster:
     def test_import_error_without_rasterio(self):
         """Should raise ImportError when rasterio is not available."""
         import importlib
-        import sys
+
         import swe.topo.raster as mod
 
         with patch.dict("sys.modules", {"rasterio": None}):
@@ -72,11 +74,10 @@ class TestElevationsFromRaster:
     def test_crs_reprojection(self, mock_rasterio_module):
         """Should reproject coordinates when target_crs differs from raster CRS."""
         import importlib
+
         import swe.topo.raster as mod
 
-        mock_src = self._make_mock_src(
-            crs="EPSG:32610", sample_values=[500.0]
-        )
+        mock_src = self._make_mock_src(crs="EPSG:32610", sample_values=[500.0])
         mock_rasterio = MagicMock()
         mock_rasterio.open.return_value = mock_src
 
@@ -88,15 +89,16 @@ class TestElevationsFromRaster:
         mock_pyproj = MagicMock()
         mock_pyproj.Transformer.from_crs.return_value = mock_transformer
 
-        with patch.dict("sys.modules", {
-            "rasterio": mock_rasterio,
-            "pyproj": mock_pyproj,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "rasterio": mock_rasterio,
+                "pyproj": mock_pyproj,
+            },
+        ):
             importlib.reload(mod)
             coords = np.array([[-122.0, 42.0]])
-            result = mod.elevations_from_raster(
-                "dem.tif", coords, target_crs="EPSG:4326"
-            )
+            result = mod.elevations_from_raster("dem.tif", coords, target_crs="EPSG:4326")
 
         assert result.shape == (1,)
         assert result[0] == 500.0
@@ -108,20 +110,17 @@ class TestElevationsFromRaster:
     def test_same_crs_no_reprojection(self, mock_rasterio_module):
         """When target_crs matches raster CRS, no reprojection should happen."""
         import importlib
+
         import swe.topo.raster as mod
 
-        mock_src = self._make_mock_src(
-            crs="EPSG:4326", sample_values=[150.0]
-        )
+        mock_src = self._make_mock_src(crs="EPSG:4326", sample_values=[150.0])
         mock_rasterio = MagicMock()
         mock_rasterio.open.return_value = mock_src
 
         with patch.dict("sys.modules", {"rasterio": mock_rasterio}):
             importlib.reload(mod)
             coords = np.array([[-122.0, 42.0]])
-            result = mod.elevations_from_raster(
-                "dem.tif", coords, target_crs="EPSG:4326"
-            )
+            result = mod.elevations_from_raster("dem.tif", coords, target_crs="EPSG:4326")
 
         assert result[0] == 150.0
 
@@ -129,6 +128,7 @@ class TestElevationsFromRaster:
 # ---------------------------------------------------------------------------
 # TestGridFromRaster
 # ---------------------------------------------------------------------------
+
 
 class TestGridFromRaster:
     """Tests for grid_from_raster() with mocked rasterio."""
@@ -141,7 +141,7 @@ class TestGridFromRaster:
 
         # Create a simple affine-like transform.
         mock_transform = MagicMock()
-        mock_transform.a = 10.0   # pixel width
+        mock_transform.a = 10.0  # pixel width
         mock_transform.c = 100.0  # x origin (upper-left)
         mock_transform.e = -10.0  # pixel height (negative = north-up)
         mock_transform.f = 500.0  # y origin (upper-left)
@@ -165,11 +165,15 @@ class TestGridFromRaster:
         mock_windows = MagicMock()
         mock_rasterio.windows = mock_windows
 
-        with patch.dict("sys.modules", {
-            "rasterio": mock_rasterio,
-            "rasterio.windows": mock_windows,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "rasterio": mock_rasterio,
+                "rasterio.windows": mock_windows,
+            },
+        ):
             import swe.topo.raster as mod
+
             importlib.reload(mod)
 
             result = mod.grid_from_raster("dem.tif")
@@ -192,11 +196,15 @@ class TestGridFromRaster:
         mock_windows.from_bounds = mock_from_bounds
         mock_rasterio.windows = mock_windows
 
-        with patch.dict("sys.modules", {
-            "rasterio": mock_rasterio,
-            "rasterio.windows": mock_windows,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "rasterio": mock_rasterio,
+                "rasterio.windows": mock_windows,
+            },
+        ):
             import swe.topo.raster as mod
+
             importlib.reload(mod)
 
             result = mod.grid_from_raster(
@@ -223,12 +231,16 @@ class TestGridFromRaster:
         mock_fillnodata = MagicMock(return_value=np.zeros((3, 3)))
         mock_fill.fillnodata = mock_fillnodata
 
-        with patch.dict("sys.modules", {
-            "rasterio": mock_rasterio,
-            "rasterio.windows": mock_windows,
-            "rasterio.fill": mock_fill,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "rasterio": mock_rasterio,
+                "rasterio.windows": mock_windows,
+                "rasterio.fill": mock_fill,
+            },
+        ):
             import swe.topo.raster as mod
+
             importlib.reload(mod)
 
             mod.grid_from_raster("dem.tif", fill_nodata=True)
@@ -238,6 +250,7 @@ class TestGridFromRaster:
     def test_import_error_without_rasterio(self):
         """Should raise ImportError when rasterio is not available."""
         import importlib
+
         import swe.topo.raster as mod
 
         with patch.dict("sys.modules", {"rasterio": None, "rasterio.windows": None}):
@@ -249,6 +262,7 @@ class TestGridFromRaster:
 # ---------------------------------------------------------------------------
 # TestTerrainCorrection
 # ---------------------------------------------------------------------------
+
 
 class TestTerrainCorrection:
     """Tests for terrain_correction() with mocked rasterio."""
@@ -269,18 +283,24 @@ class TestTerrainCorrection:
         mock_windows = MagicMock()
         mock_rasterio.windows = mock_windows
 
-        with patch.dict("sys.modules", {
-            "rasterio": mock_rasterio,
-            "rasterio.windows": mock_windows,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "rasterio": mock_rasterio,
+                "rasterio.windows": mock_windows,
+            },
+        ):
             import swe.topo.raster as mod
+
             importlib.reload(mod)
 
-            coords = np.array([
-                [10.0, 20.0, 0.0],
-                [30.0, 40.0, 0.0],
-                [50.0, 60.0, 0.0],
-            ])
+            coords = np.array(
+                [
+                    [10.0, 20.0, 0.0],
+                    [30.0, 40.0, 0.0],
+                    [50.0, 60.0, 0.0],
+                ]
+            )
             result = mod.terrain_correction(coords, "dem.tif")
 
         # z-column should be updated, x-y should be unchanged.
@@ -303,11 +323,15 @@ class TestTerrainCorrection:
         mock_windows = MagicMock()
         mock_rasterio.windows = mock_windows
 
-        with patch.dict("sys.modules", {
-            "rasterio": mock_rasterio,
-            "rasterio.windows": mock_windows,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "rasterio": mock_rasterio,
+                "rasterio.windows": mock_windows,
+            },
+        ):
             import swe.topo.raster as mod
+
             importlib.reload(mod)
 
             coords = np.array([[10.0, 20.0, 0.0]])

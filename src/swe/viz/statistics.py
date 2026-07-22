@@ -21,9 +21,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "plot_date_distribution",
     "plot_distribution",
     "plot_moment_distribution",
-    "plot_date_distribution",
 ]
 
 
@@ -57,13 +57,16 @@ def plot_distribution(
     data = np.asarray(values, dtype=float)
 
     fig, ax = plt.subplots(figsize=figsize)
-    n, bin_edges, patches = ax.hist(
-        data, bins=bins, facecolor="darkred", alpha=0.6,
+    _n, bin_edges, _patches = ax.hist(
+        data,
+        bins=bins,
+        facecolor="darkred",
+        alpha=0.6,
     )
     ax.set_facecolor("dimgrey")
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Counts per bin")
-    ax.set_xlim([bin_edges[0], bin_edges[-1]])
+    ax.set_xlim((bin_edges[0], bin_edges[-1]))
     ax.grid(True)
     if title:
         ax.set_title(title)
@@ -98,13 +101,16 @@ def plot_moment_distribution(
     data = np.asarray(magnitudes, dtype=float)
 
     fig, ax = plt.subplots(figsize=figsize)
-    n, bin_edges, patches = ax.hist(
-        data, bins=bins, facecolor="darkred", alpha=0.6,
+    _n, bin_edges, _patches = ax.hist(
+        data,
+        bins=bins,
+        facecolor="darkred",
+        alpha=0.6,
     )
     ax.set_facecolor("dimgrey")
     ax.set_xlabel(f"Relative moment ({bins} bins)")
     ax.set_ylabel("Counts per bin")
-    ax.set_xlim([bin_edges[0], bin_edges[-1]])
+    ax.set_xlim((bin_edges[0], bin_edges[-1]))
     ax.grid(True)
 
     # Quantile overlay on twin axis
@@ -174,14 +180,17 @@ def plot_date_distribution(
         title = f"Detections (n={len(mpl_dates)})"
 
     fig, ax = plt.subplots(figsize=figsize)
-    n, bin_edges, patches = ax.hist(
-        mpl_dates, bins=bins, facecolor="darkred", alpha=0.6,
+    _n, bin_edges, _patches = ax.hist(
+        mpl_dates,
+        bins=bins,
+        facecolor="darkred",
+        alpha=0.6,
     )
     ax.set_facecolor("dimgrey")
     ax.set_xlabel("Date")
     ax.set_ylabel("Detections per bin")
     ax.set_title(title)
-    ax.set_xlim([bin_edges[0], bin_edges[-1]])
+    ax.set_xlim((bin_edges[0], bin_edges[-1]))
     ax.xaxis.set_major_formatter(DateFormatter("%m-%d-%y"))
     ax.xaxis.set_major_locator(AutoDateLocator())
     ax.grid(True)

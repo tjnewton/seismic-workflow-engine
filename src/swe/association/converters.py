@@ -63,9 +63,7 @@ def association_to_catalog(
     obspy.core.event.Catalog
         One event per non-noise cluster.
     """
-    unique_labels, cluster_medians = get_cluster_stats(
-        result.labels, result.pick_times
-    )
+    unique_labels, cluster_medians = get_cluster_stats(result.labels, result.pick_times)
 
     pick_times = np.array(result.pick_times)
     pick_station_order = np.array(result.pick_station_order)

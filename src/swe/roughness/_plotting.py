@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.figure import Figure
 
 if TYPE_CHECKING:
@@ -238,8 +238,7 @@ def plot_scaling_law_fit(
                 f_model,
                 "r-",
                 linewidth=2,
-                label=f"\u03bb\u2080 = {result.lambda_0:.2e} m"
-                f" (R\u00b2 = {result.r_squared:.3f})",
+                label=f"\u03bb\u2080 = {result.lambda_0:.2e} m (R\u00b2 = {result.r_squared:.3f})",
             )
 
     axes[1].set_xlabel("Slip Velocity (m/s)")
@@ -349,10 +348,7 @@ def plot_frequency_roughness_correlation(
                 pred_valid[sort_idx],
                 "r-",
                 linewidth=2,
-                label=(
-                    f"r = {result.correlation_coefficient:.3f} "
-                    f"(p = {result.p_value:.4f})"
-                ),
+                label=(f"r = {result.correlation_coefficient:.3f} (p = {result.p_value:.4f})"),
             )
 
     ax.set_xlabel(f"Local Roughness ({result.roughness_metric})")

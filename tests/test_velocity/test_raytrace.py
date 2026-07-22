@@ -35,25 +35,28 @@ class TestComputeTravelTimes:
 
         with patch.dict("sys.modules", {"ttcrpy": mock_ttcrpy, "ttcrpy.rgrid": mock_ttcrpy.rgrid}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             sources = np.array([[0.0, 0.0, 5.0], [1.0, 1.0, 10.0]])
-            receivers = np.array([
-                [5.0, 0.0, 0.0],
-                [5.0, 5.0, 0.0],
-                [10.0, 0.0, 0.0],
-                [10.0, 5.0, 0.0],
-            ])
-            result = mod.compute_travel_times(
-                str(model_file), sources, receivers
+            receivers = np.array(
+                [
+                    [5.0, 0.0, 0.0],
+                    [5.0, 5.0, 0.0],
+                    [10.0, 0.0, 0.0],
+                    [10.0, 5.0, 0.0],
+                ]
             )
+            result = mod.compute_travel_times(str(model_file), sources, receivers)
 
         assert result.shape == (2, 4)
 
     def test_import_error_without_ttcrpy(self, tmp_path):
         """Should raise ImportError when ttcrpy is not installed."""
         import importlib
+
         import swe.velocity.raytrace as mod
 
         with patch.dict("sys.modules", {"ttcrpy": None, "ttcrpy.rgrid": None}):
@@ -71,15 +74,15 @@ class TestComputeTravelTimes:
         mock_ttcrpy = MagicMock()
         with patch.dict("sys.modules", {"ttcrpy": mock_ttcrpy, "ttcrpy.rgrid": mock_ttcrpy.rgrid}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             sources = np.array([[0.0, 0.0, 0.0]])
             receivers = np.array([[1.0, 0.0, 0.0]])
             with pytest.raises(ValueError, match="Unsupported model_type"):
-                mod.compute_travel_times(
-                    str(model_file), sources, receivers, model_type="3d"
-                )
+                mod.compute_travel_times(str(model_file), sources, receivers, model_type="3d")
 
     def test_1d_model_loading(self, tmp_path):
         """Should correctly load a two-column velocity model."""
@@ -93,7 +96,9 @@ class TestComputeTravelTimes:
 
         with patch.dict("sys.modules", {"ttcrpy": mock_ttcrpy, "ttcrpy.rgrid": mock_ttcrpy.rgrid}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             sources = np.array([[0.0, 0.0, 2.0]])
@@ -116,7 +121,9 @@ class TestComputeTravelTimes:
 
         with patch.dict("sys.modules", {"ttcrpy": mock_ttcrpy, "ttcrpy.rgrid": mock_ttcrpy.rgrid}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             sources = np.array([[0.0, 0.0, 0.0]])
@@ -129,6 +136,7 @@ class TestComputeTravelTimes:
 # ---------------------------------------------------------------------------
 # TestComputeTravelTimesWithVelocityModel
 # ---------------------------------------------------------------------------
+
 
 class TestComputeTravelTimesWithVelocityModel:
     """Tests for compute_travel_times() when passed a VelocityModel."""
@@ -162,22 +170,29 @@ class TestComputeTravelTimesWithVelocityModel:
 
         with patch.dict("sys.modules", {"ttcrpy": mock_ttcrpy, "ttcrpy.rgrid": mock_ttcrpy.rgrid}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             sources = np.array([[10.0, 10.0, 10.0], [50.0, 50.0, 25.0]])
-            receivers = np.array([
-                [20.0, 20.0, 0.0],
-                [80.0, 80.0, 0.0],
-                [50.0, 50.0, 0.0],
-            ])
+            receivers = np.array(
+                [
+                    [20.0, 20.0, 0.0],
+                    [80.0, 80.0, 0.0],
+                    [50.0, 50.0, 0.0],
+                ]
+            )
             result = mod.compute_travel_times(vm, sources, receivers)
 
         assert result.shape == (2, 3)
         # cell_slowness=True should have been used.
         mock_grid3d_cls.assert_called_once()
         call_kwargs = mock_grid3d_cls.call_args
-        assert call_kwargs[1].get("cell_slowness") is True or call_kwargs.kwargs.get("cell_slowness") is True
+        assert (
+            call_kwargs[1].get("cell_slowness") is True
+            or call_kwargs.kwargs.get("cell_slowness") is True
+        )
 
     def test_ignores_model_type_arg(self):
         """When VelocityModel is passed, model_type parameter is ignored."""
@@ -196,15 +211,15 @@ class TestComputeTravelTimesWithVelocityModel:
 
         with patch.dict("sys.modules", {"ttcrpy": mock_ttcrpy, "ttcrpy.rgrid": mock_ttcrpy.rgrid}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             sources = np.array([[5.0, 5.0, 5.0]])
             receivers = np.array([[0.0, 0.0, 0.0]])
             # model_type="3d" should NOT raise, because VelocityModel is used.
-            result = mod.compute_travel_times(
-                vm, sources, receivers, model_type="3d"
-            )
+            result = mod.compute_travel_times(vm, sources, receivers, model_type="3d")
 
         assert result.shape == (1, 1)
 
@@ -212,6 +227,7 @@ class TestComputeTravelTimesWithVelocityModel:
 # ---------------------------------------------------------------------------
 # TestComputeTravelTimeGrid
 # ---------------------------------------------------------------------------
+
 
 class TestComputeTravelTimeGrid:
     """Tests for compute_travel_time_grid() with mocked ttcrpy."""
@@ -241,7 +257,9 @@ class TestComputeTravelTimeGrid:
 
         with patch.dict("sys.modules", {"ttcrpy": mock_ttcrpy, "ttcrpy.rgrid": mock_ttcrpy.rgrid}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             ttg = mod.compute_travel_time_grid(vm, stations)
@@ -272,7 +290,9 @@ class TestComputeTravelTimeGrid:
 
         with patch.dict("sys.modules", {"ttcrpy": mock_ttcrpy, "ttcrpy.rgrid": mock_ttcrpy.rgrid}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             ttg = mod.compute_travel_time_grid(vm, stations)
@@ -293,7 +313,9 @@ class TestComputeTravelTimeGrid:
 
         with patch.dict("sys.modules", {"ttcrpy": None, "ttcrpy.rgrid": None}):
             import importlib
+
             import swe.velocity.raytrace as mod
+
             importlib.reload(mod)
 
             with pytest.raises(ImportError, match="ttcrpy"):

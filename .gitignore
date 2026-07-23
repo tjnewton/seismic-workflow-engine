@@ -17,6 +17,12 @@ htmlcov/
 *.laz
 *.mat
 *.nc
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.zip
+*.bundle
 .env
 .venv/
 env/
@@ -26,15 +32,9 @@ venv/
 .DS_Store
 explore_progress.json
 
-# Local-only: AI-agent config, internal planning docs, redacted
-# directions, and the notebooks/data that contain them. Kept on disk locally,
-# never committed to the public repo.
+# Local-only: agent config + local data / scratch dirs. Never committed.
 .claude/
 CLAUDE.md
-/PLAN.md
-/PLAN_redacted.md
-/papers/
-/data/
-/docs/notebooks/data/
-/notebooks/redacted.ipynb
-/docs/notebooks/redacted.ipynb
+data/
+**/data/
+data_cache/

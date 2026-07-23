@@ -96,7 +96,7 @@ class TestResonanceFrequency:
         assert f2 == pytest.approx(2.0 * f1)
 
     def test_known_value(self):
-        """Reproduce the redacted case: ~20m thick, Vs~690 m/s."""
+        """Known value: a ~20m thick layer with Vs~690 m/s -> 17.25 Hz."""
         # f = 690 / (2 * 20) = 17.25 Hz
         f = resonance_frequency(20.0, 690.0)
         assert f == pytest.approx(17.25)

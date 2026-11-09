@@ -5,6 +5,7 @@ from __future__ import annotations
 from swe.utils.helpers import (
     ellipsoidal_distance,
     geo_to_local,
+    is_integer,
     max_amplitude,
     nearest,
     nearest_ind,
@@ -17,6 +18,7 @@ __all__ = [
     "geo_to_local",
     "get_trace_properties",
     "instantaneous_frequency",
+    "is_integer",
     "max_amplitude",
     "nearest",
     "nearest_ind",

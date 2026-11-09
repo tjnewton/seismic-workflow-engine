@@ -17,6 +17,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def is_integer(value: object) -> bool:
+    """True for a Python or NumPy integer; bool (and NumPy bool) is not an integer here."""
+    return isinstance(value, (int, np.integer)) and not isinstance(value, (bool, np.bool_))
+
+
 def nearest(items: np.ndarray, pivot: float | UTCDateTime):
     """Find the value in *items* closest to *pivot*."""
     return min(items, key=lambda x: abs(x - pivot))

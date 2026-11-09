@@ -43,6 +43,7 @@ stress inversion, spectral analysis, uncertainty propagation, and visualization.
    api/focal
    api/magnitude
    api/spectral
+   api/scattering
    api/moment_tensor
    api/stress
    api/uncertainty

@@ -1,4 +1,4 @@
-"""Matched-filter detection and waveform stacking."""
+"""Matched-filter detection, waveform stacking, and injection-recovery."""
 
 from __future__ import annotations
 
@@ -15,6 +15,12 @@ from swe.detection.evaluation import (
     MatchResult,
     dedup_times_by_interval,
     match_detections,
+)
+from swe.detection.injection import (
+    clopper_pearson,
+    inject,
+    inject_trace,
+    injection_recovery,
 )
 from swe.detection.matched_filter import (
     MarkerTemplateResult,
@@ -43,6 +49,7 @@ __all__ = [
     "MatchResult",
     "Stack",
     "StackResult",
+    "clopper_pearson",
     "cull_detections",
     "cull_party_dates",
     "dedup_times_by_interval",
@@ -52,6 +59,9 @@ __all__ = [
     "get_day_detections",
     "get_detections",
     "get_threshold_detections",
+    "inject",
+    "inject_trace",
+    "injection_recovery",
     "make_templates",
     "markers_to_template",
     "match_detections",

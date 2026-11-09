@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **`swe.scattering`** (new): Born single-scattering by a compact elastic inclusion in a homogeneous full space.
+  - `born_radiation_pattern` gives the P→P and P→S patterns in density and P/S velocity perturbations (Wu & Aki 1985).
+  - `born_point_scattering` gives the far-field scattered/incident amplitude, with validity flags: Rayleigh regime, weak contrast, and far field (`kr > 10` and beyond the body's Fraunhofer distance). Physically impossible hosts are rejected.
+  - Form factors: `sphere_form_factor` (analytic) and `voxel_form_factor` (any body given by an inside-test).
+  - Tested against the exact small-fluid-sphere (Rayleigh) result in the fluid limit; a faceted polyhedral inclusion matches its volume-equivalent sphere at ka < 0.3.
+  - `born_point_scattering` keeps the sign and phase of the form factor. `voxel_form_factor` uses the `exp(-i q·x)` convention of `scattering_wavenumber` and evaluates many `q` at once, and rejects a body that would be clipped by its bounds.
+- **`swe.detection` injection-recovery**: `injection_recovery` estimates a detector's detection probability over a parameter grid, with Clopper–Pearson intervals (`clopper_pearson`). It is seedable through `random_state` and accepts any iterable grid.
+  - `inject` plants a signal in an array or raster; `inject_trace` does the same in an ObsPy `Trace`.
+  - Masked gaps stay masked, and masked signal samples are not injected. An unmasked injected trace can be written back to MiniSEED.
+  - Each grid entry's random stream is seeded from `random_state` and its own canonicalised parameters (whole numbers as exact ints; every container type-tagged, so different structures never share a stream), so a row's result does not depend on the other entries, their order or numeric types. The seed key is stable across NumPy versions; NumPy does not promise identical draws across versions (NEP 19).
 - **`swe.io`**: station inventories by region and epoch, and event catalogs.
   - `get_stations_in_region`: FDSN station query for a lat/lon box and epoch, at any detail level. It drops excluded networks; by default that is the synthetic `SY` network (`DEFAULT_EXCLUDED_NETWORKS`). A bare string such as `"SY"` counts as one code, and a network named explicitly (`network="SY"`) is never excluded.
   - `inventory_to_dataframe`: one row per station or per channel, with ISO-8601 epochs.

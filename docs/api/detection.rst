@@ -1,5 +1,5 @@
-``swe.detection``: Matched-Filter Detection
-=============================================
+``swe.detection``: Detection and Injection-Recovery
+===================================================
 
 .. automodule:: swe.detection
    :members:

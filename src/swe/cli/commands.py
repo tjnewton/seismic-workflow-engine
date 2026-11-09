@@ -64,7 +64,10 @@ def download(
     "--remove-response/--no-remove-response", default=False, help="Remove instrument response."
 )
 @click.option(
-    "--response-dir", default=None, type=click.Path(exists=True), help="RESP file directory."
+    "--response-dir",
+    default=None,
+    type=click.Path(exists=True),
+    help="Response file directory (StationXML from swe.io.get_response_files, or RESP.*).",
 )
 @click.option("--output", "-o", default="noise_windows.npz", help="Output .npz file.")
 def noise(

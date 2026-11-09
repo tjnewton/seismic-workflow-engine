@@ -13,7 +13,8 @@ from typing import NamedTuple
 
 import numpy as np
 from obspy import read
-from obspy.core.inventory import read_inventory
+
+from swe.io.fdsn import load_response
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,9 @@ def find_picking_windows(
     apply_response : bool
         If *True*, remove instrument response.  Requires *response_dir*.
     response_dir : str or Path, optional
-        Directory containing RESP files for response removal.
+        Directory of response files for response removal: StationXML from
+        :func:`swe.io.get_response_files`, or legacy ``RESP.*`` files (see
+        :func:`swe.io.load_response`).
     epsilon : float
         Small value added before ``log`` to avoid ``log(0)``.
 
@@ -148,13 +151,7 @@ def find_picking_windows(
             period_trace = period_trace.trim(start_time, end_time)
 
             if apply_response and response_dir is not None:
-                response_dir = Path(response_dir)
-                resp_file = response_dir / (
-                    f"RESP.{period_trace.stats.network}"
-                    f".{period_trace.stats.station}"
-                    f"..{period_trace.stats.channel}"
-                )
-                inv = read_inventory(path_or_file_object=str(resp_file), format="RESP")
+                inv = load_response(period_trace, response_dir)
                 period_trace.remove_response(inventory=inv, output="VEL", plot=False)
 
             if apply_filter:

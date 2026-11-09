@@ -14,9 +14,11 @@ from pathlib import Path
 from typing import NamedTuple
 
 import numpy as np
-from obspy import read, read_inventory
+from obspy import read
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.signal.trigger import classic_sta_lta
+
+from swe.io.fdsn import load_response
 
 logger = logging.getLogger(__name__)
 
@@ -82,11 +84,12 @@ def find_noise_windows(
     corners : int
         Number of filter corners (only used when ``bandpass_filter=True``).
     remove_response : bool
-        If True, remove instrument response using RESP files found in
-        *response_dir*.
+        If True, remove instrument response using the response files in
+        *response_dir* (see :func:`swe.io.load_response`).
     response_dir : str, Path, or None
-        Directory containing RESP files.  Required when
-        ``remove_response=True``.
+        Directory of response files: StationXML from
+        :func:`swe.io.get_response_files`, or legacy ``RESP.*`` files.
+        Required when ``remove_response=True``.
     station_parser : callable or None
         A function ``f(filepath) -> (station, channel)`` that extracts
         metadata from the file path.  If *None*, the default parser splits
@@ -136,7 +139,7 @@ def find_noise_windows(
             if remove_response:
                 if response_dir is None:
                     raise ValueError("response_dir must be provided when remove_response=True")
-                inv = _load_response(period_trace, response_dir)
+                inv = load_response(period_trace, response_dir)
                 period_trace.remove_response(inventory=inv, output="VEL", plot=False)
 
             if bandpass_filter:
@@ -215,11 +218,3 @@ def _default_station_parser(filepath: Path) -> tuple[str, str]:
         # Simple format: CI.WBS.BHZ.2019-07-06.ms
         channel = parts[2]
     return station, channel
-
-
-def _load_response(trace, response_dir: str | Path):
-    """Load the RESP file for a given trace."""
-    response_dir = Path(response_dir)
-    stats = trace.stats
-    resp_file = response_dir / (f"RESP.{stats.network}.{stats.station}..{stats.channel}")
-    return read_inventory(str(resp_file), format="RESP")

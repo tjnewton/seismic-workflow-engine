@@ -12,8 +12,11 @@ permissions:
 
 # Supersede stale runs on the same ref (saves runner time).
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # PR runs share a group and cancel superseded runs. Each push run gets its own
+  # group (keyed by SHA) so it is never cancelled, running or pending: a
+  # cancelled push run would leave that push's commit messages unscanned.
+  group: ci-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'pr' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -103,6 +106,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history, so PR commit messages can be scanned
       - name: Scan tracked files for private/large/secret content
         env:
           # Distinctive private name-tokens (comma/space separated). Set in
@@ -110,3 +115,19 @@ jobs:
           # checks (extensions, size, secrets) run even if this is unset.
           LEAK_TOKENS: ${{ secrets.LEAK_TOKENS }}
         run: python3 scripts/leak_guard.py --tracked
+      - name: Scan pull-request commit messages
+        if: github.event_name == 'pull_request'
+        env:
+          LEAK_TOKENS: ${{ secrets.LEAK_TOKENS }}
+        run: python3 scripts/leak_guard.py --log "origin/${{ github.base_ref }}..HEAD"
+      - name: Scan pushed commit messages
+        if: github.event_name == 'push'
+        env:
+          LEAK_TOKENS: ${{ secrets.LEAK_TOKENS }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        # A new branch (all-zero BEFORE) or a force push (BEFORE gone from
+        # history) falls back to scanning every message reachable from AFTER.
+        run: |
+          if git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then RANGE="${BEFORE}..${AFTER}"; else RANGE="${AFTER}"; fi
+          python3 scripts/leak_guard.py --log "$RANGE"

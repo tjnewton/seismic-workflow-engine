@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
-from swe.io.fdsn import get_response_files, get_waveforms
+from swe.io.fdsn import (
+    DEFAULT_EXCLUDED_NETWORKS,
+    catalog_to_dataframe,
+    get_events,
+    get_response_files,
+    get_stations_in_region,
+    get_waveforms,
+    inventory_to_dataframe,
+    load_response,
+)
 from swe.io.quakeml import read_quakeml, write_quakeml
 from swe.io.snuffler import (
     parse_all_markers,
@@ -12,8 +21,14 @@ from swe.io.snuffler import (
 )
 
 __all__ = [
+    "DEFAULT_EXCLUDED_NETWORKS",
+    "catalog_to_dataframe",
+    "get_events",
     "get_response_files",
+    "get_stations_in_region",
     "get_waveforms",
+    "inventory_to_dataframe",
+    "load_response",
     "parse_all_markers",
     "parse_phase_picks",
     "party_to_markers",

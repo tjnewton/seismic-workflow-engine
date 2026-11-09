@@ -252,7 +252,7 @@ class TestFindPickingWindows:
         assert windows[0, 0, 0] == pytest.approx(expected_log, rel=1e-5)
         assert windows[0, 0, 1] == pytest.approx(1.0)
 
-    @patch("swe.picking.windows.read_inventory")
+    @patch("swe.picking.windows.load_response")
     @patch("swe.picking.windows.read")
     def test_response_removal_and_filter(self, mock_read, mock_inv):
         """Response removal and filter paths should be exercised."""
@@ -283,8 +283,8 @@ class TestFindPickingWindows:
 
         mock_inv.assert_called_once()
         # The mocked methods are on the original stream trace,
-        # but trim creates copies, so check read_inventory was called
-        assert mock_inv.called
+        # but trim creates copies, so check the shared loader was called
+        assert mock_inv.call_args.args[1] == "/fake/resp"
 
 
 # ---------------------------------------------------------------------------

@@ -128,3 +128,32 @@ class TestFormatProvenance:
             }
         ]
         assert "HIT" in format_provenance(records)
+
+
+def test_unserializable_record_keeps_existing_file(tmp_path):
+    """A record json cannot encode raises without wiping records already saved."""
+    import json
+    from pathlib import Path as _P
+
+    import pytest
+
+    from swe.pipeline.provenance import StepProvenance, save_provenance
+
+    def rec(name, params):
+        return StepProvenance(
+            step_name=name,
+            function_path="mod.fn",
+            resolved_params=params,
+            input_hash="h",
+            started_at=0.0,
+            completed_at=1.0,
+            duration_seconds=1.0,
+            return_type="None",
+            cache_hit=False,
+        )
+
+    save_provenance(tmp_path, [rec("ok", {})])
+    with pytest.raises(TypeError):
+        save_provenance(tmp_path, [rec("bad", {"path": _P("/x")})])
+    saved = json.loads((tmp_path / "provenance.json").read_text())
+    assert [r["step_name"] for r in saved] == ["ok"]

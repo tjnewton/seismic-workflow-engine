@@ -15,6 +15,10 @@ conda activate swe
 
 # 3. Install in editable mode with dev dependencies
 pip install -e ".[dev,docs]" --no-deps
+
+# 4. Install the git hooks (leak guard on files, commit messages and pushes).
+#    Re-run after pulling a change to the hook types in .pre-commit-config.yaml.
+pre-commit install
 ```
 
 ## Code Style

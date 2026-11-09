@@ -5,11 +5,30 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **`swe.io`**: station inventories by region and epoch, and event catalogs.
+  - `get_stations_in_region`: FDSN station query for a lat/lon box and epoch, at any detail level. It drops excluded networks; by default that is the synthetic `SY` network (`DEFAULT_EXCLUDED_NETWORKS`). A bare string such as `"SY"` counts as one code, and a network named explicitly (`network="SY"`) is never excluded.
+  - `inventory_to_dataframe`: one row per station or per channel, with ISO-8601 epochs.
+  - `get_events` returns an empty `Catalog` when nothing matches, and passes FDSN query parameters through unchanged. `catalog_to_dataframe` flattens a catalog to one row per event.
+  - `load_response`: one shared reader for response files.
+  - Every `swe.io.fdsn` function now accepts an ObsPy data-centre key, a base URL (e.g. `https://service.earthscope.org`), or a ready `Client` instance.
+- **Leak guard**: commit messages are now scanned, `#` lines included (`git commit -m` keeps them). The `git commit -v` diff below the scissors line is ignored, whatever `core.commentChar` is, with LF or CRLF line endings.
+  - `scripts/leak_guard.py --commit-msg` runs as a commit-msg hook, and `--push-log` checks every local commit not yet on the target remote, which covers multi-branch pushes and commits already on another remote.
+  - In CI, `--log` covers the commits of a pull request and of every push. Push runs get their own concurrency group, so a newer run never cancels them, running or pending, and no pushed range goes unscanned.
+  - Re-run `pre-commit install` in existing clones to get the commit-msg hook.
+  - `pre-commit install` now installs the pre-commit, commit-msg and pre-push hooks together.
 - **`swe.roughness`**: roughness-frequency scaling analysis: instantaneous-frequency time series, 1-D/2-D surface roughness PSD, spatial frequency-roughness correlation, forward models (asperity contact + structural resonance), and 6 plotting functions.
   - `roughness` pipeline template added (`swe pipeline template roughness`).
   - 58 new test functions.
 
 ### Fixed
+- **`swe.pipeline.provenance.save_provenance`**: concurrent saves could lose records. The file lock was released before the buffered JSON was flushed, so the write landed at `close()`, after unlock, and the next writer read stale content. The data is now flushed before unlocking, and records are serialized before the file is truncated, so a record JSON cannot encode no longer wipes the saved ones. The existing concurrency test, `TestBug3ProvenanceFileLocking`, failed intermittently in CI because of this.
+- **`swe.io.get_response_files` / response removal**: downloaded responses could never be loaded. `get_response_files` wrote StationXML under a `RESP.{net}.{sta}..{chan}` name, which `swe.noise` and `swe.picking` then parsed with `format="RESP"`.
+  - Responses are now one StationXML file per channel returned, named with the real codes: `{net}.{sta}.{loc}.{chan}.xml`. Pattern requests (`*`, `BH?`) and separate per-channel downloads no longer collide or overwrite each other. A channel with several epochs keeps them all in one file. A later download of the same channel replaces its file.
+  - Both modules read through the shared `swe.io.load_response`. It returns the first file that covers the trace (network, station, location, channel and epoch), trying the exact channel first, then other station files, then legacy `RESP.*`.
+  - Formats are detected from content; a legacy file that detection rejects or misreads is retried as RESP.
+  - Unreadable or unrelated files are skipped with a warning.
+  - Parsed files are cached by inode, size, mtime and ctime, and the directory is listed only when the exact file misses.
+  - Regression tests: a download → load → sensitivity-removal round trip, per-channel downloads, legacy files not hidden by a non-covering new file, and the cache.
 - **`swe.detection.matched_filter`**: `make_templates`/`markers_to_template` no longer force pick channel codes to `"...Z"`. This produced non-existent channels (e.g. `SP1`->`SPZ`) for borehole networks whose components are numbered `1/2/3` (such as the Parkfield HRSN), yielding empty templates. Channel codes are now preserved and 3-component expansion honours the instrument's convention (Z/N/E or 1/2/3). Fixes `detect_signals` for borehole data. Regression tests added.
 - **`swe.spectral.fit_brune_model`**: the corner-frequency fit is now bounded to the fitted `[freq_min, freq_max]` band, preventing divergence to physically meaningless values when a spectrum lacks a clear corner (e.g. a weak or narrow-band stack).
 

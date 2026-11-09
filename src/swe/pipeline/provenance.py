@@ -67,9 +67,15 @@ def save_provenance(
             content = fh.read()
             existing: list[dict[str, Any]] = json.loads(content) if content.strip() else []
             existing.extend(asdict(r) for r in records)
+            # Serialize before truncating, so a record that cannot be encoded
+            # raises without destroying the records already on disk.
+            payload = json.dumps(existing, indent=2)
             fh.seek(0)
             fh.truncate()
-            fh.write(json.dumps(existing, indent=2))
+            fh.write(payload)
+            # Flush before unlocking: otherwise the buffered write lands at close(),
+            # after the lock is released, and a concurrent writer reads stale content.
+            fh.flush()
         finally:
             fcntl.flock(fh, fcntl.LOCK_UN)
 

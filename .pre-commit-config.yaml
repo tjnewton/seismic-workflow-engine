@@ -1,7 +1,12 @@
 # Local commit-time leak guard + standard hygiene.
-# Activate once:  pip install pre-commit && pre-commit install && pre-commit install --hook-type pre-push
+# Activate:  pip install pre-commit && pre-commit install
+# (installs the pre-commit, commit-msg and pre-push hook types listed below).
+# Re-run `pre-commit install` after pulling a change to the hook types: an older
+# clone has no .git/hooks/commit-msg until you do.
 # The core guard is a local hook so it works without network; the private
 # name-tokens live out-of-repo (see scripts/leak_guard.py).
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit, pre-push]  # hooks without `stages` stay off commit-msg
 repos:
   - repo: local
     hooks:
@@ -11,6 +16,18 @@ repos:
         language: system
         pass_filenames: true
         stages: [pre-commit, pre-push]
+      - id: swe-leak-guard-commit-msg
+        name: leak guard (commit message)
+        entry: python scripts/leak_guard.py --commit-msg
+        language: system
+        stages: [commit-msg]
+      - id: swe-leak-guard-push-log
+        name: leak guard (messages of pushed commits)
+        entry: python scripts/leak_guard.py --push-log
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:

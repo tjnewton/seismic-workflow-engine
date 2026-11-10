@@ -53,17 +53,18 @@ def plot_hvsr(
                 alpha=0.5,
             )
 
-    # Confidence band
-    lower = result.hvsr_mean - confidence_band * result.hvsr_std
-    upper = result.hvsr_mean + confidence_band * result.hvsr_std
-    ax.fill_between(
-        result.frequencies,
-        np.maximum(lower, 0),
-        upper,
-        alpha=0.3,
-        color="steelblue",
-        label=f"\u00b1{confidence_band:.0f}\u03c3",
-    )
+    # Confidence band (undefined, so not drawn, with a single window)
+    if np.isfinite(result.hvsr_std).any():
+        lower = result.hvsr_mean - confidence_band * result.hvsr_std
+        upper = result.hvsr_mean + confidence_band * result.hvsr_std
+        ax.fill_between(
+            result.frequencies,
+            np.maximum(lower, 0),
+            upper,
+            alpha=0.3,
+            color="steelblue",
+            label=f"\u00b1{confidence_band:.0f}\u03c3",
+        )
 
     # Mean curve
     ax.plot(

@@ -26,10 +26,14 @@ from swe.spectral.fitting import (
     spectral_fit_batch,
 )
 from swe.spectral.ratios import (
+    AntiTrigger,
     HVSRResult,
+    SesameCriteria,
     SSRResult,
     compute_hvsr,
     compute_ssr,
+    sesame_criteria,
+    sesame_thresholds,
 )
 from swe.spectral.source_params import (
     FalloffResult,
@@ -41,17 +45,15 @@ from swe.spectral.source_params import (
 )
 
 __all__ = [
-    # coda
+    "AntiTrigger",
     "CodaQFrequencyResult",
     "CodaQResult",
-    # source parameters (LFE-robust)
     "FalloffResult",
-    # ratios
     "HVSRResult",
     "MomentResult",
     "SSRResult",
+    "SesameCriteria",
     "SourceDurationResult",
-    # fitting
     "SpectralFitResult",
     "StressDropResult",
     "brune_spectrum",
@@ -64,13 +66,14 @@ __all__ = [
     "fit_brune_model",
     "high_frequency_falloff",
     "moment_from_spectral_level",
-    # plotting
     "plot_brune_fit",
     "plot_coda_decay",
     "plot_coda_q_vs_frequency",
     "plot_hvsr",
     "plot_ssr",
     "plot_stress_drop_summary",
+    "sesame_criteria",
+    "sesame_thresholds",
     "source_time_function_width",
     "spectral_fit_batch",
 ]

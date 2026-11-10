@@ -1,8 +1,10 @@
 """Output serialization for pipeline step results.
 
-Strategy: try JSON first (handles dicts, lists, numpy scalars/arrays,
-UTCDateTime, NamedTuples). Fall back to pickle only for objects that
-cannot be JSON-encoded (ObsPy Stream/Catalog/Trace).
+Strategy: JSON only for values built purely from JSON-native types (dict
+with str keys, list, str, int, float, bool, None), which load back equal and
+of the same types. Everything else (NamedTuples, tuples, dataclasses, numpy
+arrays and scalars, UTCDateTime, ObsPy Stream/Catalog/Trace) is pickled, so a
+cache hit returns the same type the step returned.
 
 Pickle files are HMAC-signed so that only files written by the same
 SWE installation (with the same secret key) can be loaded.  This
@@ -27,7 +29,16 @@ import swe
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["SWEJSONEncoder", "deserialize_output", "serialize_output"]
+__all__ = [
+    "OUTPUT_FORMAT",
+    "SWEJSONEncoder",
+    "deserialize_output",
+    "serialize_output",
+]
+
+# Checkpoint format. 2: JSON only for JSON-native values, so a loaded value keeps its type.
+# Runs record it (manifest "output_format") and the cache key includes it.
+OUTPUT_FORMAT = 2
 
 
 def _get_hmac_key() -> bytes:
@@ -45,23 +56,42 @@ def _get_hmac_key() -> bytes:
     return hashlib.sha256(identity).digest()
 
 
+def _sig_path(path: Path) -> Path:
+    return path.with_suffix(path.suffix + ".sig")
+
+
 def _sign_file(path: Path) -> None:
     """Write an HMAC-SHA256 signature file alongside *path*."""
     key = _get_hmac_key()
     data = path.read_bytes()
     sig = hmac.new(key, data, hashlib.sha256).hexdigest()
-    path.with_suffix(path.suffix + ".sig").write_text(sig)
+    _sig_path(path).write_text(sig)
 
 
 def _verify_file(path: Path) -> bool:
     """Return True if the HMAC signature for *path* is valid."""
-    sig_path = path.with_suffix(path.suffix + ".sig")
+    sig_path = _sig_path(path)
     if not sig_path.exists():
         return False
     key = _get_hmac_key()
     data = path.read_bytes()
     expected = hmac.new(key, data, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, sig_path.read_text().strip())
+
+
+_JSON_LEAVES = (str, int, float, bool, type(None))
+
+
+def _json_native(x: Any) -> bool:
+    """True when *x* round-trips through plain JSON unchanged (exact types, no subclasses)."""
+    t = type(x)
+    if t in _JSON_LEAVES:
+        return True
+    if t is list:
+        return all(_json_native(v) for v in x)
+    if t is dict:
+        return all(type(k) is str and _json_native(v) for k, v in x.items())
+    return False
 
 
 class SWEJSONEncoder(json.JSONEncoder):
@@ -123,55 +153,75 @@ def serialize_output(
     Returns
     -------
     str
-        Format used: ``"json"`` or ``"pickle"``.
+        Format used: ``"json"`` or ``"pickle"``, or ``"none"`` when the output can be
+        neither pickled nor JSON-encoded.
     """
-    steps_dir.mkdir(parents=True, exist_ok=True)
-
-    # Try JSON first
+    json_path, pkl_path, meta_path = _clear_output(steps_dir, step_name)
     try:
-        json_path = steps_dir / f"{step_name}.output.json"
-        payload = json.dumps(output, cls=SWEJSONEncoder, indent=2)
-        json_path.write_text(payload)
-        return "json"
-    except (TypeError, ValueError, RecursionError):
+        if _json_native(output):
+            json_path.write_text(json.dumps(output, indent=2, allow_nan=False))
+            return "json"
+    except (ValueError, RecursionError):  # NaN/inf, or nesting too deep: pickle it
         pass
 
-    # Fall back to pickle for complex scientific objects (ObsPy Stream,
-    # Catalog, Trace) that cannot be JSON-serialized.  HMAC signatures
-    # are stored alongside the file; unsigned or tampered files are
-    # rejected on load (see deserialize_output).  Version metadata is
-    # also recorded; mismatches are treated as cache misses.
-    pkl_path = steps_dir / f"{step_name}.output.pkl"
-    meta_path = steps_dir / f"{step_name}.output.pkl.meta"
+    # Pickle everything else, so the loaded value keeps its type.  HMAC signatures are
+    # stored alongside the file; unsigned or tampered files are rejected on load (see
+    # deserialize_output).  Version metadata is also recorded; mismatches are rejected.
     try:
         with open(pkl_path, "wb") as fh:
             pickle.dump(output, fh, protocol=pickle.HIGHEST_PROTOCOL)
-    except (pickle.PicklingError, AttributeError, TypeError) as exc:
+    except OSError:  # disk full, permissions: a real write failure, raised as before
+        pkl_path.unlink(missing_ok=True)
+        raise
+    except Exception as exc:  # any pickling error: the step has run, so fall back, never abort
+        pkl_path.unlink(missing_ok=True)  # partial file
+        # as before this change for a value pickle cannot handle (e.g. a NamedTuple class
+        # defined inside a function): the lossy JSON encoder, so a checkpoint still exists
+        try:
+            json_path.write_text(json.dumps(output, cls=SWEJSONEncoder, indent=2))
+        except (TypeError, ValueError, RecursionError):
+            json_path.unlink(missing_ok=True)
+            logger.warning(
+                "Could not serialize step '%s' output (type: %s): %s; "
+                "checkpointing unavailable for this step.",
+                step_name,
+                type(output).__name__,
+                exc,
+            )
+            return "none"
         logger.warning(
-            "Could not serialize step '%s' output (type: %s): %s; "
-            "checkpointing unavailable for this step.",
+            "Step '%s' output (type: %s) cannot be pickled (%s); stored as JSON, so a cache "
+            "hit or resume returns plain lists and dicts.",
             step_name,
             type(output).__name__,
             exc,
         )
-        # Clean up partial files
-        pkl_path.unlink(missing_ok=True)
-        return "none"
-
-    # Sign the pickle file
+        return "json"
     _sign_file(pkl_path)
-
-    meta = {
-        "swe_version": swe.__version__,
-        "python_version": sys.version,
-    }
-    meta_path.write_text(json.dumps(meta))
-    logger.debug(
-        "Serialized step '%s' using pickle (type: %s)",
-        step_name,
-        type(output).__name__,
+    meta_path.write_text(
+        json.dumps({"swe_version": swe.__version__, "python_version": sys.version})
     )
+    logger.debug("Serialized step '%s' using pickle (type: %s)", step_name, type(output).__name__)
     return "pickle"
+
+
+def _output_files(steps_dir: Path, step_name: str) -> tuple[Path, Path, Path, Path]:
+    pkl_path = steps_dir / f"{step_name}.output.pkl"
+    return (
+        steps_dir / f"{step_name}.output.json",
+        pkl_path,
+        steps_dir / f"{step_name}.output.pkl.meta",
+        _sig_path(pkl_path),
+    )
+
+
+def _clear_output(steps_dir: Path, step_name: str) -> tuple[Path, Path, Path]:
+    """Remove a step's earlier output (either format): it would shadow or outlive a new one."""
+    steps_dir.mkdir(parents=True, exist_ok=True)
+    files = _output_files(steps_dir, step_name)
+    for f in files:
+        f.unlink(missing_ok=True)
+    return files[0], files[1], files[2]
 
 
 def deserialize_output(steps_dir: Path, step_name: str) -> Any:
@@ -194,13 +244,11 @@ def deserialize_output(steps_dir: Path, step_name: str) -> Any:
     FileNotFoundError
         If no serialized output exists for this step.
     """
-    json_path = steps_dir / f"{step_name}.output.json"
+    json_path, pkl_path, meta_path, _ = _output_files(steps_dir, step_name)
     if json_path.exists():
         return json.loads(json_path.read_text())
 
-    pkl_path = steps_dir / f"{step_name}.output.pkl"
     if pkl_path.exists():
-        meta_path = steps_dir / f"{step_name}.output.pkl.meta"
         if meta_path.exists():
             meta = json.loads(meta_path.read_text())
             if meta.get("swe_version") != swe.__version__:

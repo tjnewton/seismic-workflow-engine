@@ -20,6 +20,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from swe.pipeline.serialization import OUTPUT_FORMAT
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["RunContext"]
@@ -57,6 +59,7 @@ class RunContext:
             "run_id": run_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "running",
+            "output_format": OUTPUT_FORMAT,
             "steps": {},
         }
 
@@ -105,6 +108,11 @@ class RunContext:
         )
         logger.info("Loaded run: %s", run_id)
         return ctx
+
+    @property
+    def output_format(self) -> int:
+        """Checkpoint format the run was written with (1: before the field existed)."""
+        return int(self._manifest.get("output_format", 1))
 
     def is_step_completed(self, step_name: str) -> bool:
         """Check whether a step has been marked as completed."""

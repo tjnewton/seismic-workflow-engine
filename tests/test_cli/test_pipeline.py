@@ -116,28 +116,28 @@ class TestResolveParams:
     def test_simple_reference(self):
         """Should replace ${step.key} with the value."""
         outputs = {"step1": {"path": "/tmp/data"}}
-        result = _resolve_params({"f": "${step1.path}"}, outputs)
+        result = _resolve_params({"f": "${step1.path}"}, outputs, set(outputs))
         assert result["f"] == "/tmp/data"
 
     def test_no_reference(self):
         """Strings without ${} should pass through."""
-        result = _resolve_params({"f": "hello"}, {})
+        result = _resolve_params({"f": "hello"}, {}, set())
         assert result["f"] == "hello"
 
     def test_numeric_passthrough(self):
         """Non-string values should pass through."""
-        result = _resolve_params({"n": 42, "x": 3.14}, {})
+        result = _resolve_params({"n": 42, "x": 3.14}, {}, set())
         assert result["n"] == 42
         assert result["x"] == 3.14
 
     def test_nested_dict(self):
         """Should resolve references in nested dicts."""
         outputs = {"s1": {"val": 100}}
-        result = _resolve_params({"nested": {"x": "${s1.val}"}}, outputs)
+        result = _resolve_params({"nested": {"x": "${s1.val}"}}, outputs, set(outputs))
         assert result["nested"]["x"] == 100
 
     def test_list_resolution(self):
         """Should resolve references inside lists."""
         outputs = {"s1": {"a": "foo", "b": "bar"}}
-        result = _resolve_params({"items": ["${s1.a}", "${s1.b}"]}, outputs)
+        result = _resolve_params({"items": ["${s1.a}", "${s1.b}"]}, outputs, set(outputs))
         assert result["items"] == ["foo", "bar"]

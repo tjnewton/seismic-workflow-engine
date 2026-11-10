@@ -8,15 +8,12 @@ concurrently.
 from __future__ import annotations
 
 import logging
-import re
 from collections import defaultdict
 from typing import Any
 
-from swe.pipeline.core import PipelineStep
+from swe.pipeline.core import _REF_PATTERN, PipelineStep
 
 logger = logging.getLogger(__name__)
-
-_REF_PATTERN = re.compile(r"\$\{(\w+)\.(\w+)\}")
 
 __all__ = ["build_dependency_graph", "topological_tiers"]
 
@@ -107,7 +104,7 @@ def topological_tiers(
 
 
 def _extract_references(params: dict[str, Any]) -> set[str]:
-    """Recursively extract step names referenced via ``${step.key}``."""
+    """Recursively extract step names referenced via ``${step}`` or ``${step.key}``."""
     refs: set[str] = set()
 
     for value in params.values():

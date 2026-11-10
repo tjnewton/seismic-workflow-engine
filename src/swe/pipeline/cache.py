@@ -11,13 +11,17 @@ import hashlib
 import inspect
 import json
 import logging
+import re
+import uuid
 from pathlib import Path
 from typing import Any
 
 import swe
-from swe.pipeline.serialization import SWEJSONEncoder
+from swe.pipeline.serialization import OUTPUT_FORMAT, SWEJSONEncoder
 
 logger = logging.getLogger(__name__)
+
+_ADDRESS = re.compile(r" at 0x[0-9a-fA-F]+>")
 
 __all__ = ["compute_step_hash", "find_cached_result"]
 
@@ -44,12 +48,18 @@ def compute_step_hash(
         Hex-encoded SHA-256 digest.
     """
     h = hashlib.sha256()
+    h.update(f"step-output-format-{OUTPUT_FORMAT}".encode())  # older (lossy) caches miss
     h.update(function_path.encode())
 
     try:
         canonical = json.dumps(resolved_params, cls=SWEJSONEncoder, sort_keys=True)
     except (TypeError, ValueError):
         canonical = repr(sorted(resolved_params.items()))
+        if _ADDRESS.search(canonical):
+            # a default repr (e.g. a Catalog or Stream passed by ${step}) holds the object's
+            # address, not its content: a key that could recur for other data, so the step is
+            # uncacheable. ponytail: exact content keys belong in their own change
+            canonical += uuid.uuid4().hex
     h.update(canonical.encode())
 
     try:
@@ -120,6 +130,9 @@ def find_cached_result(
             try:
                 return deserialize_output(run_dir / "steps", step_name)
             except (_VersionMismatchError, FileNotFoundError):
+                continue
+            except Exception as exc:  # e.g. a pickled class renamed since: a miss, not a crash
+                logger.warning("Cached output of %s in %s unreadable (%s)", step_name, run_dir, exc)
                 continue
 
     return None

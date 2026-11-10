@@ -24,7 +24,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_REF_PATTERN = re.compile(r"\$\{(\w+)\.(\w+)\}")
+# ``${step}`` is the whole output of an earlier step; ``${step.key}`` a key or attribute of it.
+# The one pattern for resolution (here), dependencies (dag) and validation.
+_REF_PATTERN = re.compile(r"\$\{(\w+)(?:\.(\w+))?\}")
 
 __all__ = ["Pipeline", "PipelineStep"]
 
@@ -125,6 +127,7 @@ class Pipeline:
 
         from swe.pipeline.provenance import save_provenance
         from swe.pipeline.run_context import RunContext
+        from swe.pipeline.serialization import OUTPUT_FORMAT
 
         provenance_records: list[StepProvenance] = []
 
@@ -132,10 +135,23 @@ class Pipeline:
         base_dir = Path(run_dir) if run_dir else Path(".swe_runs")
         if resume:
             run_ctx = RunContext.load(base_dir, resume)
+            if run_ctx.output_format != OUTPUT_FORMAT:
+                raise RuntimeError(
+                    f"Run {run_ctx.run_id} was written before checkpoints kept their types "
+                    f"(output format {run_ctx.output_format}, now {OUTPUT_FORMAT}); "
+                    "start a new run instead."
+                )
             # Restore completed step outputs
             for step in self.steps:
                 if run_ctx.is_step_completed(step.name):
-                    outputs[step.name] = run_ctx.get_step_output(step.name)
+                    try:
+                        outputs[step.name] = run_ctx.get_step_output(step.name)
+                    except Exception as exc:  # e.g. pickled by another SWE version or install
+                        raise RuntimeError(
+                            f"Cannot resume run {run_ctx.run_id}: the checkpoint of step "
+                            f"{step.name!r} cannot be loaded ({type(exc).__name__}: {exc}). "
+                            "Start a new run instead."
+                        ) from exc
                     logger.info("Restored step from checkpoint: %s", step.name)
         else:
             run_ctx = RunContext.create(base_dir)
@@ -184,7 +200,7 @@ class Pipeline:
                 continue
 
             logger.info("Running step: %s (%s)", step.name, step.function)
-            resolved = _resolve_params(step.params, outputs)
+            resolved = _resolve_params(step.params, outputs, {s.name for s in self.steps})
             func = _import_callable(step.function)
             result = func(**resolved)
             outputs[step.name] = result
@@ -286,7 +302,7 @@ class Pipeline:
         from swe.pipeline.provenance import StepProvenance
         from swe.pipeline.serialization import serialize_output
 
-        resolved = _resolve_params(step.params, outputs)
+        resolved = _resolve_params(step.params, outputs, {s.name for s in self.steps})
         func = _import_callable(step.function)
         step_hash = compute_step_hash(step.function, resolved, func)
 
@@ -352,35 +368,44 @@ class Pipeline:
 def _resolve_params(
     params: dict[str, Any],
     outputs: dict[str, Any],
+    step_names: set[str],
 ) -> dict[str, Any]:
-    """Replace ``${step.key}`` references with values from prior outputs."""
+    """Replace ``${step}`` and ``${step.key}`` references with values from prior outputs.
+
+    A bare ``${NAME}`` stays literal when NAME is not one of the pipeline's ``step_names``,
+    as such text did before ``${step}`` references existed (e.g. ``${HOME}``).
+    """
     resolved: dict[str, Any] = {}
     for key, value in params.items():
         if isinstance(value, str):
-            resolved[key] = _resolve_string(value, outputs)
+            resolved[key] = _resolve_string(value, outputs, step_names)
         elif isinstance(value, list):
             resolved[key] = [
-                _resolve_string(v, outputs) if isinstance(v, str) else v for v in value
+                _resolve_string(v, outputs, step_names) if isinstance(v, str) else v for v in value
             ]
         elif isinstance(value, dict):
-            resolved[key] = _resolve_params(value, outputs)
+            resolved[key] = _resolve_params(value, outputs, step_names)
         else:
             resolved[key] = value
     return resolved
 
 
-def _resolve_string(value: str, outputs: dict[str, Any]) -> Any:
-    """Resolve a single string that may contain ``${step.key}`` references."""
+def _resolve_string(value: str, outputs: dict[str, Any], step_names: set[str]) -> Any:
+    """Resolve a single string that may contain ``${step}`` or ``${step.key}`` references."""
 
-    def _lookup(step_name: str, attr: str) -> Any:
+    def _lookup(step_name: str, attr: str | None) -> Any:
+        if attr is None and step_name not in step_names:
+            return f"${{{step_name}}}"  # not a step: literal
         if step_name not in outputs:
-            ref = f"${{{step_name}.{attr}}}"
+            ref = f"${{{step_name}}}" if attr is None else f"${{{step_name}.{attr}}}"
             raise KeyError(
                 f"Parameter reference '{ref}' failed: "
                 f"step '{step_name}' not found in outputs "
                 f"(available: {list(outputs)})"
             )
         step_output = outputs[step_name]
+        if attr is None:
+            return step_output
         if isinstance(step_output, dict):
             if attr not in step_output:
                 ref = f"${{{step_name}.{attr}}}"

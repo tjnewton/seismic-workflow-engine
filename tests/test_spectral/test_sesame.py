@@ -15,7 +15,7 @@ from swe.spectral import (
     sesame_criteria,
     sesame_thresholds,
 )
-from swe.spectral.ratios import _konno_ohmachi_smoothing
+from swe.spectral.ratios import _konno_ohmachi_smoothing, _samples
 
 SR = 50.0
 
@@ -172,6 +172,12 @@ class TestAntiTrigger:
     def test_record_shorter_than_lta_raises(self):
         with pytest.raises(ValueError, match="shorter than the anti-trigger lta"):
             _hvsr(_stream(duration=20.0), window_length=10.0, anti_trigger=AntiTrigger(lta=30.0))
+
+    def test_band_settle_zones_count_in_the_length_check(self):
+        # 40 s is longer than lta = 30 s, but not than lta + 2 x 4 / 0.5 Hz = 46 s
+        at = AntiTrigger(lta=30.0, band=(0.5, 10.0))
+        with pytest.raises(ValueError, match="plus the band-pass settle zones"):
+            _hvsr(_stream(duration=40.0), window_length=10.0, anti_trigger=at)
 
     def test_offset_does_not_hide_a_transient(self):
         st = _stream(gain=0.0, spike_at=400.0)
@@ -787,7 +793,29 @@ def test_sesame_criteria_accepts_a_cached_pipeline_output(tmp_path):
     r = _hvsr(_stream(duration=300.0))
     serialize_output(tmp_path, "compute_hvsr", r)
     cached = deserialize_output(tmp_path, "compute_hvsr")
-    assert not isinstance(cached, HVSRResult)
+    assert isinstance(cached, HVSRResult)  # pickled, so a cache hit keeps the type
     a, b = sesame_criteria(r), sesame_criteria(cached)
     assert (a.f0, a.reliability, a.clear_peak) == (b.f0, b.reliability, b.clear_peak)
     assert sesame_criteria(r._asdict()).f0 == a.f0
+
+
+def test_window_length_is_rounded_to_samples_not_truncated():
+    w = 40.3  # 40.3 * 50 Hz is 2014.9999999999998 in floating point
+    assert int(w * SR) == 2014
+    assert _hvsr(_stream(duration=300.0), window_length=w).window_length == 2015 / SR
+    # an np.float64 length (numpy 1.x round() of it is a float) still gives integer samples
+    assert _hvsr(_stream(duration=300.0), window_length=np.float64(w)).window_length == 2015 / SR
+    assert type(_samples(np.float64(2014.9999999999998))) is int
+
+
+def test_site_label_carries_the_location_code():
+    st = _stream(duration=300.0)
+    assert _hvsr(st).station == "XX.S1"
+    for tr in st:
+        tr.stats.location = "10"
+    assert _hvsr(st).station == "XX.S1.10"
+    r = compute_ssr([st[1]], [st[0]])
+    assert (r.target_station, r.reference_station) == ("XX.S1.10", "XX.S1.10")
+    for tr in st:
+        tr.stats.network = ""
+    assert _hvsr(st).station == ".S1.10"  # an empty network keeps its place

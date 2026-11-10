@@ -159,6 +159,7 @@ steps:
 steps:
   - name: load_catalog
     function: swe.io.read_quakeml
+    cache: false
     params:
       path: "data/catalog.xml"
 
@@ -197,13 +198,21 @@ steps:
 steps:
   - name: load_catalog
     function: swe.io.read_quakeml
+    cache: false  # file readers re-read: the cache key holds the path, not the file
     params:
       path: "data/catalog.xml"
 
+  - name: load_hvsr_station
+    function: obspy.read
+    cache: false
+    params:
+      pathname_or_url: "data/waveforms/XX.STA1.*"  # one station, one trace per component
+
   - name: compute_hvsr
     function: swe.spectral.compute_hvsr
+    cache: false  # its Stream param has no stable cache key
     params:
-      stream_dir: "data/waveforms/"
+      stream: ${load_hvsr_station}
       window_length: 40.0
       smoothing_bandwidth: 40.0
       freq_min: 0.1
@@ -244,6 +253,7 @@ steps:
 steps:
   - name: load_catalog
     function: swe.io.read_quakeml
+    cache: false
     params:
       path: "data/catalog.xml"
 
@@ -313,6 +323,7 @@ steps:
 steps:
   - name: load_catalog
     function: swe.io.read_quakeml
+    cache: false
     params:
       path: "data/catalog.xml"
 

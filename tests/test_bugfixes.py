@@ -253,27 +253,27 @@ class TestBug5ParameterResolutionErrors:
         from swe.pipeline.core import _resolve_params
 
         with pytest.raises(KeyError, match="not found in outputs"):
-            _resolve_params({"x": "${nonexistent.key}"}, {})
+            _resolve_params({"x": "${nonexistent.key}"}, {}, set())
 
     def test_missing_dict_key_raises_keyerror(self):
         from swe.pipeline.core import _resolve_params
 
         outputs = {"s1": {"a": 1}}
         with pytest.raises(KeyError, match=r"key 'missing'.*not found"):
-            _resolve_params({"x": "${s1.missing}"}, outputs)
+            _resolve_params({"x": "${s1.missing}"}, outputs, set(outputs))
 
     def test_missing_attr_raises_attributeerror(self):
         from swe.pipeline.core import _resolve_params
 
         outputs = {"s1": SimpleNamespace(a=1)}
         with pytest.raises(AttributeError, match="has no attribute 'missing'"):
-            _resolve_params({"x": "${s1.missing}"}, outputs)
+            _resolve_params({"x": "${s1.missing}"}, outputs, set(outputs))
 
     def test_valid_reference_still_works(self):
         from swe.pipeline.core import _resolve_params
 
         outputs = {"s1": {"path": "/data"}}
-        result = _resolve_params({"x": "${s1.path}"}, outputs)
+        result = _resolve_params({"x": "${s1.path}"}, outputs, set(outputs))
         assert result["x"] == "/data"
 
 

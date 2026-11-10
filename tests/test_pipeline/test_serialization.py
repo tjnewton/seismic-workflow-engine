@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any, NamedTuple
 
 import numpy as np
 import pytest
@@ -13,6 +14,13 @@ from swe.pipeline.serialization import (
     deserialize_output,
     serialize_output,
 )
+
+
+class _Point(NamedTuple):
+    """Module-level NamedTuple so pickle can serialize it."""
+
+    x: float
+    y: Any
 
 
 class _PicklableCustom:
@@ -125,8 +133,59 @@ class TestSerializeOutput:
             deserialize_output(tmp_path, "nonexistent")
 
     def test_numpy_array_roundtrip(self, tmp_path):
-        """Numpy arrays should serialize as JSON lists."""
+        """A numpy array comes back as an array (pickled), not a list."""
         arr = np.array([1.0, 2.0, 3.0])
-        serialize_output(tmp_path, "s1", {"data": arr})
+        assert serialize_output(tmp_path, "s1", {"data": arr}) == "pickle"
         result = deserialize_output(tmp_path, "s1")
-        assert result["data"] == [1.0, 2.0, 3.0]
+        assert isinstance(result["data"], np.ndarray)
+        np.testing.assert_array_equal(result["data"], arr)
+
+    @pytest.mark.parametrize(
+        "value",
+        [_Point(1.0, np.array([2.0])), (1, 2), {"p": (1, 2)}, {1: "a"}, {"x": float("nan")}],
+        ids=["namedtuple", "tuple", "nested-tuple", "int-key", "nan"],
+    )
+    def test_non_json_native_keeps_type(self, tmp_path, value):
+        """Values JSON would change (types, keys, NaN) are pickled and load back the same type."""
+        assert serialize_output(tmp_path, "s1", value) == "pickle"
+        result = deserialize_output(tmp_path, "s1")
+        assert type(result) is type(value)
+        assert repr(result) == repr(value)  # repr: NaN and arrays compare by value
+
+    def test_unpicklable_value_falls_back_to_json(self, tmp_path):
+        """As before this change: a NamedTuple local to a function goes to (lossy) JSON."""
+
+        class Local(NamedTuple):
+            a: int
+
+        assert serialize_output(tmp_path, "s1", Local(5)) == "json"
+        assert deserialize_output(tmp_path, "s1") == [5]
+
+    def test_any_pickling_error_falls_back_to_json(self, tmp_path):
+        """A pickling error outside PicklingError/TypeError (here ValueError) falls back to JSON."""
+        from unittest.mock import patch
+
+        with patch("swe.pipeline.serialization.pickle.dump", side_effect=ValueError("handle")):
+            assert serialize_output(tmp_path, "s1", (1, 2)) == "json"
+        assert deserialize_output(tmp_path, "s1") == [1, 2]
+
+    def test_disk_error_while_pickling_is_raised(self, tmp_path):
+        """A write failure is not a pickling failure: it propagates, as before this change."""
+        from unittest.mock import patch
+
+        with (
+            patch("swe.pipeline.serialization.pickle.dump", side_effect=OSError("disk full")),
+            pytest.raises(OSError),
+        ):
+            serialize_output(tmp_path, "s1", (1, 2))
+        assert not (tmp_path / "s1.output.json").exists()
+
+    def test_new_format_replaces_old(self, tmp_path):
+        """A step re-serialized in the other format does not load its stale earlier output."""
+        serialize_output(tmp_path, "s1", {"old": 1})
+        serialize_output(tmp_path, "s1", _Point(3.0, None))
+        assert not (tmp_path / "s1.output.json").exists()
+        assert deserialize_output(tmp_path, "s1") == _Point(3.0, None)
+        serialize_output(tmp_path, "s1", {"new": 2})
+        assert not (tmp_path / "s1.output.pkl").exists()
+        assert deserialize_output(tmp_path, "s1") == {"new": 2}

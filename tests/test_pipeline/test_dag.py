@@ -149,6 +149,7 @@ class TestExtractReferences:
 
     def test_string_ref(self):
         assert _extract_references({"x": "${step1.val}"}) == {"step1"}
+        assert _extract_references({"x": "${whole}"}) == {"whole"}
 
     def test_list_ref(self):
         assert _extract_references({"x": ["${a.val}", "${b.val}"]}) == {"a", "b"}

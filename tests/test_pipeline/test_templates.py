@@ -67,6 +67,17 @@ class TestGetTemplate:
         assert "pick_phases" in step_names
         assert "associate_events" in step_names
 
+    def test_spectral_hvsr_step_fits_compute_hvsr(self):
+        """The HVSR step passes a stream by reference, in params compute_hvsr accepts."""
+        import inspect
+
+        from swe.spectral import compute_hvsr
+
+        steps = {s["name"]: s for s in yaml.safe_load(get_template("spectral"))["steps"]}
+        params = steps["compute_hvsr"]["params"]
+        assert params["stream"] == "${load_hvsr_station}"
+        inspect.signature(compute_hvsr).bind(**params)
+
     def test_detection_template_has_detect_step(self):
         content = get_template("detection")
         data = yaml.safe_load(content)

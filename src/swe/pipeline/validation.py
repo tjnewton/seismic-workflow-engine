@@ -8,15 +8,12 @@ from __future__ import annotations
 
 import importlib
 import logging
-import re
 
-from swe.pipeline.core import Pipeline
+from swe.pipeline.core import _REF_PATTERN, Pipeline
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["validate_pipeline"]
-
-_REF_PATTERN = re.compile(r"\$\{(\w+)(?:\.(\w+))?\}")
 
 
 def validate_pipeline(

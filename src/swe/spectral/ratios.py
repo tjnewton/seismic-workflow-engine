@@ -79,7 +79,7 @@ class HVSRResult(NamedTuple):
     n_windows: int
     """Number of time windows used."""
     station: str
-    """Station identifier."""
+    """``NET.STA``, or ``NET.STA.LOC`` when the location code is set."""
     hvsr_median: NDArray[np.floating] | None = None
     """Lognormal median H/V curve, ``exp(mean(ln H/V))`` across windows."""
     hvsr_log_std: NDArray[np.floating] | None = None
@@ -159,9 +159,9 @@ class SSRResult(NamedTuple):
     ssr_per_event: NDArray[np.floating]
     """Individual SSR curves, shape ``(n_events, n_freqs)``."""
     target_station: str
-    """Target station identifier."""
+    """Target ``NET.STA`` (``NET.STA.LOC`` when the location code is set)."""
     reference_station: str
-    """Reference station identifier."""
+    """Reference ``NET.STA`` (``NET.STA.LOC`` when the location code is set)."""
     n_events: int
     """Number of events used."""
 
@@ -275,6 +275,17 @@ def _demeaned(x: NDArray[np.floating]) -> NDArray[np.floating]:
     return out
 
 
+def _samples(x: float) -> int:
+    """Nearest whole number of samples as a Python int (numpy 1.x ``round`` of np.float64 is a float)."""
+    return int(np.rint(x))
+
+
+def _site_label(tr: Trace) -> str:
+    """``NET.STA``, or ``NET.STA.LOC`` when the location code is set (co-located sensors)."""
+    s = tr.stats
+    return f"{s.network}.{s.station}" + (f".{s.location}" if s.location else "")
+
+
 def _zero_runs(x: NDArray[np.floating], run: int) -> NDArray[np.bool_]:
     """True on samples inside runs of at least ``run`` consecutive exact zeros."""
     edges = np.flatnonzero(np.diff(np.concatenate([[0], (x == 0).astype(np.int8), [0]])))
@@ -323,12 +334,15 @@ def _anti_trigger_mask(
                 f"anti-trigger band must satisfy 0 < low < high < Nyquist, got {at.band}"
             )
         sos = butter(4, (lo, hi), btype="bandpass", fs=sr, output="sos")
-        settle = round(4.0 / lo * sr)  # four periods of the low corner
-    nsta, nlta = round(at.sta * sr), round(at.lta * sr)
+        settle = _samples(4.0 / lo * sr)  # four periods of the low corner
+    nsta, nlta = _samples(at.sta * sr), _samples(at.lta * sr)
     if not (0 < nsta < nlta):
         raise ValueError(f"need 0 < sta < lta in samples, got sta={nsta}, lta={nlta}")
-    if min(len(x) for x in data) < nlta:
-        raise ValueError(f"record shorter than the anti-trigger lta ({at.lta} s)")
+    if min(len(x) for x in data) <= nlta + 2 * settle:  # the per-segment test below
+        raise ValueError(
+            f"record shorter than the anti-trigger lta ({at.lta} s)"
+            + (f" plus the band-pass settle zones (2 x {settle / sr:g} s)" if settle else "")
+        )
     ok = np.ones(len(starts), dtype=bool)
     for x in data:
         good = np.zeros(len(x), dtype=bool)
@@ -467,8 +481,6 @@ def compute_hvsr(
     if "Z" not in groups:
         raise ValueError("No vertical component found in stream")
 
-    station = f"{groups['Z'][0].stats.network}.{groups['Z'][0].stats.station}"
-
     # One trace per component: an N/E or 1/2 horizontal pair and one vertical
     pair = next((p for p in (("N", "E"), ("1", "2")) if set(p) <= groups.keys()), None)
     used = ("Z", *pair) if pair is not None else tuple(groups)
@@ -483,6 +495,7 @@ def compute_hvsr(
         raise ValueError(f"need an N/E or 1/2 horizontal pair, got components {horiz}")
     vert_trace = groups["Z"][0]
     horiz_traces = [groups[pair[0]][0], groups[pair[1]][0]]
+    station = _site_label(vert_trace)
     sites = {
         (t.stats.network, t.stats.station, t.stats.location) for t in (vert_trace, *horiz_traces)
     }
@@ -492,8 +505,9 @@ def compute_hvsr(
     sr = vert_trace.stats.sampling_rate
     if any(not math.isclose(tr.stats.sampling_rate, sr, rel_tol=1e-6) for tr in horiz_traces):
         raise ValueError("all three components must share one sampling rate")
-    window_samples = int(window_length * sr)
-    step_samples = int(window_samples * (1.0 - overlap))
+    # round, not truncate: 40.3 s at 100 Hz is 4029.999... samples
+    window_samples = _samples(window_length * sr)
+    step_samples = _samples(window_samples * (1.0 - overlap))
 
     if window_samples < 4:
         raise ValueError(
@@ -516,7 +530,7 @@ def compute_hvsr(
         # a gap straddling the common range keeps its full length), then trim to the common range
         full = np.ma.filled(np.ma.array(tr.data, dtype=np.float64, copy=True), np.nan)
         if zero_gap is not None:
-            full[_zero_runs(full, max(_MIN_ZERO_RUN, round(zero_gap * sr)))] = np.nan
+            full[_zero_runs(full, max(_MIN_ZERO_RUN, _samples(zero_gap * sr)))] = np.nan
         i0 = round((t_start - tr.stats.starttime) * sr)
         return full[i0 : i0 + round((t_end - t_start) * sr) + 1]
 
@@ -555,9 +569,15 @@ def compute_hvsr(
         n_rejected += int((~keep).sum())
         starts = [st for st, k in zip(starts, keep, strict=True) if k]
         if not starts:
+            settle = (
+                f", and the band-pass settle zones of {4.0 / anti_trigger.band[0]:g} s at each end"
+                if anti_trigger.band is not None
+                else ""
+            )
             raise ValueError(
                 "every window was rejected by the anti-trigger (windows overlapping the first "
-                f"lta = {anti_trigger.lta} s of the record or after a gap are always rejected)"
+                f"lta = {anti_trigger.lta} s of the record or after a gap{settle} are always"
+                " rejected)"
             )
 
     # Frequency array for the FFT
@@ -671,7 +691,8 @@ def compute_ssr(
     zero_gap : float or None
         As in :func:`compute_hvsr`: a run of exact zeros of at least this many
         seconds (and 10 samples) marks a zero-filled gap, and the call raises.
-        ``None`` treats zeros as data. A trace that never varies also raises.
+        ``None`` treats zeros as data: pass it for synthetics that are exactly zero
+        before the first arrival. A trace that never varies also raises.
 
     Returns
     -------
@@ -696,8 +717,8 @@ def compute_ssr(
             f"({len(reference_traces)}) must have the same length"
         )
 
-    target_station = f"{target_traces[0].stats.network}.{target_traces[0].stats.station}"
-    reference_station = f"{reference_traces[0].stats.network}.{reference_traces[0].stats.station}"
+    target_station = _site_label(target_traces[0])
+    reference_station = _site_label(reference_traces[0])
 
     sr = target_traces[0].stats.sampling_rate
     # each pair is analysed over its first npts = min(len) samples, so the checks look at those
@@ -722,7 +743,7 @@ def compute_ssr(
             if (
                 zero_gap is not None
                 and _zero_runs(
-                    np.asarray(d, dtype=np.float64), max(_MIN_ZERO_RUN, round(zero_gap * sr))
+                    np.asarray(d, dtype=np.float64), max(_MIN_ZERO_RUN, _samples(zero_gap * sr))
                 ).any()
             ):
                 raise ValueError(

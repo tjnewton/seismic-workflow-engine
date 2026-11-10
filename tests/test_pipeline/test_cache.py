@@ -20,6 +20,16 @@ def _other_func(x=1):
 class TestComputeStepHash:
     """Tests for compute_step_hash."""
 
+    def test_address_holding_repr_makes_the_step_uncacheable(self):
+        """A Stream param (not JSON) has only its address in repr(): a fresh key every time."""
+        import numpy as np
+        from obspy import Stream, Trace
+
+        p = {"stream": Stream([Trace(np.zeros(10))])}
+        assert compute_step_hash("mod.fn", p, _dummy_func) != compute_step_hash(
+            "mod.fn", p, _dummy_func
+        )
+
     def test_deterministic(self):
         """Same inputs should produce the same hash."""
         h1 = compute_step_hash("mod.fn", {"a": 1}, _dummy_func)
@@ -62,6 +72,18 @@ class TestFindCachedResult:
 
         result = find_cached_result("s1", "hash_abc", tmp_path)
         assert result == {"result": 42}
+
+    def test_unloadable_cached_pickle_is_a_miss(self, tmp_path):
+        """A cached pickle whose class no longer imports is a miss, not an exception."""
+        from swe.pipeline.serialization import _sign_file
+
+        ctx = RunContext.create(tmp_path)
+        serialize_output(ctx.steps_dir, "s1", (1, 2))
+        ctx.mark_step_completed("s1", "h")
+        pkl = ctx.steps_dir / "s1.output.pkl"
+        pkl.write_bytes(b"cno_such_module_xyz\nCls\n)\x81.")
+        _sign_file(pkl)
+        assert find_cached_result("s1", "h", tmp_path) is None
 
     def test_returns_none_on_miss(self, tmp_path):
         """Should return None when no cache matches."""

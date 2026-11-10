@@ -152,6 +152,45 @@ class TestPipelineExecute:
         assert "s1" in outputs
         assert "s2" in outputs
 
+    def test_resume_refuses_a_run_written_before_typed_checkpoints(self, tmp_path):
+        """A run without the output-format field holds lossy JSON checkpoints: no resume."""
+        import json
+
+        run_dir = tmp_path / "runs"
+        pipeline = Pipeline(steps=[PipelineStep(name="s1", function="os.getcwd", params={})])
+        with patch("swe.pipeline.core._import_callable", return_value=MagicMock(return_value=1)):
+            pipeline.execute(run_dir=run_dir)
+        (manifest,) = run_dir.glob("*/manifest.json")
+        m = json.loads(manifest.read_text())
+        del m["output_format"]
+        manifest.write_text(json.dumps(m))
+        with pytest.raises(RuntimeError, match="before checkpoints kept their types"):
+            pipeline.execute(run_dir=run_dir, resume="latest")
+
+    def test_resume_stops_clearly_on_a_checkpoint_from_another_version(self, tmp_path):
+        """A pickle written by another SWE version stops the resume with the step named."""
+        import json
+
+        run_dir = tmp_path / "runs"
+        mock_fn = MagicMock(return_value=(1, 2))
+        pipeline = Pipeline(steps=[PipelineStep(name="s1", function="os.getcwd", params={})])
+        with patch("swe.pipeline.core._import_callable", return_value=mock_fn):
+            pipeline.execute(run_dir=run_dir)
+        (meta,) = run_dir.glob("*/steps/s1.output.pkl.meta")
+        meta.write_text(json.dumps({"swe_version": "0.0.0-other"}))
+        with pytest.raises(RuntimeError, match="checkpoint of step 's1' cannot be loaded"):
+            pipeline.execute(run_dir=run_dir, resume="latest")
+
+    def test_resume_restores_a_typed_output(self, tmp_path):
+        """A tuple output is pickled, so a resume gets the tuple back, not a list."""
+        run_dir = tmp_path / "runs"
+        mock_fn = MagicMock(return_value=(1, 2))
+        pipeline = Pipeline(steps=[PipelineStep(name="s1", function="os.getcwd", params={})])
+        with patch("swe.pipeline.core._import_callable", return_value=mock_fn):
+            pipeline.execute(run_dir=run_dir)
+            outputs = pipeline.execute(run_dir=run_dir, resume="latest")
+        assert outputs["s1"] == (1, 2)
+
     def test_failed_step_raises(self, tmp_path):
         """A step that raises should be recorded as failed and re-raised."""
         run_dir = tmp_path / "runs"
@@ -199,30 +238,50 @@ class TestResolveParams:
     def test_simple_reference(self):
         """Should replace ${step.key} with the value."""
         outputs = {"step1": {"path": "/tmp/data"}}
-        result = _resolve_params({"f": "${step1.path}"}, outputs)
+        result = _resolve_params({"f": "${step1.path}"}, outputs, set(outputs))
         assert result["f"] == "/tmp/data"
+
+    def test_whole_output_reference(self):
+        """``${step}`` passes the earlier step's whole output, of any type."""
+        out = object()
+        assert _resolve_params({"f": "${step1}", "g": ["${step1}"]}, {"step1": out}, {"step1"}) == {
+            "f": out,
+            "g": [out],
+        }
+
+    def test_bare_name_that_is_not_a_step_stays_literal(self):
+        """``${HOME}``-style text passed through before ``${step}`` existed, and still does."""
+        assert _resolve_params({"p": "${HOME}/x", "q": "${HOME}"}, {"s": 1}, {"s"}) == {
+            "p": "${HOME}/x",
+            "q": "${HOME}",
+        }
+
+    def test_bare_ref_to_a_pipeline_step_without_output_raises(self):
+        """A known step must have output, as for ``${step.key}``."""
+        with pytest.raises(KeyError, match="not found in outputs"):
+            _resolve_params({"p": "${load}"}, {}, {"load"})
 
     def test_no_reference(self):
         """Strings without ${} should pass through."""
-        result = _resolve_params({"f": "hello"}, {})
+        result = _resolve_params({"f": "hello"}, {}, set())
         assert result["f"] == "hello"
 
     def test_numeric_passthrough(self):
         """Non-string values should pass through."""
-        result = _resolve_params({"n": 42, "x": 3.14}, {})
+        result = _resolve_params({"n": 42, "x": 3.14}, {}, set())
         assert result["n"] == 42
         assert result["x"] == 3.14
 
     def test_nested_dict(self):
         """Should resolve references in nested dicts."""
         outputs = {"s1": {"val": 100}}
-        result = _resolve_params({"nested": {"x": "${s1.val}"}}, outputs)
+        result = _resolve_params({"nested": {"x": "${s1.val}"}}, outputs, set(outputs))
         assert result["nested"]["x"] == 100
 
     def test_list_resolution(self):
         """Should resolve references inside lists."""
         outputs = {"s1": {"a": "foo", "b": "bar"}}
-        result = _resolve_params({"items": ["${s1.a}", "${s1.b}"]}, outputs)
+        result = _resolve_params({"items": ["${s1.a}", "${s1.b}"]}, outputs, set(outputs))
         assert result["items"] == ["foo", "bar"]
 
 

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **`swe.topo` morphometry**: terrain shape on gridded elevation, using signed grid spacings so north-up rasters work.
+  - `slope_aspect`: slope and downslope aspect (clockwise from north).
+  - `local_plane_fit`: moving-window least-squares planes with slope, aspect and residual standard deviation; NaN nodata stays local.
+  - `curvature`: Laplacian by second central differences, with optional isotropic Gaussian pre-smoothing in length units (NaN spreads over the smoothing footprint rather than biasing hole edges).
+  - `faceted_template`: a regular n-sided apex landform; `base` is twice the apothem, one edge faces row 0 at zero `rotation` (a square is grid-aligned), and `dy` matches non-square cells.
+  - `template_correlation`: local normalised cross-correlation by FFT; windows containing NaN are NaN.
+  - `grid_spacing`: signed `(dx, dy)` of an `ElevationGrid`, rejecting non-uniform, zero-spaced, non-square transposed or geographic grids (CRS checked with pyproj or rasterio when installed; non-metre units warn).
+  - Acceptance tests: with 2 m noise, curvature correlation finds a planted faceted landform and rejects a dome and a ridge of the same size; a landform turned 30° is found at the right rotation by a rotation search.
 - **`swe.scattering`** (new): Born single-scattering by a compact elastic inclusion in a homogeneous full space.
   - `born_radiation_pattern` gives the P→P and P→S patterns in density and P/S velocity perturbations (Wu & Aki 1985).
   - `born_point_scattering` gives the far-field scattered/incident amplitude, with validity flags: Rayleigh regime, weak contrast, and far field (`kr > 10` and beyond the body's Fraunhofer distance). Physically impossible hosts are rejected.

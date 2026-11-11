@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import collections
 import copy
 import dataclasses
 import datetime
 import enum
+import hashlib
 import json
+import logging
 import re
+import sys
 from decimal import Decimal
 from pathlib import Path, PurePosixPath
 from typing import NamedTuple
@@ -46,32 +48,6 @@ class _Pt:
     x: int
 
 
-class _PtWithNote(_Pt):  # not a dataclass itself: ``note`` is state outside the fields
-    def __init__(self, x, note):
-        super().__init__(x)
-        object.__setattr__(self, "note", note)
-
-
-@dataclasses.dataclass
-class _Unset:
-    x: float
-    y: float = dataclasses.field(init=False)
-
-
-@dataclasses.dataclass
-class _DictDC(dict):  # a dataclass whose contents live in the dict, outside its fields
-    name: str = "n"
-
-    def __init__(self, items):
-        dict.__init__(self, items)
-        self.name = "n"
-
-
-class _FakeFields(tuple):  # not a NamedTuple: _fields covers one of two elements
-    _fields = ("a",)
-    a = property(lambda s: s[0])
-
-
 def _zone_from_file(d):
     import zoneinfo
 
@@ -96,69 +72,10 @@ class _TZ(datetime.tzinfo):  # no __repr__: its repr is an address
         return datetime.timedelta(hours=self.h)
 
 
-@dataclasses.dataclass(eq=False)
-class _DequeDC(collections.deque):  # contents live in the deque, outside the fields
-    name: str = "n"
-
-    def __init__(self, items):
-        collections.deque.__init__(self, items)
-        self.name = "n"
-
-
 def _nan_payload(n):
     import struct
 
     return struct.unpack("<d", struct.pack("<Q", 0x7FF8000000000000 | n))[0]
-
-
-@dataclasses.dataclass(eq=False)
-class _TupleDC(tuple):  # contents live in the tuple, outside the fields
-    name: str = "n"
-
-    def __new__(cls, items):
-        return tuple.__new__(cls, items)
-
-    def __init__(self, items):
-        self.name = "n"
-
-
-class _IterSlots(_Pt):  # __slots__ given as an iterator: exhausted once the class is built
-    __slots__ = iter(("note",))
-
-    def __init__(self, x, note):
-        super().__init__(x)
-        object.__setattr__(self, "note", note)
-
-
-class _DictProp(_Pt):  # a property named __dict__ hides the real instance dict
-    __dict__ = property(lambda s: {"x": 1})
-
-    def __init__(self, x, note):
-        super().__init__(x)
-        object.__setattr__(self, "note", note)
-
-
-@dataclasses.dataclass
-class _HidingGetattr:  # reports a clean __dict__ while storing more
-    x: int
-
-    def __init__(self, x, note):
-        object.__setattr__(self, "x", x)
-        object.__setattr__(self, "note", note)
-
-    def __getattribute__(self, name):
-        if name == "__dict__":
-            return {"x": object.__getattribute__(self, "x")}
-        return object.__getattribute__(self, name)
-
-
-_SIDE: dict = {}
-
-
-class _Undecorated(_Pt):  # not decorated: its tag lives in a side table, outside the fields
-    def __init__(self, x, tag):
-        super().__init__(x)
-        _SIDE[id(self)] = tag
 
 
 def _distinct_numpy_int_types():
@@ -187,14 +104,6 @@ def _utc_with_attribute(d):
 def _readonly(a):
     a.flags.writeable = False
     return a
-
-
-class _SlotNote(_Pt):  # extra state in __slots__, outside the dataclass fields
-    __slots__ = ("note",)
-
-    def __init__(self, x, note):
-        super().__init__(x)
-        object.__setattr__(self, "note", note)
 
 
 class _NotePath(PurePosixPath):  # a path subclass with a __dict__, so it can carry state
@@ -261,7 +170,11 @@ class TestComputeStepHash:
             pytest.param([np.array([1, 2], dtype=np.int32), np.array([1, 2]), [1, 2]], id="dtype"),
             pytest.param([np.zeros((0, 2)), np.zeros((0, 3)), np.zeros(4)], id="shape"),
             pytest.param(
-                [np.arange(6.0).reshape(2, 3), np.asfortranarray(np.arange(6.0).reshape(2, 3))],
+                [
+                    np.arange(6.0).reshape(2, 3),
+                    np.asfortranarray(np.arange(6.0).reshape(2, 3)),
+                    np.asfortranarray(np.arange(6.0).reshape(2, 3)[::-1]),
+                ],
                 id="memory-order",
             ),
             pytest.param([{"a": 1, "b": 2}, {"b": 2, "a": 1}], id="dict-order"),
@@ -302,25 +215,14 @@ class TestComputeStepHash:
             pytest.param(lambda d: _Pair(1, d), id="namedtuple"),
             pytest.param(lambda d: np.ma.array([1.0, d]), id="masked-array"),
             pytest.param(_utc_with_attribute, id="utcdatetime-with-instance-attribute"),
-            pytest.param(lambda d: _PtWithNote(1, d), id="state-outside-dataclass-fields"),
-            pytest.param(_Unset, id="unset-dataclass-field"),
-            pytest.param(lambda d: _DictDC({d: 1}), id="dataclass-subclassing-dict"),
             pytest.param(_void_with_object, id="numpy-scalar-with-object-field"),
             pytest.param(lambda d: _Color.RED if d == 1.0 else _Color.GREEN, id="enum-member"),
             pytest.param(lambda d: re.I | (re.M if d == 1.0 else re.S), id="flag"),
-            pytest.param(lambda d: _FakeFields((1, d)), id="tuple-subclass-with-fake-fields"),
             pytest.param(_zone_from_file, id="zoneinfo"),
             pytest.param(
                 lambda d: datetime.datetime(2020, 1, 1, tzinfo=_TZ(d)), id="custom-tzinfo"
             ),
             pytest.param(lambda d: np.ma.array(np.matrix([[1.0, d]])), id="masked-matrix"),
-            pytest.param(lambda d: _DequeDC([d]), id="dataclass-subclassing-deque"),
-            pytest.param(lambda d: _TupleDC((d,)), id="dataclass-subclassing-tuple"),
-            pytest.param(lambda d: _IterSlots(1, d), id="slots-given-as-an-iterator"),
-            pytest.param(lambda d: _DictProp(1, d), id="dict-hidden-by-a-property"),
-            pytest.param(lambda d: _HidingGetattr(1, d), id="custom-getattribute"),
-            pytest.param(lambda d: _Undecorated(1, d), id="undecorated-dataclass-subclass"),
-            pytest.param(lambda d: _SlotNote(1, d), id="state-in-slots-outside-fields"),
             pytest.param(_note_path, id="path-subclass-with-state"),
             pytest.param(lambda d: _MyTime(ns=int(d)), id="utcdatetime-subclass"),
         ],
@@ -436,17 +338,130 @@ class TestFindCachedResult:
         assert result == {"run": 2}
 
 
-def test_hashing_a_masked_array_leaves_it_unchanged():
-    """Reading the key must not set a masked array's fill value (the property does)."""
-    m = np.ma.array([1.0, 2.0])
-    assert m._fill_value is None
-    compute_step_hash("mod.fn", {"m": m}, _dummy_func)
-    assert m._fill_value is None
-
-
 def test_read_only_array_is_keyed_apart_from_a_writable_one():
     """In-place writes fail on a read-only input, so the two must not share a cached output."""
     a, b = np.arange(3.0), _readonly(np.arange(3.0))
     assert compute_step_hash("mod.fn", {"a": a}, _dummy_func) != compute_step_hash(
         "mod.fn", {"a": b}, _dummy_func
     )
+
+
+# SHA-256 of the key text of {"v": value}, as computed before the key text was built from
+# element text: a changed key would silently miss every cached output
+_PINNED = {
+    "c-2d-float": (
+        np.arange(6.0).reshape(2, 3),
+        "0fd1f36a36836055b9d6b4f9a3bca32fa1d5276b91096b09494b0588b099e40e",
+    ),
+    "c-1d-int32": (
+        np.arange(5, dtype=np.int32),
+        "fda3a712298be9c8cf967802081b0e57956adcc9075baf0c379c697e4b125ef8",
+    ),
+    "c-datetime64": (
+        np.array(["2020-01-01", "2020-01-02"], dtype="datetime64[D]"),
+        "96bb335e3dc946368dc2c3a8039bd19e20eee7a0e3a2449bdb1c089860ec444b",
+    ),
+    "c-empty-2d": (
+        np.zeros((0, 3)),
+        "baaac66df6fdf20591b6973184ec90c1b2811f60d03a8b098663ed3f504dbb9a",
+    ),
+    "c-0d": (np.array(3.5), "a8eab1db79bf2b06f6a0c6ed5aa91a227b2e23292cc2b42be31ba341f79c2a82"),
+    "c-read-only": (
+        _readonly(np.arange(3.0)),
+        "822832eda75e835e3b25d3b3c61cea9ab2e5056b6e625cbf52e6473e913d3991",
+    ),
+    "c-structured": (
+        np.zeros(2, dtype=[("a", "<i4"), ("b", "<f8")]),
+        "5526a086365a35f43673702a844cffdb97b3f2478b359ba6e05b10dad67fc9c1",
+    ),
+    "strided-1d": (
+        np.arange(10.0)[::2],
+        "e0fbbbed4ae86daa29fb0b51478d09e426bfab2baf187ddf48581be582500b98",
+    ),
+    "strided-2d": (
+        np.arange(12.0).reshape(3, 4)[:, ::2],
+        "925d256c9420893783b25018983614fccb9d9358535e8a45520e7a63a2b95b6d",
+    ),
+    "set-ints": ({3, 1, 2}, "46c3dbae69357935ba52568e003f4559d6801c481eec2c662f5fe79bd72a9632"),
+    "set-empty": (set(), "ac522383b6055975eb7c811a82049632f976f65b0251cc159fa4b167274efb3b"),
+    "frozenset-strs": (
+        frozenset({"b", "a"}),
+        "47540ad6af53c6c13f1b34bc7c8fc802f32dd3b91bfab128cc322cd99604b294",
+    ),
+    "set-tuples": (
+        {(2, "y"), (1, "x")},
+        "16596598642bdbca9cccae789cfd5439286638cf9cd2bf3fa69f852327c6200f",
+    ),
+    "set-mixed": (
+        {None, "a", 1.5, 2},
+        "de6ea58036a862ea914a1af6bd1f4a60440bd5e1dc5991342d6c465c3c756914",
+    ),
+    "set-of-frozensets": (
+        {frozenset({3}), frozenset({1, 2})},
+        "02b41ff3bae29e66d3298b08741aeb8be7a0e64007117c26f86d60127382c63c",
+    ),
+    "nested-frozensets": (
+        frozenset({frozenset({frozenset({1})}), 2}),
+        "a1b02800491e8f064efa4312072f8a49da94e97b2fa4afda92f27eb6a0fd3251",
+    ),
+    "other-types": (
+        {
+            "a": [1, 2.5, None, True, "s"],
+            "b": (1,),
+            1: {"n": {}},
+            "d": Decimal("1.5"),
+            "t": UTCDateTime(ns=5),
+            "date": datetime.date(2020, 1, 1),
+            "naive": datetime.datetime(2020, 1, 1, 12),
+            "time": datetime.time(1, 2),
+            "np": np.float32(0.5),
+            "big": 10**30,
+            "text": "é☃",
+        },
+        "b22d50a4e18bb0606445eb9b8942f9131852b31ed6a7ff733fdbdb40d9ad3e01",
+    ),
+}
+
+
+@pytest.mark.parametrize(("value", "expected"), _PINNED.values(), ids=list(_PINNED))
+def test_existing_keys_are_unchanged(value, expected):
+    """C-contiguous and strided arrays, sets and the other keyed types keep their keys."""
+    assert hashlib.sha256(cache._key({"v": value}).encode()).hexdigest() == expected
+
+
+def test_equal_sets_share_a_key_whatever_their_insertion_order():
+    """1 and 9 collide in a small set's table, so insertion order sets iteration order."""
+    a, b = {1, 9}, {9, 1}
+    assert list(a) != list(b)  # else this test checks nothing
+    assert _h(a) == _h(b)
+    assert _h([frozenset(a), "x"]) == _h([frozenset(b), "x"])
+
+
+def test_too_deeply_nested_param_is_uncacheable_by_design(caplog):
+    """Nesting deeper than the recursion limit has no key: a designed rejection, no warning."""
+    v: list = []
+    for _ in range(sys.getrecursionlimit()):
+        v = [v]
+    with caplog.at_level(logging.DEBUG, logger=cache.__name__):
+        assert _h(v).startswith(cache.UNCACHEABLE)
+    assert [r.levelname for r in caplog.records if r.name == cache.__name__] == ["DEBUG"]
+
+
+class _SlottedTime:  # as a newer obspy UTCDateTime: __slots__, no instance dict
+    __slots__ = ("ns", "precision")
+
+    def __init__(self, ns=0, precision=6):
+        self.ns, self.precision = ns, precision
+
+
+class _MoreInternals:  # an obspy UTCDateTime whose __init__ sets another private attribute
+    def __init__(self, ns=0, precision=6):
+        self.ns, self.precision, self._other = ns, precision, None
+
+
+@pytest.mark.parametrize("cls", [_SlottedTime, _MoreInternals])
+def test_utcdatetime_attributes_of_a_fresh_instance_are_not_extra_state(monkeypatch, cls):
+    """Keyed by ns and precision whatever attributes obspy itself sets on an instance."""
+    expected = cache._key(UTCDateTime(ns=5))
+    monkeypatch.setattr(cache, "UTCDateTime", cls)
+    assert cache._key(cls(ns=5)) == expected

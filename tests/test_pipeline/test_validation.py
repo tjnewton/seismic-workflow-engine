@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from types import MappingProxyType
 
 import pytest
 
@@ -12,6 +13,18 @@ from swe.pipeline.templates import get_template, list_templates
 from swe.pipeline.validation import validate_pipeline
 
 EXAMPLES = sorted((Path(__file__).parents[2] / "examples").glob("*.yml"))
+
+
+class _NoSignature:  # a callable whose signature cannot be read, as for some builtins
+    @property
+    def __signature__(self):
+        raise ValueError("no signature found")
+
+    def __call__(self):  # takes no params: a read signature would reject the step's x
+        return None
+
+
+_NO_SIGNATURE = _NoSignature()
 
 
 class TestValidatePipeline:
@@ -49,8 +62,8 @@ class TestValidatePipeline:
 
     def test_callable_without_signature_is_not_checked(self):
         """``inspect.signature`` fails for some builtins; such steps are not reported."""
-        pipeline = Pipeline(steps=[PipelineStep(name="s", function="builtins.max", params={})])
-        errors, _warnings = validate_pipeline(pipeline)
+        step = PipelineStep(name="s", function=f"{__name__}._NO_SIGNATURE", params={"x": 1})
+        errors, _warnings = validate_pipeline(Pipeline(steps=[step]))
         assert errors == []
 
     def test_empty_pipeline(self):
@@ -224,30 +237,36 @@ class TestShippedPipelines:
             errors, _warnings = validate_pipeline(Pipeline.from_yaml(path))
             assert errors == [], (i, errors)
 
-    @pytest.mark.parametrize("params", [None, ["x"]], ids=["null", "list"])
-    def test_params_that_are_not_a_mapping_are_an_error(self, params):
-        """``params:`` left empty (null) or given as a list cannot be passed as keywords."""
-        step = PipelineStep(
-            name="s", function="swe.moment_tensor.tensor.scalar_moment", params=params
+    def test_params_none_is_no_params(self):
+        assert PipelineStep(name="s", function="os.getcwd", params=None).params == {}
+
+    def test_params_any_mapping_is_accepted_as_a_dict(self):
+        step = PipelineStep(name="s", function="os.getcwd", params=MappingProxyType({"a": 1}))
+        assert step.params == {"a": 1} and type(step.params) is dict
+
+    @pytest.mark.parametrize("params", [["x"], [], ""], ids=["list", "empty-list", "empty-str"])
+    def test_params_that_are_not_a_mapping_are_rejected(self, params):
+        """They cannot be passed as keywords; a falsy one is rejected too, not taken as none."""
+        with pytest.raises(ValueError) as exc_info:
+            PipelineStep(name="s", function="os.getcwd", params=params)
+        assert str(exc_info.value) == (
+            f"Step 's': params must be a mapping, got {type(params).__name__}"
         )
-        errors, _warnings = validate_pipeline(Pipeline(steps=[step]))
-        assert [e for e in errors if "params" in e] == [
-            f"Step 's': params must be a mapping, got {type(params).__name__}."
-        ]
 
     def test_examples_are_found(self):
         """An empty glob would turn the example test into a silent skip."""
         assert EXAMPLES
 
-    def test_yaml_params_null_is_empty_and_a_list_is_rejected(self, tmp_path):
+    @pytest.mark.parametrize("bad", ["[1]", "[]"])
+    def test_yaml_params_null_is_empty_and_a_list_is_rejected(self, tmp_path, bad):
         """``params:`` left empty loads as no params; a list fails at load, before any step runs."""
         ok = tmp_path / "ok.yml"
         ok.write_text("steps:\n  - name: s\n    function: os.getcwd\n    params:\n")
         assert Pipeline.from_yaml(ok).steps[0].params == {}
-        bad = tmp_path / "bad.yml"
-        bad.write_text("steps:\n  - name: s\n    function: os.getcwd\n    params: [1]\n")
+        path = tmp_path / "bad.yml"
+        path.write_text(f"steps:\n  - name: s\n    function: os.getcwd\n    params: {bad}\n")
         with pytest.raises(ValueError, match="params must be a mapping"):
-            Pipeline.from_yaml(bad)
+            Pipeline.from_yaml(path)
 
     @pytest.mark.parametrize("path", EXAMPLES, ids=lambda p: p.name)
     def test_example_validates(self, path):

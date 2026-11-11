@@ -110,7 +110,10 @@ def run(
         click.echo(format_provenance(records))
         return
 
-    pipeline = Pipeline.from_yaml(config_file)
+    try:
+        pipeline = Pipeline.from_yaml(config_file)
+    except ValueError as exc:  # a malformed pipeline: an error line, not a traceback
+        raise click.ClickException(str(exc)) from exc
 
     if dry_run:
         from swe.pipeline.validation import validate_pipeline

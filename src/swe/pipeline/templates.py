@@ -197,7 +197,6 @@ steps:
 
   - name: compute_hvsr
     function: swe.spectral.compute_hvsr
-    cache: false  # its Stream param has no stable cache key
     params:
       stream: ${load_hvsr_station}
       window_length: 40.0

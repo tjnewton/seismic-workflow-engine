@@ -134,6 +134,14 @@ class TestDryRun:
         assert result.exit_code == 0
         assert "valid" in result.output.lower() or "passed" in result.output.lower()
 
+    def test_malformed_pipeline_is_an_error_line_not_a_traceback(self, tmp_path):
+        config = tmp_path / "bad.yml"
+        config.write_text("steps:\n  - name: s\n    function: os.getcwd\n    params: [1]\n")
+        result = CliRunner().invoke(cli, ["run", str(config)])
+        assert result.exit_code == 1
+        assert isinstance(result.exception, SystemExit)  # click's error exit, nothing raised
+        assert "Error: Step 's': params must be a mapping, got list" in result.output
+
     def test_dry_run_invalid_function(self, tmp_path):
         config = tmp_path / "invalid.yml"
         config.write_text("steps:\n  - name: step1\n    function: swe.nonexistent.module.func\n")

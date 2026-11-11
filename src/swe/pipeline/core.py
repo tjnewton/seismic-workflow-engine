@@ -13,6 +13,7 @@ import importlib
 import logging
 import re
 import threading
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -47,6 +48,16 @@ class PipelineStep:
     propagate_uncertainty: bool = False
     """Whether this step participates in uncertainty propagation."""
 
+    def __post_init__(self) -> None:
+        if self.params is None:  # an empty `params:` is none
+            self.params = {}
+        elif isinstance(self.params, Mapping):  # the run calls function(**params)
+            self.params = dict(self.params)
+        else:
+            raise ValueError(
+                f"Step {self.name!r}: params must be a mapping, got {type(self.params).__name__}"
+            )
+
 
 @dataclass
 class Pipeline:
@@ -77,17 +88,11 @@ class Pipeline:
 
         steps: list[PipelineStep] = []
         for step_dict in raw["steps"]:
-            params = step_dict.get("params") or {}  # an empty `params:` is none
-            if not isinstance(params, dict):
-                raise ValueError(
-                    f"Step {step_dict.get('name')!r}: params must be a mapping, "
-                    f"got {type(params).__name__}: {path}"
-                )
             steps.append(
                 PipelineStep(
                     name=step_dict["name"],
                     function=step_dict["function"],
-                    params=params,
+                    params=step_dict.get("params"),
                     cache=step_dict.get("cache", True),
                     propagate_uncertainty=step_dict.get("propagate_uncertainty", False),
                 )

@@ -62,10 +62,6 @@ def validate_pipeline(
 
         if not step.function:
             errors.append(f"Step {step.name!r} has an empty function path.")
-        if not isinstance(step.params, dict):  # the run calls function(**params)
-            errors.append(
-                f"Step {step.name!r}: params must be a mapping, got {type(step.params).__name__}."
-            )
 
     # --- Check 3: function imports ---
     for step in pipeline.steps:
@@ -96,8 +92,6 @@ def validate_pipeline(
                 f"(type: {type(obj).__name__})."
             )
             continue
-        if not isinstance(step.params, dict):
-            continue  # already reported as not a mapping
         try:
             signature = inspect.signature(obj)
         except (TypeError, ValueError):  # some builtins expose no signature
@@ -110,7 +104,7 @@ def validate_pipeline(
     # --- Check 4: reference resolution ---
     step_names_ordered: list[str] = []
     for step in pipeline.steps:
-        refs = _extract_step_refs(step.params if isinstance(step.params, dict) else {})
+        refs = _extract_step_refs(step.params)
         for ref_name in refs:
             if ref_name not in seen_names:
                 errors.append(f"Step {step.name!r}: references unknown step {ref_name!r}.")

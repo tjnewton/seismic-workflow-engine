@@ -7,23 +7,110 @@ scanned (most recent first) for matching step name + hash.
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import inspect
 import json
 import logging
-import re
+import struct
 import uuid
-from pathlib import Path
+from decimal import Decimal
+from pathlib import Path, PosixPath, PurePosixPath, PureWindowsPath, WindowsPath
 from typing import Any
 
+import numpy as np
+from obspy import UTCDateTime
+
 import swe
-from swe.pipeline.serialization import OUTPUT_FORMAT, SWEJSONEncoder
+from swe.pipeline.serialization import OUTPUT_FORMAT
 
 logger = logging.getLogger(__name__)
 
-_ADDRESS = re.compile(r" at 0x[0-9a-fA-F]+>")
+# prefix of the hash of a step whose params have no exact key: it is never looked up
+UNCACHEABLE = "uncacheable:"
 
-__all__ = ["compute_step_hash", "find_cached_result"]
+__all__ = ["UNCACHEABLE", "compute_step_hash", "find_cached_result"]
+
+
+def _name(t: type) -> list[str]:
+    return [t.__module__, t.__qualname__]
+
+
+_PATHS = (PurePosixPath, PureWindowsPath, PosixPath, WindowsPath)  # concrete classes only
+
+
+def _tz_key(tz: Any) -> Any:
+    """Fixed UTC offsets by value; any other tzinfo (an IANA zone's name does not pin its
+    rules) has no exact key."""
+    if tz is None:
+        return None
+    if type(tz) is datetime.timezone:
+        return ["timezone", [tz.utcoffset(None).total_seconds(), tz.tzname(None)]]
+    raise _NoExactKey(f"no exact cache key for tzinfo {type(tz).__qualname__}")
+
+
+def _digest(a: np.ndarray) -> str:
+    """SHA-256 of an array's bytes, without copying a C-contiguous array."""
+    # a uint8 view: datetime64 and timedelta64 arrays expose no buffer of their own
+    return hashlib.sha256(np.ascontiguousarray(a).reshape(-1).view(np.uint8).data).hexdigest()
+
+
+class _NoExactKey(TypeError):
+    """A value has no exact cache key (by design: its step is uncacheable)."""
+
+
+# obspy UTCDateTime's own instance attributes; anything else set on an instance is unkeyed state
+_UTC_STATE = frozenset(
+    {"_UTCDateTime__ns", "_UTCDateTime__precision", "_initialized", "_has_warned"}
+)
+
+
+def _key(v: Any) -> Any:
+    """Exact, type-tagged JSON form of *v*.
+
+    Contract (memoization semantics, as for ``functools.lru_cache``): two values that are not
+    equal, compared with their exact types (arrays by dtype, shape and bytes), never share a
+    key. Properties outside value equality are not part of the key: memory layout and
+    aliasing, writeability, set iteration order. A few of them are keyed anyway (dict order,
+    Fortran order, writeability), which can only turn equal values into misses.
+    Every value becomes ``[tag, payload]``, so a user dict can never pose as a tagged value.
+    Only exact types that cannot carry unkeyed instance state are keyed: immutable builtins,
+    the builtin containers, plain ndarrays and numpy scalars, paths, Decimal, dates and
+    times, and UTCDateTime with no attributes set on it. Dataclasses, NamedTuples, masked
+    arrays and everything else raise ``_NoExactKey`` (their steps are uncacheable).
+    """
+    t: Any = type(v)
+    if t is float:  # by bit pattern: NaN payloads and -0.0 stay distinct
+        return ["float", struct.pack("<d", v).hex()]
+    if t is int:  # as hex: no JSON digit limit
+        return ["int", hex(v)]
+    if v is None or t in (bool, str):  # exact types: IntEnum, np.float64 go on
+        return [t.__name__, v]
+    if t in (list, tuple):
+        return [t.__name__, [_key(x) for x in v]]
+    if t in (set, frozenset):
+        return [t.__name__, sorted((_key(x) for x in v), key=json.dumps)]
+    if t is dict:  # in insertion order: a step that iterates the dict sees it
+        return ["dict", [[_key(k), _key(x)] for k, x in v.items()]]
+    if t is np.ndarray and not v.dtype.hasobject:  # exact: a masked array holds a __dict__
+        layout = bool(v.flags.f_contiguous and not v.flags.c_contiguous)  # visible to the step
+        meta = [str(v.dtype), v.dtype.char, list(v.shape), layout, bool(v.flags.writeable)]
+        return ["ndarray", [*meta, _digest(v)]]
+    if isinstance(v, np.generic) and t.__module__ == "numpy" and not v.dtype.hasobject:
+        # object fields would be pointers; type and dtype char tell apart same-width aliases
+        return ["numpy", [t.__name__, str(v.dtype), v.dtype.char, v.tobytes().hex()]]
+    # exact types only: a subclass may carry state its text form omits
+    # no attributes set on the instance (newer obspy uses __slots__: no instance dict at all)
+    if t is UTCDateTime and set(getattr(v, "__dict__", ())) <= _UTC_STATE:
+        return ["UTCDateTime", [v.ns, v.precision]]
+    if t in _PATHS or t is Decimal:
+        return [_name(t), str(v)]
+    if t in (datetime.date, datetime.datetime, datetime.time):
+        return [
+            _name(t),
+            [v.isoformat(), _tz_key(getattr(v, "tzinfo", None)), getattr(v, "fold", 0)],
+        ]
+    raise _NoExactKey(f"no exact cache key for {t.__qualname__}")
 
 
 def compute_step_hash(
@@ -45,21 +132,23 @@ def compute_step_hash(
     Returns
     -------
     str
-        Hex-encoded SHA-256 digest.
+        Hex-encoded SHA-256 digest; for params with no exact key (see ``_key``),
+        ``UNCACHEABLE`` plus a random suffix, which never matches.
     """
     h = hashlib.sha256()
     h.update(f"step-output-format-{OUTPUT_FORMAT}".encode())  # older (lossy) caches miss
     h.update(function_path.encode())
 
     try:
-        canonical = json.dumps(resolved_params, cls=SWEJSONEncoder, sort_keys=True)
-    except (TypeError, ValueError):
-        canonical = repr(sorted(resolved_params.items()))
-        if _ADDRESS.search(canonical):
-            # a default repr (e.g. a Catalog or Stream passed by ${step}) holds the object's
-            # address, not its content: a key that could recur for other data, so the step is
-            # uncacheable. ponytail: exact content keys belong in their own change
-            canonical += uuid.uuid4().hex
+        canonical = json.dumps(_key(resolved_params))
+    except MemoryError:
+        raise
+    except Exception as exc:  # any key-building error means no exact key, never a failed step
+        # no exact key (e.g. a Stream or Catalog passed by ${step}): uncacheable
+        # ponytail: chain the upstream step's own hash instead, if such steps need caching
+        level = logging.DEBUG if isinstance(exc, _NoExactKey) else logging.WARNING  # by design
+        logger.log(level, "%s is uncacheable: %s: %s", function_path, type(exc).__name__, exc)
+        return UNCACHEABLE + uuid.uuid4().hex
     h.update(canonical.encode())
 
     try:

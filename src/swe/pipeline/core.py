@@ -298,7 +298,7 @@ class Pipeline:
         """Execute a single pipeline step with caching and provenance."""
         import time
 
-        from swe.pipeline.cache import compute_step_hash, find_cached_result
+        from swe.pipeline.cache import UNCACHEABLE, compute_step_hash, find_cached_result
         from swe.pipeline.provenance import StepProvenance
         from swe.pipeline.serialization import serialize_output
 
@@ -309,7 +309,7 @@ class Pipeline:
         cache_hit = False
 
         # Try cache
-        if not no_cache and step.cache:
+        if not no_cache and step.cache and not step_hash.startswith(UNCACHEABLE):
             cached = find_cached_result(step.name, step_hash, run_ctx.base_dir)
             if cached is not None:
                 logger.info("Cache hit for step: %s (hash %s)", step.name, step_hash[:12])

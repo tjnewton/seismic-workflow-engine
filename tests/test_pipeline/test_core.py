@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from swe.pipeline.cache import UNCACHEABLE
 from swe.pipeline.core import Pipeline, PipelineStep, _extract_uncertainty, _resolve_params
 
 
@@ -230,6 +232,20 @@ class TestPipelineExecute:
             pipeline.execute(run_dir=run_dir, no_cache=True)
 
         assert call_count[0] == 2
+
+    def test_step_without_exact_key_skips_the_cache_lookup(self, tmp_path):
+        """A param with no exact cache key (an arbitrary object) never triggers a lookup."""
+        pipeline = Pipeline(
+            steps=[PipelineStep(name="s1", function="os.getcwd", params={"x": object()})]
+        )
+        with (
+            patch("swe.pipeline.core._import_callable", return_value=lambda **kw: 1),
+            patch("swe.pipeline.cache.find_cached_result") as lookup,
+        ):
+            pipeline.execute(run_dir=tmp_path / "runs")
+        lookup.assert_not_called()
+        (manifest,) = (tmp_path / "runs").glob("*/manifest.json")
+        assert json.loads(manifest.read_text())["steps"]["s1"]["hash"].startswith(UNCACHEABLE)
 
 
 class TestResolveParams:

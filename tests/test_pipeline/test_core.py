@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
+import shutil
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -193,6 +195,53 @@ class TestPipelineExecute:
             outputs = pipeline.execute(run_dir=run_dir, resume="latest")
         assert outputs["s1"] == (1, 2)
 
+    def test_a_run_served_from_cache_can_be_resumed(self, tmp_path):
+        """A cache hit leaves a checkpoint in the current run, so its resume restores the step."""
+        run_dir = tmp_path / "runs"
+        fns = {"m.a": MagicMock(return_value={"v": 1}), "m.b": MagicMock(return_value=(1, 2))}
+        pipeline = Pipeline(  # one JSON and one pickled checkpoint
+            steps=[PipelineStep(name=n, function=f"m.{n}", params={}) for n in ("a", "b")]
+        )
+        with patch("swe.pipeline.core._import_callable", side_effect=fns.__getitem__):
+            pipeline.execute(run_dir=run_dir)
+            first = set(run_dir.iterdir())
+            pipeline.execute(run_dir=run_dir)  # both steps served from cache
+            (cached_run,) = set(run_dir.iterdir()) - first
+            outputs = pipeline.execute(run_dir=run_dir, resume=cached_run.name)
+        assert outputs == {"a": {"v": 1}, "b": (1, 2)}
+        assert [f.call_count for f in fns.values()] == [1, 1]
+
+    def test_a_failed_checkpoint_copy_on_a_cache_hit_warns_and_the_step_succeeds(
+        self, tmp_path, caplog
+    ):
+        """The cached value is loaded: a failed copy is a warning and leaves no partial copy."""
+        run_dir = tmp_path / "runs"
+        mock_fn = MagicMock(return_value=(1, 2))  # pickled: .pkl, .pkl.meta and .pkl.sig
+        pipeline = Pipeline(steps=[PipelineStep(name="s1", function="os.getcwd", params={})])
+        real_copy2, copied = shutil.copy2, []
+
+        def _copy_once_then_fail(src, dst):
+            if copied:
+                raise OSError("disk full")
+            copied.append(real_copy2(src, dst))
+
+        with patch("swe.pipeline.core._import_callable", return_value=mock_fn):
+            pipeline.execute(run_dir=run_dir)
+            first = set(run_dir.iterdir())
+            with (
+                patch("shutil.copy2", side_effect=_copy_once_then_fail),
+                caplog.at_level(logging.WARNING, logger="swe.pipeline.core"),
+            ):
+                outputs = pipeline.execute(run_dir=run_dir)
+        (run,) = set(run_dir.iterdir()) - first
+        assert outputs["s1"] == (1, 2)
+        assert mock_fn.call_count == 1
+        assert "cached checkpoint of step s1" in caplog.text
+        assert copied  # a partial copy was made, then removed
+        assert not list((run / "steps").glob("s1.*"))
+        manifest = json.loads((run / "manifest.json").read_text())
+        assert manifest["steps"]["s1"]["status"] == "completed"
+
     def test_failed_step_raises(self, tmp_path):
         """A step that raises should be recorded as failed and re-raised."""
         run_dir = tmp_path / "runs"
@@ -240,7 +289,7 @@ class TestPipelineExecute:
         )
         with (
             patch("swe.pipeline.core._import_callable", return_value=lambda **kw: 1),
-            patch("swe.pipeline.cache.find_cached_result") as lookup,
+            patch("swe.pipeline.cache._find_cached") as lookup,
         ):
             pipeline.execute(run_dir=tmp_path / "runs")
         lookup.assert_not_called()

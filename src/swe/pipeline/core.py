@@ -8,6 +8,7 @@ syntax.
 
 from __future__ import annotations
 
+import contextlib
 import importlib
 import logging
 import re
@@ -304,9 +305,9 @@ class Pipeline:
         """Execute a single pipeline step with caching and provenance."""
         import time
 
-        from swe.pipeline.cache import UNCACHEABLE, compute_step_hash, find_cached_result
+        from swe.pipeline.cache import UNCACHEABLE, _find_cached, compute_step_hash
         from swe.pipeline.provenance import StepProvenance
-        from swe.pipeline.serialization import serialize_output
+        from swe.pipeline.serialization import copy_output, serialize_output
 
         resolved = _resolve_params(step.params, outputs, {s.name for s in self.steps})
         func = _import_callable(step.function)
@@ -316,8 +317,19 @@ class Pipeline:
 
         # Try cache
         if not no_cache and step.cache and not step_hash.startswith(UNCACHEABLE):
-            cached = find_cached_result(step.name, step_hash, run_ctx.base_dir)
-            if cached is not None:
+            found = _find_cached(step.name, step_hash, run_ctx.base_dir)
+            if found is not None:
+                cached, cached_dir = found
+                # this run's own checkpoint, so --resume can restore the step
+                try:
+                    copy_output(cached_dir, run_ctx.steps_dir, step.name)
+                except OSError as exc:  # the value is loaded; only the checkpoint is missing
+                    logger.warning(
+                        "Could not copy the cached checkpoint of step %s (%s); a resume of "
+                        "this run stops at it.",
+                        step.name,
+                        exc,
+                    )
                 logger.info("Cache hit for step: %s (hash %s)", step.name, step_hash[:12])
                 if lock is not None:
                     with lock:
@@ -333,7 +345,8 @@ class Pipeline:
             try:
                 result = func(**resolved)
             except Exception:
-                run_ctx.mark_step_failed(step.name)
+                with lock or contextlib.nullcontext():  # parallel tiers share the manifest
+                    run_ctx.mark_step_failed(step.name)
                 logger.error(
                     "Pipeline failed at step '%s'. Resume with: "
                     "swe run <pipeline.yml> --resume latest",
@@ -350,7 +363,8 @@ class Pipeline:
 
         completed_at = time.time()
 
-        run_ctx.mark_step_completed(step.name, step_hash)
+        with lock or contextlib.nullcontext():
+            run_ctx.mark_step_completed(step.name, step_hash)
 
         prov = StepProvenance(
             step_name=step.name,

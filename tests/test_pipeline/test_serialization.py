@@ -189,3 +189,12 @@ class TestSerializeOutput:
         serialize_output(tmp_path, "s1", {"new": 2})
         assert not (tmp_path / "s1.output.pkl").exists()
         assert deserialize_output(tmp_path, "s1") == {"new": 2}
+
+    def test_copy_output_onto_its_own_dir_is_a_no_op(self, tmp_path):
+        """Copying a checkpoint onto its own directory, however spelled, keeps it."""
+        from swe.pipeline.serialization import copy_output
+
+        steps = tmp_path / "steps"
+        serialize_output(steps, "s1", (1, 2))
+        copy_output(steps, steps / ".." / "steps", "s1")
+        assert deserialize_output(steps, "s1") == (1, 2)

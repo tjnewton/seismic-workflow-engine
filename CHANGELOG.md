@@ -39,6 +39,7 @@ All notable changes to this project will be documented in this file.
   - 58 new test functions.
 
 ### Fixed
+- **Resume after a cache hit**: a step served from the cache is now checkpointed in the current run (its output files are copied from the run that cached it), so `--resume` of that run restores it. Before, the resume stopped with "checkpoint of step ... cannot be loaded". A failed copy logs a warning; the step still succeeds. Under `--parallel`, steps finishing at once now update and write the run manifest under a lock, instead of from several threads at the same time.
 - **Pipeline checkpoints**: a cached or resumed step output now loads back with the type the step returned. Before, any value JSON could encode was stored as JSON, so a NamedTuple result (such as `HVSRResult`), a tuple or a numpy array came back as a list, and int keys as strings; code using `result.f0` then failed on a cache hit or resume.
   - JSON is now used only for values built purely from JSON-native types (dict with str keys, list, str, int, float, bool, None, no NaN); everything else is pickled, HMAC-signed as before.
   - Re-serializing a step removes its earlier output in the other format, so a stale file cannot shadow the new one.

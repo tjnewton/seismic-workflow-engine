@@ -186,6 +186,12 @@ def find_cached_result(
     Any or None
         The deserialized output if found, otherwise ``None``.
     """
+    found = _find_cached(step_name, step_hash, base_dir)
+    return None if found is None else found[0]
+
+
+def _find_cached(step_name: str, step_hash: str, base_dir: Path) -> tuple[Any, Path] | None:
+    """As :func:`find_cached_result`, plus the steps directory the output was loaded from."""
     if not base_dir.exists():
         return None
 
@@ -217,7 +223,7 @@ def find_cached_result(
             )
 
             try:
-                return deserialize_output(run_dir / "steps", step_name)
+                return deserialize_output(run_dir / "steps", step_name), run_dir / "steps"
             except (_VersionMismatchError, FileNotFoundError):
                 continue
             except Exception as exc:  # e.g. a pickled class renamed since: a miss, not a crash

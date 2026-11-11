@@ -13,12 +13,14 @@ mitigates arbitrary-code-execution risk from untrusted pickle files.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import hmac
 import json
 import logging
 import os
 import pickle
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -32,6 +34,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "OUTPUT_FORMAT",
     "SWEJSONEncoder",
+    "copy_output",
     "deserialize_output",
     "serialize_output",
 ]
@@ -222,6 +225,25 @@ def _clear_output(steps_dir: Path, step_name: str) -> tuple[Path, Path, Path]:
     for f in files:
         f.unlink(missing_ok=True)
     return files[0], files[1], files[2]
+
+
+def copy_output(src_dir: Path, dst_dir: Path, step_name: str) -> None:
+    """Copy a step's checkpoint files to another steps directory, without re-serializing.
+
+    Used on a cache hit, so the current run holds its own checkpoint for ``--resume``.
+    On an OSError the partial copy is removed and the error re-raised.
+    """
+    if dst_dir.exists() and src_dir.samefile(dst_dir):
+        return  # clearing would delete the files to copy
+    _clear_output(dst_dir, step_name)
+    try:
+        for f in _output_files(src_dir, step_name):
+            if f.exists():
+                shutil.copy2(f, dst_dir / f.name)
+    except OSError:
+        with contextlib.suppress(OSError):  # no partial checkpoint: absent is unambiguous
+            _clear_output(dst_dir, step_name)
+        raise
 
 
 def deserialize_output(steps_dir: Path, step_name: str) -> Any:

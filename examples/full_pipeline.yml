@@ -1,11 +1,17 @@
 # Full end-to-end seismic analysis pipeline
 #
-# Downloads waveforms, runs phase picking and association,
-# performs matched-filter detection, locates events, estimates
-# magnitudes, and solves focal mechanisms.
+# Downloads waveforms and responses, runs phase picking and association.
+# Not included: location (swe.location.run_nonlinloc reads a phase file, and
+# no step writes the association result to one).
 #
-# Run with:
-#   swe run examples/full_pipeline.yml --parallel
+# Steps pass data through files, which the dependency graph cannot see,
+# so run them in order:
+#   swe run examples/full_pipeline.yml
+#
+# Not included, as one step cannot express them: noise windows
+# (find_noise_windows needs (start, end) UTCDateTime pairs, which params cannot
+# build), magnitudes, focal mechanisms and stress inversion (they need per-event
+# waveforms and polarity observations; see swe.magnitude and swe.focal).
 
 steps:
   # --- Data acquisition ---
@@ -32,25 +38,18 @@ steps:
       output_dir: "data/responses"
       client: "SCEDC"
 
-  # --- Noise classification ---
-
-  - name: classify_noise
-    function: swe.noise.find_noise_windows
-    params:
-      filepaths: "data/waveforms/"
-      detection_parameters: [15, 250, 3.0, 240]
-      time_periods:
-        - ["2019-07-04T17:00:00", "2019-07-05T06:00:00"]
-      bandpass_filter: true
-      freqmin: 1.0
-      freqmax: 20.0
-
   # --- Phase picking ---
+
+  - name: load_waveforms
+    function: obspy.read
+    cache: false
+    params:
+      pathname_or_url: "data/waveforms/*.ms"
 
   - name: pick_phases
     function: swe.picking.predict_phase_arrivals
     params:
-      stream_dir: "data/waveforms/"
+      stream: ${load_waveforms}
       model_name: "PhaseNet"
       pretrained: "original"
       p_threshold: 0.3
@@ -63,7 +62,7 @@ steps:
     function: swe.association.associate_picks
     params:
       station_picks: ${pick_phases}
-      stations: ["WBS", "WRC2", "WCS2"]
+      station_list: ["WBS", "WRC2", "WCS2"]
       location_dict:
         WBS: [-117.599, 35.765, 0.732]
         WRC2: [-117.636, 35.734, 0.685]
@@ -71,36 +70,3 @@ steps:
       dbscan_eps: 0.5
       dbscan_min_samples: 5
       min_picks_per_cluster: 4
-
-  # --- Location ---
-
-  - name: locate_events
-    function: swe.location.run_nonlinloc
-    params:
-      control_file: "config/nlloc.conf"
-
-  # --- Magnitudes ---
-
-  - name: estimate_magnitudes
-    function: swe.magnitude.attach_magnitudes_to_catalog
-    params:
-      catalog: ${locate_events}
-      stream_dir: "data/waveforms/"
-
-  # --- Focal mechanisms ---
-
-  - name: solve_focal
-    function: swe.focal.focal_mechanisms_batch
-    params:
-      catalog: ${estimate_magnitudes}
-      stream_dir: "data/waveforms/"
-      min_observations: 6
-      grid_spacing: 5.0
-
-  # --- Stress inversion ---
-
-  - name: invert_stress
-    function: swe.stress.stress_inversion
-    params:
-      focal_data: ${solve_focal.mechanisms}
-      n_iterations: 2000

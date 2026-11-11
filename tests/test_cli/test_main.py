@@ -127,6 +127,7 @@ class TestDryRun:
         config = tmp_path / "valid.yml"
         config.write_text(
             "steps:\n  - name: step1\n    function: swe.moment_tensor.tensor.scalar_moment\n"
+            "    params:\n      m: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]\n"
         )
         runner = CliRunner()
         result = runner.invoke(cli, ["run", "--dry-run", str(config)])

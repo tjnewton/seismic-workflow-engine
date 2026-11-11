@@ -7,25 +7,32 @@
 #   swe run examples/spectral_analysis.yml
 
 steps:
-  - name: load_catalog
-    function: swe.io.read_quakeml
+  - name: load_ambient_noise
+    function: obspy.read
+    cache: false
     params:
-      path: "data/catalog.xml"
+      pathname_or_url: "data/noise/XX.STA1.*"  # one station, one trace per component
 
   - name: compute_hvsr
     function: swe.spectral.compute_hvsr
     params:
-      stream: ${load_ambient_noise.stream}
+      stream: ${load_ambient_noise}
       window_length: 40.0
       smoothing_bandwidth: 40.0
       freq_min: 0.1
       freq_max: 25.0
 
+  - name: load_waveforms
+    function: obspy.read
+    cache: false
+    params:
+      pathname_or_url: "data/event_waveforms/*"  # one S-wave trace per event
+
   - name: fit_spectra
     function: swe.spectral.spectral_fit_batch
     params:
       traces: ${load_waveforms.traces}
-      magnitudes: ${load_catalog.magnitudes}
+      magnitudes: [2.0, 2.5]  # <-- moment magnitude of each trace, one per trace, in trace order
       freq_min: 0.5
       freq_max: 40.0
       velocity_m_s: 3500.0

@@ -111,25 +111,26 @@ locations = extract_nll_locations("nlloc.hyp")
 ### Running a Pipeline
 
 ```yaml
-# pipeline.yml
+# pipeline.yml: H/V spectral ratio of one three-component station
 steps:
-  - name: download_waveforms
-    function: swe.io.fdsn.get_waveforms
+  - name: load_station
+    function: obspy.read
+    cache: false
     params:
-      network: "CI"
-      stations: ["WBS", "WRC2"]
-      start_time: "2019-07-04T17:30:00"
-      end_time: "2019-07-04T18:30:00"
+      pathname_or_url: "data/waveforms/XX.STA1.*"  # one trace per component
 
-  - name: pick_phases
-    function: swe.picking.find_picking_windows
+  - name: compute_hvsr
+    function: swe.spectral.compute_hvsr
     params:
-      filepaths: ${download_waveforms}
-      method: "sta_lta"
+      stream: ${load_station}      # ${step} passes a step's whole output
+      window_length: 40.0
+      freq_min: 0.1
+      freq_max: 25.0
 ```
 
 ```bash
-swe run pipeline.yml --parallel
+swe run pipeline.yml --dry-run   # check every step's params against its function
+swe run pipeline.yml
 ```
 
 ## Development

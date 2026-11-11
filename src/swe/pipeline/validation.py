@@ -7,6 +7,7 @@ functions are importable, and step references resolve without cycles.
 from __future__ import annotations
 
 import importlib
+import inspect
 import logging
 
 from swe.pipeline.core import _REF_PATTERN, Pipeline
@@ -25,7 +26,9 @@ def validate_pipeline(
 
     1. Each step has a non-empty name and function path.
     2. No duplicate step names.
-    3. All ``function`` paths are importable.
+    3. All ``function`` paths are importable, and each step's ``params`` bind to the
+       function's signature (no unknown names, no missing required ones), as the
+       ``function(**params)`` call at run time needs.
     4. All ``${step.key}`` references point to earlier steps.
     5. No dependency cycles exist.
 
@@ -59,6 +62,10 @@ def validate_pipeline(
 
         if not step.function:
             errors.append(f"Step {step.name!r} has an empty function path.")
+        if not isinstance(step.params, dict):  # the run calls function(**params)
+            errors.append(
+                f"Step {step.name!r}: params must be a mapping, got {type(step.params).__name__}."
+            )
 
     # --- Check 3: function imports ---
     for step in pipeline.steps:
@@ -88,11 +95,22 @@ def validate_pipeline(
                 f"Step {step.name!r}: {step.function!r} is not callable "
                 f"(type: {type(obj).__name__})."
             )
+            continue
+        if not isinstance(step.params, dict):
+            continue  # already reported as not a mapping
+        try:
+            signature = inspect.signature(obj)
+        except (TypeError, ValueError):  # some builtins expose no signature
+            continue
+        try:
+            signature.bind(**dict.fromkeys(step.params))
+        except TypeError as exc:
+            errors.append(f"Step {step.name!r}: params do not fit {step.function}: {exc}.")
 
     # --- Check 4: reference resolution ---
     step_names_ordered: list[str] = []
     for step in pipeline.steps:
-        refs = _extract_step_refs(step.params)
+        refs = _extract_step_refs(step.params if isinstance(step.params, dict) else {})
         for ref_name in refs:
             if ref_name not in seen_names:
                 errors.append(f"Step {step.name!r}: references unknown step {ref_name!r}.")

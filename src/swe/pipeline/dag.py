@@ -37,7 +37,7 @@ def build_dependency_graph(
     graph: dict[str, set[str]] = {s.name: set() for s in steps}
 
     for step in steps:
-        refs = _extract_references(step.params)
+        refs = _extract_references(step.params if isinstance(step.params, dict) else {})
         for ref_name in refs:
             if ref_name in step_names:
                 graph[step.name].add(ref_name)

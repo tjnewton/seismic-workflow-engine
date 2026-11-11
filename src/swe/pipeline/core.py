@@ -76,11 +76,17 @@ class Pipeline:
 
         steps: list[PipelineStep] = []
         for step_dict in raw["steps"]:
+            params = step_dict.get("params") or {}  # an empty `params:` is none
+            if not isinstance(params, dict):
+                raise ValueError(
+                    f"Step {step_dict.get('name')!r}: params must be a mapping, "
+                    f"got {type(params).__name__}: {path}"
+                )
             steps.append(
                 PipelineStep(
                     name=step_dict["name"],
                     function=step_dict["function"],
-                    params=step_dict.get("params", {}),
+                    params=params,
                     cache=step_dict.get("cache", True),
                     propagate_uncertainty=step_dict.get("propagate_uncertainty", False),
                 )

@@ -1,7 +1,12 @@
 # Detection-to-Location pipeline
 #
-# Starts from existing templates and runs matched-filter detection,
-# then locates the detected events.
+# Starts from existing templates, runs matched-filter detection and writes the
+# detections as markers.
+#
+# Not included: location. NonLinLoc reads the phase file its control file names,
+# and a detection Party is not a Catalog, so no step here can write that file;
+# write it from party.get_catalog() in Python, then run swe.location.run_nonlinloc.
+# A date range with no detection gives no Party, and write_detections then fails.
 #
 # Run with:
 #   swe run examples/detection_to_location.yml
@@ -9,21 +14,30 @@
 steps:
   - name: build_templates
     function: swe.detection.markers_to_template
+    cache: false
     params:
-      marker_file: "data/picks.mrkr"
-      prepick: 2.0
+      marker_file_path: "data/picks.mrkr"
+      prepick_offset: 2.0
+
+  - name: start_date
+    function: obspy.UTCDateTime
+    params: {year: 2019, month: 7, day: 4}
+
+  - name: end_date
+    function: obspy.UTCDateTime
+    params: {year: 2019, month: 7, day: 6}
 
   - name: run_detection
     function: swe.detection.detect_signals
     params:
       templates: ${build_templates.templates}
-      filepaths: "data/templates/"
+      template_files: ["data/templates/*.ms"]
       station_dict: ${build_templates.station_dict}
       template_length: 16.0
-      prepick: 2.0
-      data_dir: "data/continuous/"
-      start_date: "2019-07-04"
-      end_date: "2019-07-06"
+      template_prepick: 2.0
+      detection_files_path: "data/continuous/"
+      start_date: ${start_date}
+      end_date: ${end_date}
       thresh_type: "MAD"
       detect_thresh: 8.0
       trig_int: 8.0
@@ -37,18 +51,3 @@ steps:
       party: ${run_detection}
       output_path: "output/detections.mrkr"
 
-  - name: prepare_nll_obs
-    function: swe.location.catalog_to_obs
-    params:
-      catalog: ${run_detection}
-      output_path: "output/nll_obs.txt"
-
-  - name: locate_events
-    function: swe.location.run_nonlinloc
-    params:
-      control_file: "config/nlloc.conf"
-
-  - name: extract_locations
-    function: swe.location.extract_nll_locations
-    params:
-      hyp_dir: "output/nll/"

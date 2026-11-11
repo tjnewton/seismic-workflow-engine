@@ -1,48 +1,45 @@
 # Stress analysis pipeline
 #
-# Measures P-wave polarities, computes focal mechanisms,
-# and inverts for the regional stress tensor.
+# Groups events by location and inverts their focal mechanisms for the
+# regional stress tensor of each group.
+#
+# Focal mechanisms are read from a table: measuring polarities and solving
+# mechanisms (swe.focal.measure_polarities, compute_takeoff_angles_1d,
+# focal_mechanisms_batch) works on one event's stream and source at a time,
+# which a step cannot loop over, so those steps were removed.
 #
 # Run with:
 #   swe run examples/stress_analysis.yml
 
 steps:
-  - name: load_catalog
-    function: swe.io.read_quakeml
+  - name: load_hypocenters
+    function: numpy.loadtxt
+    cache: false
     params:
-      path: "data/located_catalog.xml"
+      fname: "data/focal_mechanisms.csv"  # header, then x, y, depth (km), strike, dip, rake
+      delimiter: ","
+      skiprows: 1
+      usecols: [0, 1, 2]  # cluster_events uses Euclidean distance: give x, y in km, not degrees
+      ndmin: 2
 
-  - name: measure_polarities
-    function: swe.focal.measure_polarities
+  - name: load_mechanisms
+    function: numpy.loadtxt
+    cache: false
     params:
-      catalog: ${load_catalog}
-      stream_dir: "data/waveforms/"
-      window_before: 0.05
-      window_after: 0.15
-
-  - name: compute_takeoffs
-    function: swe.focal.compute_takeoff_angles_1d
-    params:
-      catalog: ${load_catalog}
-      velocity_model_path: "config/velocity_1d.csv"
-
-  - name: solve_focal_mechanisms
-    function: swe.focal.focal_mechanisms_batch
-    params:
-      polarities: ${measure_polarities}
-      takeoff_angles: ${compute_takeoffs}
-      min_observations: 8
-      grid_spacing: 5.0
+      fname: "data/focal_mechanisms.csv"
+      delimiter: ","
+      skiprows: 1
+      usecols: [3, 4, 5]
+      ndmin: 2
 
   - name: cluster_mechanisms
     function: swe.stress.cluster_focal_mechanisms
     params:
-      mechanisms: ${solve_focal_mechanisms.mechanisms}
+      data: ${load_hypocenters}
       n_clusters: 3
 
   - name: invert_stress
     function: swe.stress.stress_inversion
     params:
-      focal_data: ${cluster_mechanisms}
-      n_iterations: 2000
-      damping: 0.5
+      data: ${load_mechanisms}
+      labels: ${cluster_mechanisms.labels}

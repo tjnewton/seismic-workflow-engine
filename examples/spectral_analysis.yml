@@ -1,6 +1,6 @@
 # Spectral analysis pipeline
 #
-# Computes HVSR for site characterisation, fits Brune source models,
+# Computes HVSR for site characterization, fits Brune source models,
 # and estimates stress drops for a set of events.
 #
 # Run with:

@@ -259,7 +259,7 @@ def plot_spatial_frequency_map(
     station_coords: NDArray[np.floating] | None = None,
     figsize: tuple[float, float] = (10, 8),
 ) -> Figure:
-    """Plot spatial frequency map as a pseudocolour grid.
+    """Plot spatial frequency map as a pseudocolor grid.
 
     Parameters
     ----------

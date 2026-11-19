@@ -14,7 +14,7 @@ def synthetic_station_network():
     Returns a dict with keys:
     - ``stations``: list of station codes
     - ``location_dict``: ``{station: [lon, lat, elev]}`` for association (geographic)
-    - ``station_coords``: ``(6, 3)`` ndarray in metres for location (local Cartesian)
+    - ``station_coords``: ``(6, 3)`` ndarray in meters for location (local Cartesian)
     """
     stations = ["STA1", "STA2", "STA3", "STA4", "STA5", "STA6"]
     location_dict = {
@@ -25,7 +25,7 @@ def synthetic_station_network():
         "STA5": [-118.42, 34.04, 0.0],
         "STA6": [-118.40, 34.05, 0.0],
     }
-    # Local Cartesian coordinates in metres (roughly 2 km spacing)
+    # Local Cartesian coordinates in meters (roughly 2 km spacing)
     station_coords = np.array(
         [
             [0.0, 0.0, 0.0],
@@ -85,7 +85,7 @@ def synthetic_pick_times(synthetic_station_network):
     Event 1 picks cluster around t0+10s, event 2 around t0+610s,
     with small inter-station delays (0.1-0.5 s).  The 600 s gap
     ensures DBSCAN separates the two events cleanly in the
-    standardised feature space.
+    standardized feature space.
     """
     t0 = UTCDateTime("2024-01-01T00:00:00")
     stations = synthetic_station_network["stations"]

@@ -130,7 +130,7 @@ def geo_to_local(
     local_coords : dict
         ``{station: np.array([x_m, y_m, z_m])}`` where *x* is east,
         *y* is north, and *z* is depth below the origin elevation, all in
-        metres.
+        meters.
     origin_used : tuple of float
         ``(longitude, latitude, elevation_km)`` of the reference point.
     """
@@ -194,7 +194,7 @@ def ellipsoidal_distance(
     Parameters
     ----------
     point1, point2 : list of float
-        ``[longitude, latitude, depth_km]``.  Depth is in kilometres
+        ``[longitude, latitude, depth_km]``.  Depth is in kilometers
         (positive downward).
     two_dimensional : bool
         If *True*, ignore depth and return the surface distance only.
@@ -202,7 +202,7 @@ def ellipsoidal_distance(
     Returns
     -------
     float
-        Distance in kilometres.
+        Distance in kilometers.
     """
     from geopy import Point
     from geopy.distance import distance as geodesic_distance

@@ -168,7 +168,7 @@ def pipeline_template(workflow: str, output: str | None) -> None:
     """Scaffold a starter YAML pipeline configuration.
 
     Generates a well-commented template for the chosen workflow that
-    you can customise for your data.
+    you can customize for your data.
     """
     from pathlib import Path
 

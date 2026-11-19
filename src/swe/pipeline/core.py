@@ -505,7 +505,7 @@ _UNCERTAINTY_FIELDS = frozenset(
 
 
 def _extract_uncertainty(result: Any) -> dict[str, Any] | None:
-    """Extract recognised uncertainty fields from a step result."""
+    """Extract recognized uncertainty fields from a step result."""
     if result is None:
         return None
 
@@ -530,10 +530,10 @@ def _extract_uncertainty(result: Any) -> dict[str, Any] | None:
         # Skip empty containers
         if isinstance(val, (dict, list)) and len(val) == 0:
             continue
-        # Convert uncertainty dataclasses to dicts for JSON serialisation
+        # Convert uncertainty dataclasses to dicts for JSON serialization
         if hasattr(type(val), "__dataclass_fields__"):
             val = _dataclass_to_json_safe(val)
-        # Convert tuples to lists for JSON serialisation
+        # Convert tuples to lists for JSON serialization
         elif isinstance(val, tuple):
             val = list(val)
         found[attr_name] = val

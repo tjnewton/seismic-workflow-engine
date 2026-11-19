@@ -63,7 +63,7 @@ def plot_distribution(
         facecolor="darkred",
         alpha=0.6,
     )
-    ax.set_facecolor("dimgrey")
+    ax.set_facecolor("dimgray")
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Counts per bin")
     ax.set_xlim((bin_edges[0], bin_edges[-1]))
@@ -107,7 +107,7 @@ def plot_moment_distribution(
         facecolor="darkred",
         alpha=0.6,
     )
-    ax.set_facecolor("dimgrey")
+    ax.set_facecolor("dimgray")
     ax.set_xlabel(f"Relative moment ({bins} bins)")
     ax.set_ylabel("Counts per bin")
     ax.set_xlim((bin_edges[0], bin_edges[-1]))
@@ -186,7 +186,7 @@ def plot_date_distribution(
         facecolor="darkred",
         alpha=0.6,
     )
-    ax.set_facecolor("dimgrey")
+    ax.set_facecolor("dimgray")
     ax.set_xlabel("Date")
     ax.set_ylabel("Detections per bin")
     ax.set_title(title)

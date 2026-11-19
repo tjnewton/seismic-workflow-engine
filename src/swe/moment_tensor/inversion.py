@@ -478,7 +478,7 @@ def moment_tensor_batch(
 
 
 def moment_tensor_uncertainty(result: MomentTensorResult) -> dict:
-    """Summarise component ranges from a moment tensor inversion.
+    """Summarize component ranges from a moment tensor inversion.
 
     Parameters
     ----------

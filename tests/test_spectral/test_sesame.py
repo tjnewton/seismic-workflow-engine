@@ -258,7 +258,7 @@ def test_konno_ohmachi_blocks_match_single_block(monkeypatch):
     f = np.linspace(0.1, 20, 257)
     s = np.abs(rng.standard_normal((2, f.size))) + 1
     whole = _konno_ohmachi_smoothing(s, f, bandwidth=40.0)
-    monkeypatch.setattr(ratios, "_KO_BLOCK_ELEMENTS", 3 * f.size)  # blocks of 3 centre frequencies
+    monkeypatch.setattr(ratios, "_KO_BLOCK_ELEMENTS", 3 * f.size)  # blocks of 3 center frequencies
     np.testing.assert_allclose(_konno_ohmachi_smoothing(s, f, bandwidth=40.0), whole, rtol=1e-13)
 
 
@@ -752,16 +752,16 @@ class TestFourteenthReview:
 
 
 class TestFifteenthReview:
-    def test_ssr_checks_the_analysed_samples(self):
+    def test_ssr_checks_the_analyzed_samples(self):
         st = _stream(duration=60.0)
         tgt = st[1].copy()
         tgt.data = tgt.data[:2000]
         ref = st[0].copy()
-        ref.data[:2000] = 5.0  # flat over the analysed prefix, varying after it
+        ref.data[:2000] = 5.0  # flat over the analyzed prefix, varying after it
         with pytest.raises(ValueError, match="never varies"):
             compute_ssr([tgt], [ref])
 
-    def test_ssr_ignores_padding_beyond_the_analysed_samples(self):
+    def test_ssr_ignores_padding_beyond_the_analyzed_samples(self):
         st = _stream(duration=60.0)
         tgt = st[1].copy()
         tgt.data = np.concatenate([tgt.data, np.zeros(1000)])  # trim(pad=True, fill_value=0)

@@ -67,7 +67,7 @@ def frequency_traces():
 
     for i in range(20):
         t = np.arange(npts) / sr
-        # Signal: sinusoid with Gaussian envelope centred at 1.0 s
+        # Signal: sinusoid with Gaussian envelope centered at 1.0 s
         envelope = np.exp(-((t - 1.0) ** 2) / (2 * 0.1**2))
         data = envelope * np.sin(2.0 * np.pi * freq_true * t)
         data += rng.standard_normal(npts) * 0.05

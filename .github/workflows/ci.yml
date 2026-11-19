@@ -13,8 +13,8 @@ permissions:
 # Supersede stale runs on the same ref (saves runner time).
 concurrency:
   # PR runs share a group and cancel superseded runs. Each push run gets its own
-  # group (keyed by SHA) so it is never cancelled, running or pending: a
-  # cancelled push run would leave that push's commit messages unscanned.
+  # group (keyed by SHA) so it is never canceled, running or pending: a
+  # canceled push run would leave that push's commit messages unscanned.
   group: ci-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'pr' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 

@@ -170,14 +170,14 @@ def voxel_form_factor(
     Returns
     -------
     (complex or ndarray, float)
-        ``F`` (a complex scalar, or an array of length m) and the volume ``V``. Centre the
+        ``F`` (a complex scalar, or an array of length m) and the volume ``V``. Center the
         body near the origin: the phase of ``F`` depends on the reference point, its
         magnitude does not.
 
     Raises
     ------
     ValueError
-        If no voxel centre falls inside the body, the body touches the edge of *bounds*
+        If no voxel center falls inside the body, the body touches the edge of *bounds*
         (it would be clipped), *q_vector* has the wrong shape or is empty (checked before
         voxelizing), ``n < 3``, or a bound pair is not increasing.
     """
@@ -196,7 +196,7 @@ def voxel_form_factor(
     gx, gy, gz = np.meshgrid(*axes, indexing="ij", sparse=True)
     mask = np.broadcast_to(np.asarray(inside(gx, gy, gz), dtype=bool), (n, n, n))
     if not mask.any():
-        raise ValueError("no voxel centre lies inside the body; check bounds or increase n")
+        raise ValueError("no voxel center lies inside the body; check bounds or increase n")
     faces = (mask[0], mask[-1], mask[:, 0], mask[:, -1], mask[:, :, 0], mask[:, :, -1])
     if any(f.any() for f in faces):
         raise ValueError("the body reaches the edge of bounds and would be clipped; widen bounds")

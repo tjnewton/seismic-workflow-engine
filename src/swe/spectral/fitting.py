@@ -73,7 +73,7 @@ class StressDropResult(NamedTuple):
     seismic_moment: float
     """Seismic moment in N*m."""
     source_radius_m: float
-    """Source radius in metres."""
+    """Source radius in meters."""
     spectral_fit: SpectralFitResult
     """Underlying spectral fit result."""
 

@@ -236,7 +236,7 @@ def compute_roughness_psd_2d(
     k_max = min(kx.max(), ky.max())
     n_bins = min(nx, ny) // 2
     k_edges = np.linspace(0, k_max, n_bins + 1)
-    k_centres = 0.5 * (k_edges[:-1] + k_edges[1:])
+    k_centers = 0.5 * (k_edges[:-1] + k_edges[1:])
     psd_radial = np.zeros(n_bins)
 
     for i in range(n_bins):
@@ -245,12 +245,12 @@ def compute_roughness_psd_2d(
             psd_radial[i] = np.mean(psd_2d[mask])
 
     # Remove zero-frequency bin
-    valid = k_centres > 0
-    k_centres = k_centres[valid]
+    valid = k_centers > 0
+    k_centers = k_centers[valid]
     psd_radial = psd_radial[valid]
 
-    wavelengths = 1.0 / k_centres
-    wavenumbers = k_centres
+    wavelengths = 1.0 / k_centers
+    wavenumbers = k_centers
 
     # Spectral slope
     log_k = np.log10(wavenumbers)
@@ -354,7 +354,7 @@ def dominant_roughness_wavelength(
         idx = np.argmax(psd_filt)
         return float(wl_filt[idx])
 
-    # Find break point that minimises total residual
+    # Find break point that minimizes total residual
     best_rss = np.inf
     best_break_k = log_k[len(log_k) // 2]
 

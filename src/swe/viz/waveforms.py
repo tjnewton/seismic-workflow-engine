@@ -50,7 +50,7 @@ def _trace_label(trace) -> str:
 
 
 def _normalize(data: np.ndarray, offset: float = 0.0) -> np.ndarray:
-    """Min-max normalise *data* into [0, 1.25] and shift by *offset*."""
+    """Min-max normalize *data* into [0, 1.25] and shift by *offset*."""
     dmin = np.nanmin(data)
     dmax = np.nanmax(np.abs(data))
     denom = dmax - dmin
@@ -347,7 +347,7 @@ def plot_time_series(
     figsize: tuple[float, float] | None = None,
     time_markers: dict | None = None,
 ) -> Figure:
-    """Multi-station normalised time-series plot.
+    """Multi-station normalized time-series plot.
 
     Parameters
     ----------
@@ -433,7 +433,7 @@ def plot_party_detections(
     title: str = "",
     max_detections: int = 60,
 ) -> Figure:
-    """Plot EQcorrscan Party detections as stacked normalised waveforms.
+    """Plot EQcorrscan Party detections as stacked normalized waveforms.
 
     This function expects the caller to supply a pre-loaded
     :class:`obspy.Stream` containing one trace per detection (already
@@ -504,7 +504,7 @@ def plot_stack(
     title: str = "",
     show_snr: bool = True,
 ) -> Figure:
-    """Plot a stacked waveform stream with normalised amplitudes.
+    """Plot a stacked waveform stream with normalized amplitudes.
 
     Parameters
     ----------
@@ -625,7 +625,7 @@ def plot_stream_absolute(
 ) -> Figure:
     """Plot traces on an absolute (common) time axis.
 
-    Useful for visualising shifted traces of varying length where each
+    Useful for visualizing shifted traces of varying length where each
     trace may have a different start time.
 
     Parameters
@@ -677,7 +677,7 @@ def plot_event_picks(
     picks: list[dict],
     *,
     figsize: tuple[float, float] | None = None,
-    title: str = "Normalised event waveforms and picks",
+    title: str = "Normalized event waveforms and picks",
 ) -> Figure:
     """Plot waveforms with event picks marked.
 

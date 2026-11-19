@@ -421,7 +421,7 @@ def focal_mechanisms_batch(
 
 
 def focal_mechanism_uncertainty(result: FocalMechanismResult) -> dict:
-    """Summarise angular uncertainty from a focal mechanism grid search.
+    """Summarize angular uncertainty from a focal mechanism grid search.
 
     Parameters
     ----------

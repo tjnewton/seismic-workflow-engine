@@ -62,16 +62,16 @@ class LocationUncertainty:
     Parameters
     ----------
     horiz_uncertainty_m : float
-        Horizontal uncertainty (metres), typically the semi-major axis
+        Horizontal uncertainty (meters), typically the semi-major axis
         of the 68 % confidence ellipse.
     depth_uncertainty_m : float
-        Vertical (depth) uncertainty in metres.
+        Vertical (depth) uncertainty in meters.
     rms : float
         RMS travel-time residual (seconds).
     covariance_matrix : ndarray or None
-        3x3 covariance matrix ``[[Cxx, Cxy, Cxz], ...]`` in metres^2.
+        3x3 covariance matrix ``[[Cxx, Cxy, Cxz], ...]`` in meters^2.
     n_samples : int
-        Number of Monte Carlo realisations or scatter points.
+        Number of Monte Carlo realizations or scatter points.
     method : str
         Method used (e.g. ``"monte_carlo"``, ``"nll_scatter"``).
     """

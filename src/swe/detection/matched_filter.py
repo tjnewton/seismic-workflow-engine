@@ -158,7 +158,7 @@ def _component_set(channel: str) -> tuple[str, ...]:
     Surface sensors use ``Z``/``N``/``E``; borehole sensors (e.g. the Parkfield
     HRSN) use ``1``/``2``/``3``.  The convention is inferred from the final
     character of *channel* so templates build correctly for either.  An
-    unrecognised final character yields just that single component.
+    unrecognized final character yields just that single component.
     """
     last = channel[-1]
     if last in "ZNE":

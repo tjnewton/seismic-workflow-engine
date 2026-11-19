@@ -53,7 +53,7 @@ def association_to_catalog(
     default_longitude : float
         Longitude assigned to each :class:`Origin`.
     default_depth : float
-        Depth in metres assigned to each :class:`Origin`.
+        Depth in meters assigned to each :class:`Origin`.
     swe_picks : list of SWEPick, optional
         If provided, per-pick phase hints and confidence are preserved in
         the output catalog instead of using the global *phase_hint*.

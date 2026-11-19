@@ -1,4 +1,4 @@
-"""Velocity model and travel-time visualisation.
+"""Velocity model and travel-time visualization.
 
 Provides plotting functions for inspecting velocity models and
 precomputed travel-time grids.
@@ -50,7 +50,7 @@ def plot_velocity_profile(
     if y_index is None:
         y_index = model.slowness.shape[1] // 2
 
-    # Cell-centre depths and velocities.
+    # Cell-center depths and velocities.
     z_cell = 0.5 * (model.z[:-1] + model.z[1:])
     velocity = 1.0 / model.slowness[x_index, y_index, :]
 
@@ -88,7 +88,7 @@ def plot_velocity_slice(
     index : int, optional
         Cell index along the slicing axis.  Defaults to the midpoint.
     cmap : str
-        Matplotlib colourmap name.
+        Matplotlib colormap name.
     ax : matplotlib.axes.Axes, optional
         Axes to plot on.
     figsize : tuple of 2 floats
@@ -163,7 +163,7 @@ def plot_travel_time_slice(
     index : int, optional
         Node index along the slicing axis.  Defaults to the midpoint.
     cmap : str
-        Matplotlib colourmap.
+        Matplotlib colormap.
     ax : matplotlib.axes.Axes, optional
         Axes to plot on.
     figsize : tuple of 2 floats

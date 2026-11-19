@@ -363,7 +363,7 @@ class TestExtractUncertainty:
         assert result is None
 
     def test_extracts_from_dict(self):
-        """Should extract recognised uncertainty fields from a dict."""
+        """Should extract recognized uncertainty fields from a dict."""
         obj = {"ml_stderr": 0.05, "ml_std": 0.12, "rms": 0.8}
         summary = _extract_uncertainty(obj)
         assert summary is not None
@@ -372,7 +372,7 @@ class TestExtractUncertainty:
         assert summary["rms"] == 0.8
 
     def test_extracts_from_namedtuple(self):
-        """Should extract recognised uncertainty fields from a NamedTuple."""
+        """Should extract recognized uncertainty fields from a NamedTuple."""
         from swe.stress.inversion import StressInversionResult
 
         result = StressInversionResult(

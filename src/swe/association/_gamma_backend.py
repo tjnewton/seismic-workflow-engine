@@ -121,7 +121,7 @@ def associate_picks_gamma(
     pick_phases : dict, optional
         ``{station: ["P", "S", ...]}`` per pick.
     center : tuple, optional
-        ``(longitude, latitude)`` centre of the study area.
+        ``(longitude, latitude)`` center of the study area.
         Auto-inferred from stations if not provided.
     use_amplitude : bool
         Whether to use amplitude information in association.

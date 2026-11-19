@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 @click.option("--start", required=True, help="Start time (ISO-8601).")
 @click.option("--end", required=True, help="End time (ISO-8601).")
 @click.option("--output-dir", "-o", default=".", help="Output directory.")
-@click.option("--client", default="IRIS", help="FDSN data centre.")
+@click.option("--client", default="IRIS", help="FDSN data center.")
 def download(
     network: str,
     station: tuple[str, ...],

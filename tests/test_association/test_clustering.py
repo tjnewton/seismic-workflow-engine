@@ -25,9 +25,9 @@ class TestClusterPicks:
     def test_two_distinct_clusters(self):
         """Two well-separated blobs should yield two clusters."""
         rng = np.random.default_rng(42)
-        # Cluster A centred at (0, 0, 0, 0)
+        # Cluster A centered at (0, 0, 0, 0)
         cluster_a = rng.normal(loc=0.0, scale=0.1, size=(30, 4))
-        # Cluster B centred at (10, 10, 10, 10)
+        # Cluster B centered at (10, 10, 10, 10)
         cluster_b = rng.normal(loc=10.0, scale=0.1, size=(30, 4))
         data = np.vstack([cluster_a, cluster_b])
 
@@ -60,8 +60,8 @@ class TestClusterPicks:
     def test_single_cluster(self):
         """Tightly grouped points should form a single cluster.
 
-        After standardisation the data has unit variance, so eps must be
-        large enough to capture the neighbourhood.
+        After standardization the data has unit variance, so eps must be
+        large enough to capture the neighborhood.
         """
         rng = np.random.default_rng(7)
         data = rng.normal(loc=5.0, scale=1.0, size=(50, 4))

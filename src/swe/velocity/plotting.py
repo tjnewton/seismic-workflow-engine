@@ -88,7 +88,7 @@ def plot_velocity_slice(
     index : int, optional
         Cell index along the slicing axis.  Defaults to the midpoint.
     cmap : str
-        Matplotlib colourmap name.
+        Matplotlib colormap name.
     ax : matplotlib.axes.Axes, optional
         Axes to plot on.
     figsize : tuple of 2 floats
@@ -163,7 +163,7 @@ def plot_travel_time_slice(
     index : int, optional
         Node index along the slicing axis.  Defaults to the midpoint.
     cmap : str
-        Matplotlib colourmap.
+        Matplotlib colormap.
     ax : matplotlib.axes.Axes, optional
         Axes to plot on.
     figsize : tuple of 2 floats

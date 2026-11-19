@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **American spelling throughout** (comments, docstrings, docs, messages, local names; no public name changes). Visible effects:
+  - the pipeline cache key hashes each step's source, docstrings included, so the steps whose docstrings changed (for example `cluster_picks`, `locate_by_travel_time_grid`) miss their cached results once and run again;
+  - some error messages read differently (for example "no voxel center lies inside the body", "JSON-serializable"), so a test that matches the old wording must be updated;
+  - the default title of `plot_event_picks` reads "Normalized event waveforms and picks";
+  - matplotlib color names are `gray` and `dimgray` (the same colors as before).
+
 ### Added
 - **`swe.topo` morphometry**: terrain shape on gridded elevation, using signed grid spacings so north-up rasters work.
   - `slope_aspect`: slope and downslope aspect (clockwise from north).

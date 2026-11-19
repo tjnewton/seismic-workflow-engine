@@ -22,7 +22,7 @@ def get_trace_properties(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, list, list[float]]:
     """Compute derivatives, curvature, and MADs around a phase pick.
 
-    Analyses the waveform within a time window centered on *pick_time*
+    Analyzes the waveform within a time window centered on *pick_time*
     using max-pooling, polynomial fitting, and numerical differentiation.
 
     Parameters

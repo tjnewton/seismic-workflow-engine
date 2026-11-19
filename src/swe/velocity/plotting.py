@@ -1,4 +1,4 @@
-"""Velocity model and travel-time visualisation.
+"""Velocity model and travel-time visualization.
 
 Provides plotting functions for inspecting velocity models and
 precomputed travel-time grids.
@@ -50,7 +50,7 @@ def plot_velocity_profile(
     if y_index is None:
         y_index = model.slowness.shape[1] // 2
 
-    # Cell-centre depths and velocities.
+    # Cell-center depths and velocities.
     z_cell = 0.5 * (model.z[:-1] + model.z[1:])
     velocity = 1.0 / model.slowness[x_index, y_index, :]
 

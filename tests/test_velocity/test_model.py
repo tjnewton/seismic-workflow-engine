@@ -70,7 +70,7 @@ class TestReadVelocityModel1d:
         )
 
     def test_slowness_values(self, tmp_path):
-        """Slowness should be 1/velocity at cell centres."""
+        """Slowness should be 1/velocity at cell centers."""
         model_file = tmp_path / "constant.txt"
         model_file.write_text("0.0 5000.0\n100.0 5000.0\n")
 

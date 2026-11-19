@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Approximate metres per degree of latitude at the equator (WGS-84).
-# Used for converting horizontal uncertainty from metres to degrees.
+# Approximate meters per degree of latitude at the equator (WGS-84).
+# Used for converting horizontal uncertainty from meters to degrees.
 _METERS_PER_DEG_LAT = 111_320.0
 
 
@@ -47,11 +47,11 @@ class HypocenterResult(NamedTuple):
     y_km: float
     """Northing in km."""
     z_m: float
-    """Depth in metres."""
+    """Depth in meters."""
     horiz_uncertainty_m: float
-    """Horizontal uncertainty in metres."""
+    """Horizontal uncertainty in meters."""
     depth_uncertainty_m: float = 0.0
-    """Vertical (depth) uncertainty in metres from ``sqrt(Cov_zz)``."""
+    """Vertical (depth) uncertainty in meters from ``sqrt(Cov_zz)``."""
     rms: float = 0.0
     """RMS residual from the NLL QUALITY line."""
 
@@ -226,7 +226,7 @@ def extract_nll_locations(
     -------
     pdfs : pandas.DataFrame
         Columns ``['x', 'y', 'z', 'weight']``: scatter-point locations
-        (x/y in km, z in metres) and PDF weights.
+        (x/y in km, z in meters) and PDF weights.
     hypocenters : numpy.ndarray
         Shape ``(n_events, 4)``: columns are ``[x_km, y_km, z_m, rms]``.
     """

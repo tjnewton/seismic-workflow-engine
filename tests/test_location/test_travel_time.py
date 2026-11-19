@@ -70,7 +70,7 @@ class TestLocateByTravelTimeGrid:
         true_loc = (100.0, 100.0, 50.0)
         ttg = _build_constant_velocity_ttg(velocity=velocity)
 
-        # Synthesise observed times from the true location.
+        # Synthesize observed times from the true location.
         stations = ttg.station_coords
         dists = np.sqrt(np.sum((stations - np.array(true_loc)) ** 2, axis=1))
         observed_times = dists / velocity

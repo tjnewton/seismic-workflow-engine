@@ -42,7 +42,7 @@ class ClusterResult(NamedTuple):
     labels: np.ndarray
     """Cluster label for each sample."""
     centers: np.ndarray
-    """Cluster centre coordinates."""
+    """Cluster center coordinates."""
 
 
 # ---------------------------------------------------------------------------
@@ -621,7 +621,7 @@ def cluster_focal_mechanisms(
     n_clusters : int
         Number of clusters.
     n_init : int
-        Number of K-means initialisations.
+        Number of K-means initializations.
     max_iter : int
         Maximum iterations per K-means run.
     random_state : int
@@ -632,7 +632,7 @@ def cluster_focal_mechanisms(
     labels : numpy.ndarray
         Cluster label for each sample.
     centers : numpy.ndarray
-        Cluster centre coordinates, shape ``(n_clusters, D)``.
+        Cluster center coordinates, shape ``(n_clusters, D)``.
     """
     kmeans = KMeans(
         n_clusters=n_clusters,

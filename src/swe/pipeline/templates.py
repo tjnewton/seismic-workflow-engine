@@ -1,7 +1,7 @@
 """Built-in pipeline YAML templates for common seismic workflows.
 
 Each template is a minimal, well-commented YAML configuration that users can
-scaffold via ``swe pipeline template <workflow>`` and then customise for their
+scaffold via ``swe pipeline template <workflow>`` and then customize for their
 data.
 """
 
@@ -77,7 +77,7 @@ steps:
 # Builds templates from a marker file and runs EQcorrscan matched-filter
 # detection to find repeating seismicity.
 #
-# Customise the parameters below, then run:
+# Customize the parameters below, then run:
 #   swe run pipeline.yml
 #
 # Not included: locating the detections (locate_by_travel_time locates one
@@ -135,7 +135,7 @@ steps:
 # Groups events by location and inverts their focal mechanisms for the
 # stress tensor of each group, with bootstrap uncertainties.
 #
-# Customise the parameters below, then run:
+# Customize the parameters below, then run:
 #   swe run pipeline.yml
 #
 # Focal mechanisms are read from a table: solving them from polarities
@@ -179,10 +179,10 @@ steps:
     "spectral": """\
 # Spectral analysis pipeline
 #
-# Computes HVSR for site characterisation and fits source spectra
+# Computes HVSR for site characterization and fits source spectra
 # for stress drops.
 #
-# Customise the parameters below, then run:
+# Customize the parameters below, then run:
 #   swe run pipeline.yml
 #
 # Not included: coda-Q (estimate_coda_q takes one trace and one origin
@@ -276,7 +276,7 @@ steps:
 # roughness PSD from a profile, and tests the tribological scaling
 # law f = V_slip / lambda_dominant.
 #
-# Customise the parameters below, then run:
+# Customize the parameters below, then run:
 #   swe run pipeline.yml
 #
 # Not included: the spatial frequency-roughness correlation. It needs one

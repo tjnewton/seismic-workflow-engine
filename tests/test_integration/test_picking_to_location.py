@@ -89,7 +89,7 @@ class TestCatalogToLocation:
         net = synthetic_station_network
         station_coords = net["station_coords"]
 
-        # Synthetic source at (5000, 2500, 1000) metres
+        # Synthetic source at (5000, 2500, 1000) meters
         true_loc = (5000.0, 2500.0, 1000.0)
         velocity = 5000.0  # m/s
         dists = np.sqrt(np.sum((station_coords - true_loc) ** 2, axis=1))

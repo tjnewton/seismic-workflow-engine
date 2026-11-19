@@ -29,7 +29,7 @@ def locate_by_travel_time_grid(
     """Locate an event using a precomputed travel-time grid.
 
     For each candidate source position on the grid, reads precomputed
-    travel times and minimises the L1 residual of differential times
+    travel times and minimizes the L1 residual of differential times
     relative to a reference station.  This is the same algorithm as
     :func:`~swe.location.amplitude.locate_by_travel_time` but uses
     full 3-D ray-traced travel times instead of ``dist / velocity``.

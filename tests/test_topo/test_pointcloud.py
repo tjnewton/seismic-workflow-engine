@@ -30,7 +30,7 @@ class TestLoadPointCloud:
             mock_las.green = rng.integers(0, 65535, n).astype(np.uint16)
             mock_las.blue = rng.integers(0, 65535, n).astype(np.uint16)
         else:
-            # Remove colour attributes.
+            # Remove color attributes.
             del mock_las.red
             del mock_las.green
             del mock_las.blue

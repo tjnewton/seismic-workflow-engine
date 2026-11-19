@@ -1,6 +1,6 @@
 """Injection-recovery: detection probability of a detector, with exact binomial intervals.
 
-Plant a known signal into data (arrays, rasters or traces), run a detector on each realisation,
+Plant a known signal into data (arrays, rasters or traces), run a detector on each realization,
 and report the detection probability per parameter set with a Clopper-Pearson interval. The
 harness is detector-agnostic: any ``detect(data, params) -> bool`` works.
 """
@@ -184,7 +184,7 @@ def _params_key(params: Mapping[str, Any]) -> int:
     try:
         text = json.dumps(_canonical(dict(params)), sort_keys=True)
     except TypeError as exc:
-        raise ValueError(f"grid parameter values must be JSON-serialisable: {exc}") from exc
+        raise ValueError(f"grid parameter values must be JSON-serializable: {exc}") from exc
     return int.from_bytes(hashlib.sha256(text.encode()).digest()[:8], "little")
 
 
@@ -202,14 +202,14 @@ def injection_recovery(
     Parameters
     ----------
     make_trial : callable
-        ``make_trial(rng, params) -> data``: one realisation with the signal for *params*
+        ``make_trial(rng, params) -> data``: one realization with the signal for *params*
         planted (noise drawn from *rng*).
     detect : callable
         ``detect(data, params) -> bool``.
     grid : iterable of mapping
         Parameter sets (e.g. amplitude, size, position); any iterable, read once.
     n_trials : int
-        Realisations per parameter set.
+        Realizations per parameter set.
     random_state : int
         Non-negative root seed (named as elsewhere in SWE). Each grid entry's random stream is
         seeded from ``(random_state, its parameters)``, so a row's result depends only on the
@@ -218,7 +218,7 @@ def injection_recovery(
         streams. The seed key itself is stable across processes and NumPy versions, but NumPy
         does not promise identical draws from ``Generator`` methods across versions (NEP 19),
         so archive results with the NumPy version. Parameter names must be strings and values
-        JSON-serialisable (numbers, strings, booleans, None, sequences, arrays, NamedTuples,
+        JSON-serializable (numbers, strings, booleans, None, sequences, arrays, NamedTuples,
         dataclasses).
     confidence : float
         Level of the Clopper-Pearson interval.

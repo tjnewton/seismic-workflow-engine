@@ -2,7 +2,7 @@
 
 Complements the polarity-based method in :mod:`swe.moment_tensor.inversion`
 by using P-wave amplitude ratios and absolute amplitudes to constrain the
-moment tensor.  This is particularly important for characterising
+moment tensor.  This is particularly important for characterizing
 low-frequency earthquakes (LFEs) where first-motion polarities are
 ambiguous or unreadable.
 
@@ -98,7 +98,7 @@ def moment_tensor_from_amplitudes(
 ) -> AmplitudeMTResult:
     """Find moment tensors that best fit observed P-wave amplitudes.
 
-    Uses an L2 misfit between normalised observed and predicted
+    Uses an L2 misfit between normalized observed and predicted
     amplitude patterns.
 
     Parameters
@@ -116,7 +116,7 @@ def moment_tensor_from_amplitudes(
     constraint : str
         ``"dc"``, ``"deviatoric"``, or ``"full"``.
     max_misfit : float
-        Maximum normalised L2 misfit for accepting solutions.
+        Maximum normalized L2 misfit for accepting solutions.
     min_observations : int
         Minimum number of amplitude observations required.
     weights : NDArray, optional
@@ -157,7 +157,7 @@ def moment_tensor_from_amplitudes(
     else:
         w = np.ones_like(amp_p)
 
-    # Normalise observed amplitudes
+    # Normalize observed amplitudes
     amp_p_norm = amp_p / np.max(np.abs(amp_p))
 
     # Build amplitude vectors for SV/SH if provided
@@ -324,7 +324,7 @@ def moment_tensor_from_amplitude_ratios(
     constraint : str
         ``"dc"``, ``"deviatoric"``, or ``"full"``.
     max_misfit : float
-        Maximum normalised L2 misfit.
+        Maximum normalized L2 misfit.
     min_observations : int
         Minimum observations required.
     weights : NDArray, optional
@@ -495,7 +495,7 @@ def moment_tensor_from_s_p_ratios(
     constraint : str
         ``"dc"``, ``"deviatoric"``, or ``"full"``.
     max_misfit : float
-        Maximum normalised L2 misfit (in log10-ratio space).
+        Maximum normalized L2 misfit (in log10-ratio space).
     min_observations : int
         Minimum observations required.
     weights : NDArray, optional

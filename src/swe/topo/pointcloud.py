@@ -25,8 +25,8 @@ class PointCloud(NamedTuple):
     points : ndarray
         Point coordinates, shape ``(N, 3)`` with columns ``[x, y, z]``.
     colors : ndarray or None
-        RGB colours normalised to ``[0, 1]``, shape ``(N, 3)``, or
-        ``None`` if colour data is not available.
+        RGB colors normalized to ``[0, 1]``, shape ``(N, 3)``, or
+        ``None`` if color data is not available.
     classification : ndarray or None
         LAS classification codes, shape ``(N,)``, or ``None`` if not
         available.
@@ -89,7 +89,7 @@ def load_point_cloud(
     z = np.asarray(las.z, dtype=np.float64)
     points = np.column_stack([x, y, z])
 
-    # Extract optional RGB colours (normalise from 16-bit).
+    # Extract optional RGB colors (normalize from 16-bit).
     colors: NDArray[np.floating] | None = None
     if hasattr(las, "red") and hasattr(las, "green") and hasattr(las, "blue"):
         try:

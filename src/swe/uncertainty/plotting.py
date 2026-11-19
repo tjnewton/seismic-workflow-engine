@@ -1,4 +1,4 @@
-"""Publication-quality uncertainty visualisation.
+"""Publication-quality uncertainty visualization.
 
 Provides functions to create figures showing:
 - Pick time uncertainty error bars on waveforms
@@ -138,7 +138,7 @@ def plot_location_uncertainty(
     for _i, (loc, unc) in enumerate(zip(locations, uncertainties, strict=False)):
         ax_map.plot(loc[0], loc[1], "ko", markersize=4, zorder=3)
         if unc.horiz_uncertainty_m > 0:
-            # Convert metres to approximate degrees
+            # Convert meters to approximate degrees
             h_deg = unc.horiz_uncertainty_m / 111_000.0
 
             if unc.covariance_matrix is not None and unc.covariance_matrix.shape == (3, 3):
@@ -246,7 +246,7 @@ def plot_magnitude_pdf(
         combined += pdf
         ax.plot(x, pdf, color="steelblue", alpha=0.15, linewidth=0.5)
 
-    # Normalise combined
+    # Normalize combined
     if len(magnitudes) > 0:
         combined /= len(magnitudes)
 

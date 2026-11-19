@@ -1,7 +1,7 @@
 """Spectral ratio methods: HVSR and SSR.
 
 Computes Horizontal-to-Vertical Spectral Ratios (HVSR) for site
-characterisation and Standard Spectral Ratios (SSR) for relative
+characterization and Standard Spectral Ratios (SSR) for relative
 site response estimation.
 
 References
@@ -175,11 +175,11 @@ def _konno_ohmachi_smoothing(
     """Apply Konno-Ohmachi (1998) logarithmic smoothing.
 
     Each output value is the window-weighted mean of the spectrum, with the
-    window ``(sin(b log10(f/fc)) / (b log10(f/fc)))**4`` centred on the output
-    frequency ``fc`` and normalised to unit sum. Vectorized: the windows are built
-    in blocks of centre frequencies and applied to every row at once. Values at
+    window ``(sin(b log10(f/fc)) / (b log10(f/fc)))**4`` centered on the output
+    frequency ``fc`` and normalized to unit sum. Vectorized: the windows are built
+    in blocks of center frequencies and applied to every row at once. Values at
     ``f <= 0`` are returned unchanged and take no part in the other windows.
-    (ObsPy's matrix path for 2-D input applies the row-normalised windows
+    (ObsPy's matrix path for 2-D input applies the row-normalized windows
     transposed, so it is not used here.)
 
     Parameters
@@ -704,7 +704,7 @@ def compute_ssr(
     ------
     ValueError
         If input lists are empty or have mismatched lengths; the smoothing
-        method is unknown; traces do not share one sampling rate; an analysed
+        method is unknown; traces do not share one sampling rate; an analyzed
         trace has masked or NaN samples, never varies, or holds a zero-filled
         gap; or no FFT frequency lies in the band.
     """
@@ -721,7 +721,7 @@ def compute_ssr(
     reference_station = _site_label(reference_traces[0])
 
     sr = target_traces[0].stats.sampling_rate
-    # each pair is analysed over its first npts = min(len) samples, so the checks look at those
+    # each pair is analyzed over its first npts = min(len) samples, so the checks look at those
     lengths = [
         min(len(t.data), len(r.data)) for t, r in zip(target_traces, reference_traces, strict=False)
     ]

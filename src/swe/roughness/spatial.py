@@ -155,7 +155,7 @@ def correlate_frequency_roughness(
     """Correlate event frequencies with local surface roughness.
 
     For each event, computes a roughness metric in a circular
-    neighbourhood on the elevation grid, then reports the Pearson
+    neighborhood on the elevation grid, then reports the Pearson
     correlation with event frequency.
 
     Parameters
@@ -171,7 +171,7 @@ def correlate_frequency_roughness(
         Roughness metric to compute.  One of ``"rms_height"``,
         ``"dominant_wavelength"``, ``"slope_variance"``.
     neighborhood_radius : float
-        Radius of the circular neighbourhood (same units as grid
+        Radius of the circular neighborhood (same units as grid
         coordinates).
     slip_velocity : float, optional
         If provided (m/s), predicts frequency via f = V / lambda
@@ -197,7 +197,7 @@ def correlate_frequency_roughness(
     local_roughness = np.full(len(locs), np.nan)
 
     for i, (ex, ey) in enumerate(locs):
-        # Find grid indices within neighbourhood
+        # Find grid indices within neighborhood
         ix = np.searchsorted(gx, ex)
         iy = np.searchsorted(gy, ey)
 
@@ -232,9 +232,9 @@ def correlate_frequency_roughness(
             slopes = np.sqrt(gx_grad**2 + gy_grad**2)
             local_roughness[i] = np.var(slopes[circle])
         elif roughness_metric == "dominant_wavelength":
-            # 1-D PSD along longest axis through the centre
-            centre_row = sub_elev.shape[0] // 2
-            profile = sub_elev[centre_row, :]
+            # 1-D PSD along longest axis through the center
+            center_row = sub_elev.shape[0] // 2
+            profile = sub_elev[center_row, :]
             if len(profile) >= 4:
                 from swe.roughness.surface import compute_roughness_psd_1d
 

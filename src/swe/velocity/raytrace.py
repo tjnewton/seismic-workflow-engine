@@ -132,7 +132,7 @@ def compute_travel_times(
         y = np.linspace(y_min, y_max, ny)
         z = np.linspace(z_min, z_max, nz)
 
-        # Build cell-centred slowness grid
+        # Build cell-centered slowness grid
         z_cell = 0.5 * (z[:-1] + z[1:])
         slow_1d = np.interp(z_cell, depths, 1.0 / velocities)
         slow_3d = np.broadcast_to(

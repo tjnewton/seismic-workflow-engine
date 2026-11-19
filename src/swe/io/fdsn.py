@@ -2,9 +2,9 @@
 
 Download waveform data, station metadata (instrument responses), station
 inventories for a region and epoch, and event catalogs from FDSN-compliant
-data centres using ObsPy's :class:`~obspy.clients.fdsn.Client`.
+data centers using ObsPy's :class:`~obspy.clients.fdsn.Client`.
 
-Every function takes a ``client`` argument that may be an ObsPy data-centre
+Every function takes a ``client`` argument that may be an ObsPy data-center
 key (e.g. ``"IRIS"``, ``"USGS"``; ``"EARTHSCOPE"`` in ObsPy >= 1.5), a base
 URL such as ``"https://service.earthscope.org"``, or a ready
 :class:`~obspy.clients.fdsn.Client` instance (reused, not re-created).
@@ -42,7 +42,7 @@ _PARSE_ERRORS = (TypeError, ValueError, OSError, SyntaxError)
 
 
 def _client(client: str | Client) -> Client:
-    """Return *client* itself, or a new Client for a data-centre key or base URL."""
+    """Return *client* itself, or a new Client for a data-center key or base URL."""
     if isinstance(client, str):
         return Client(client)
     return client
@@ -77,7 +77,7 @@ def get_waveforms(
     location : str
         Location code pattern (default ``"**"`` for any location).
     client : str or Client
-        FDSN data-centre key, base URL, or Client instance (default
+        FDSN data-center key, base URL, or Client instance (default
         ``"IRIS"``; see the module docstring).
     filename_format : str
         Template for output filenames.  Available placeholders:
@@ -208,7 +208,7 @@ def get_response_files(
     output_dir : str or Path
         Directory to write StationXML files into.
     client : str or Client
-        FDSN data-centre key, base URL, or Client instance.
+        FDSN data-center key, base URL, or Client instance.
 
     Returns
     -------
@@ -399,7 +399,7 @@ def get_stations_in_region(
         ``()`` to keep everything. A network named explicitly in *network*
         (e.g. ``network="SY"``) is never excluded.
     client : str or Client
-        FDSN data-centre key, base URL, or Client instance.
+        FDSN data-center key, base URL, or Client instance.
 
     Returns
     -------
@@ -516,7 +516,7 @@ def get_events(
     starttime, endtime : UTCDateTime
         Origin-time window.
     client : str or Client
-        FDSN data-centre key, base URL, or Client instance (default
+        FDSN data-center key, base URL, or Client instance (default
         ``"USGS"``).
     **query
         Further FDSN event parameters passed through unchanged, e.g.

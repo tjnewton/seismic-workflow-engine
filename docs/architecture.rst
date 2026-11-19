@@ -1,7 +1,7 @@
 Architecture Overview
 =====================
 
-SWE is organised as a collection of loosely coupled subpackages that
+SWE is organized as a collection of loosely coupled subpackages that
 form a seismic analysis pipeline.  Each subpackage can be used
 independently, but they compose naturally in the order shown below.
 
@@ -61,7 +61,7 @@ The typical end-to-end workflow proceeds as follows:
    events.
 5. **Detection**: ``swe.detection`` runs matched-filter (template)
    correlation to find additional events.
-6. **Location**: ``swe.location`` determines hypocentres, optionally
+6. **Location**: ``swe.location`` determines hypocenters, optionally
    using velocity models from ``swe.velocity``.  Optionally,
    ``swe.uncertainty`` propagates pick-time uncertainties through
    Monte Carlo relocation.
@@ -87,7 +87,7 @@ all modules together:
 
 - **DAG execution**: steps are topologically sorted by ``${ref}``
   dependencies and executed in order.
-- **Output caching**: step outputs are serialised so unchanged steps
+- **Output caching**: step outputs are serialized so unchanged steps
   can be skipped on re-runs.
 - **Checkpointing**: interrupted pipelines resume from the last
   successful step via ``swe run --resume latest``.

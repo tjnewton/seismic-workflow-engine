@@ -1,6 +1,6 @@
 """Roughness-frequency scaling analysis.
 
-Tools for characterising surface roughness, tracking temporal
+Tools for characterizing surface roughness, tracking temporal
 frequency evolution, testing the tribological scaling law
 f = V_slip / lambda_dominant, and mapping spatial correlations
 between roughness and seismic source frequency.

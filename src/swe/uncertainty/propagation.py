@@ -35,10 +35,10 @@ def monte_carlo_location_uncertainty(
 ) -> LocationUncertainty:
     """Estimate location uncertainty via Monte Carlo pick-time perturbation.
 
-    For each realisation, Gaussian noise with sigma equal to each pick's
+    For each realization, Gaussian noise with sigma equal to each pick's
     ``time_uncertainty_s`` is added to the observed times, and the
     location function is re-run.  The resulting scatter cloud is
-    summarised as a :class:`~swe.uncertainty.types.LocationUncertainty`.
+    summarized as a :class:`~swe.uncertainty.types.LocationUncertainty`.
 
     Parameters
     ----------
@@ -53,9 +53,9 @@ def monte_carlo_location_uncertainty(
         ``x``, ``y``, ``z`` attributes.
     locate_kwargs : dict
         Additional keyword arguments forwarded to *locate_fn*.  The
-        ``observed_times`` key is overwritten in each realisation.
+        ``observed_times`` key is overwritten in each realization.
     n_samples : int
-        Number of Monte Carlo realisations.
+        Number of Monte Carlo realizations.
     random_state : int
         Seed for the random number generator.
 

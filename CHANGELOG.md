@@ -10,8 +10,8 @@ All notable changes to this project will be documented in this file.
   - `local_plane_fit`: moving-window least-squares planes with slope, aspect and residual standard deviation; NaN nodata stays local.
   - `curvature`: Laplacian by second central differences, with optional isotropic Gaussian pre-smoothing in length units (NaN spreads over the smoothing footprint rather than biasing hole edges).
   - `faceted_template`: a regular n-sided apex landform; `base` is twice the apothem, one edge faces row 0 at zero `rotation` (a square is grid-aligned), and `dy` matches non-square cells.
-  - `template_correlation`: local normalised cross-correlation by FFT; windows containing NaN are NaN.
-  - `grid_spacing`: signed `(dx, dy)` of an `ElevationGrid`, rejecting non-uniform, zero-spaced, non-square transposed or geographic grids (CRS checked with pyproj or rasterio when installed; non-metre units warn).
+  - `template_correlation`: local normalized cross-correlation by FFT; windows containing NaN are NaN.
+  - `grid_spacing`: signed `(dx, dy)` of an `ElevationGrid`, rejecting non-uniform, zero-spaced, non-square transposed or geographic grids (CRS checked with pyproj or rasterio when installed; non-meter units warn).
   - Acceptance tests: with 2 m noise, curvature correlation finds a planted faceted landform and rejects a dome and a ridge of the same size; a landform turned 30° is found at the right rotation by a rotation search.
 - **`swe.scattering`** (new): Born single-scattering by a compact elastic inclusion in a homogeneous full space.
   - `born_radiation_pattern` gives the P→P and P→S patterns in density and P/S velocity perturbations (Wu & Aki 1985).
@@ -22,13 +22,13 @@ All notable changes to this project will be documented in this file.
 - **`swe.detection` injection-recovery**: `injection_recovery` estimates a detector's detection probability over a parameter grid, with Clopper–Pearson intervals (`clopper_pearson`). It is seedable through `random_state` and accepts any iterable grid.
   - `inject` plants a signal in an array or raster; `inject_trace` does the same in an ObsPy `Trace`.
   - Masked gaps stay masked, and masked signal samples are not injected. An unmasked injected trace can be written back to MiniSEED.
-  - Each grid entry's random stream is seeded from `random_state` and its own canonicalised parameters (whole numbers as exact ints; every container type-tagged, so different structures never share a stream), so a row's result does not depend on the other entries, their order or numeric types. The seed key is stable across NumPy versions; NumPy does not promise identical draws across versions (NEP 19).
+  - Each grid entry's random stream is seeded from `random_state` and its own canonicalized parameters (whole numbers as exact ints; every container type-tagged, so different structures never share a stream), so a row's result does not depend on the other entries, their order or numeric types. The seed key is stable across NumPy versions; NumPy does not promise identical draws across versions (NEP 19).
 - **`swe.io`**: station inventories by region and epoch, and event catalogs.
   - `get_stations_in_region`: FDSN station query for a lat/lon box and epoch, at any detail level. It drops excluded networks; by default that is the synthetic `SY` network (`DEFAULT_EXCLUDED_NETWORKS`). A bare string such as `"SY"` counts as one code, and a network named explicitly (`network="SY"`) is never excluded.
   - `inventory_to_dataframe`: one row per station or per channel, with ISO-8601 epochs.
   - `get_events` returns an empty `Catalog` when nothing matches, and passes FDSN query parameters through unchanged. `catalog_to_dataframe` flattens a catalog to one row per event.
   - `load_response`: one shared reader for response files.
-  - Every `swe.io.fdsn` function now accepts an ObsPy data-centre key, a base URL (e.g. `https://service.earthscope.org`), or a ready `Client` instance.
+  - Every `swe.io.fdsn` function now accepts an ObsPy data-center key, a base URL (e.g. `https://service.earthscope.org`), or a ready `Client` instance.
 - **Leak guard**: commit messages are now scanned, `#` lines included (`git commit -m` keeps them). The `git commit -v` diff below the scissors line is ignored, whatever `core.commentChar` is, with LF or CRLF line endings.
   - `scripts/leak_guard.py --commit-msg` runs as a commit-msg hook, and `--push-log` checks every local commit not yet on the target remote, which covers multi-branch pushes and commits already on another remote.
   - In CI, `--log` covers the commits of a pull request and of every push. Push runs get their own concurrency group, so a newer run never cancels them, running or pending, and no pushed range goes unscanned.
@@ -70,7 +70,7 @@ All notable changes to this project will be documented in this file.
   - Unreadable or unrelated files are skipped with a warning.
   - Parsed files are cached by inode, size, mtime and ctime, and the directory is listed only when the exact file misses.
   - Regression tests: a download → load → sensitivity-removal round trip, per-channel downloads, legacy files not hidden by a non-covering new file, and the cache.
-- **`swe.detection.matched_filter`**: `make_templates`/`markers_to_template` no longer force pick channel codes to `"...Z"`. This produced non-existent channels (e.g. `SP1`->`SPZ`) for borehole networks whose components are numbered `1/2/3` (such as the Parkfield HRSN), yielding empty templates. Channel codes are now preserved and 3-component expansion honours the instrument's convention (Z/N/E or 1/2/3). Fixes `detect_signals` for borehole data. Regression tests added.
+- **`swe.detection.matched_filter`**: `make_templates`/`markers_to_template` no longer force pick channel codes to `"...Z"`. This produced non-existent channels (e.g. `SP1`->`SPZ`) for borehole networks whose components are numbered `1/2/3` (such as the Parkfield HRSN), yielding empty templates. Channel codes are now preserved and 3-component expansion honors the instrument's convention (Z/N/E or 1/2/3). Fixes `detect_signals` for borehole data. Regression tests added.
 - **`swe.spectral.fit_brune_model`**: the corner-frequency fit is now bounded to the fitted `[freq_min, freq_max]` band, preventing divergence to physically meaningless values when a spectrum lacks a clear corner (e.g. a weak or narrow-band stack).
 
 ## [0.3.0] -- 2026-02-27
@@ -79,14 +79,14 @@ Feature expansion adding amplitude moment-tensor inversion, advanced stacking, u
 
 ### Added
 - **`swe.moment_tensor.amplitude_inversion`**: amplitude-based moment tensor inversion using P/SV/SH amplitudes and amplitude ratios. Critical for LFE characterization where first-motion polarities are ambiguous.
-  - `moment_tensor_from_amplitudes()`: L2 fit of normalised amplitude patterns.
+  - `moment_tensor_from_amplitudes()`: L2 fit of normalized amplitude patterns.
   - `moment_tensor_from_amplitude_ratios()`: SV/P and SH/P ratio-based inversion (Hardebeck & Shearer, 2003).
   - `AmplitudeMTResult`: result type with variance reduction and component ranges.
 - **Advanced stacking methods** in `swe.detection.stacking`:
   - `nth_root_stack()`: sign-preserving nth-root stack for aggressive noise suppression (Muirhead, 1968).
   - `median_stack()`: outlier-robust sample-by-sample median stack.
   - `selective_stack()`: SNR-threshold filtering before stacking with selectable method.
-- **`swe.uncertainty.plotting`**: publication-quality uncertainty visualisation:
+- **`swe.uncertainty.plotting`**: publication-quality uncertainty visualization:
   - `plot_pick_uncertainty()`: pick time error bars.
   - `plot_location_uncertainty()`: map and depth-section views with covariance ellipses.
   - `plot_magnitude_pdf()`: individual and combined magnitude PDFs.

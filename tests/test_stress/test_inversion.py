@@ -30,7 +30,7 @@ class TestClusterFocalMechanisms:
         assert centers.shape == (2, 3)
         assert set(labels) == {0, 1}
 
-        # Verify the two centres are far apart
+        # Verify the two centers are far apart
         dist = np.linalg.norm(centers[0] - centers[1])
         assert dist > 5.0
 

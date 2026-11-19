@@ -34,7 +34,7 @@ class VelocityModel(NamedTuple):
     z : ndarray
         1-D array of grid node coordinates along the z-axis.
     slowness : ndarray
-        Cell-centred slowness values with shape
+        Cell-centered slowness values with shape
         ``(len(x)-1, len(y)-1, len(z)-1)``.
     model_type : str
         Either ``"1d"`` or ``"3d"``.
@@ -90,7 +90,7 @@ def read_velocity_model_1d(
     """Read a 1-D velocity profile and expand it onto a 3-D grid.
 
     The input file is a two-column text file with ``depth  velocity``
-    rows.  The 1-D profile is interpolated at cell centres and
+    rows.  The 1-D profile is interpolated at cell centers and
     broadcast laterally to fill the 3-D slowness grid.
 
     Parameters
@@ -130,7 +130,7 @@ def read_velocity_model_1d(
                 f"max_cells_per_axis={max_cells_per_axis}."
             )
 
-    # Interpolate slowness at cell centres along z.
+    # Interpolate slowness at cell centers along z.
     z_cell = 0.5 * (z[:-1] + z[1:])
     slow_1d = np.interp(z_cell, depths, 1.0 / velocities)
 
@@ -196,7 +196,7 @@ def build_velocity_model_3d(
     x, y, z : ndarray
         1-D arrays of grid node coordinates.
     slowness : ndarray
-        Cell-centred slowness, shape ``(len(x)-1, len(y)-1, len(z)-1)``.
+        Cell-centered slowness, shape ``(len(x)-1, len(y)-1, len(z)-1)``.
 
     Returns
     -------

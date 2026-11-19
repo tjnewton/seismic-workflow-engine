@@ -22,7 +22,7 @@ def get_trace_properties(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, list, list[float]]:
     """Compute derivatives, curvature, and MADs around a phase pick.
 
-    Analyses the waveform within a time window centred on *pick_time*
+    Analyses the waveform within a time window centered on *pick_time*
     using max-pooling, polynomial fitting, and numerical differentiation.
 
     Parameters
@@ -30,7 +30,7 @@ def get_trace_properties(
     trace : obspy.Trace
         Input waveform.
     pick_time : obspy.UTCDateTime
-        Phase pick time that centres the analysis window.
+        Phase pick time that centers the analysis window.
     duration : float
         Window length in seconds (symmetric around *pick_time*).
     sampling_rate : float, optional
@@ -155,7 +155,7 @@ def instantaneous_frequency(
     """Estimate the instantaneous frequency at the peak amplitude.
 
     Uses the Hilbert transform to compute the analytic signal, then
-    estimates the instantaneous frequency over a window centred on
+    estimates the instantaneous frequency over a window centered on
     the maximum absolute amplitude.
 
     Parameters

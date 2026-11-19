@@ -155,7 +155,7 @@ def cluster_picks(
     dbscan_eps: float = 0.5,
     dbscan_min_samples: int = 5,
 ) -> np.ndarray:
-    """Cluster picks using DBSCAN on standardised pick coordinates.
+    """Cluster picks using DBSCAN on standardized pick coordinates.
 
     Parameters
     ----------
@@ -173,7 +173,7 @@ def cluster_picks(
     pca_components : int, optional
         Number of PCA components.  If *None*, all components are kept.
     dbscan_eps : float
-        DBSCAN *eps* parameter (neighbourhood radius).
+        DBSCAN *eps* parameter (neighborhood radius).
     dbscan_min_samples : int
         DBSCAN *min_samples* parameter.
 

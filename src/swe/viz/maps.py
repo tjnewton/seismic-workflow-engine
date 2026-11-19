@@ -208,7 +208,7 @@ def plot_station_event_map(
                 s=sizes,
                 cmap=cmap,
                 alpha=0.7,
-                edgecolors="grey",
+                edgecolors="gray",
                 linewidths=0.3,
                 zorder=5,
                 label="Events",
@@ -221,7 +221,7 @@ def plot_station_event_map(
                 s=sizes,
                 c="red",
                 alpha=0.7,
-                edgecolors="grey",
+                edgecolors="gray",
                 linewidths=0.3,
                 zorder=5,
                 label="Events",
@@ -270,7 +270,7 @@ def plot_cross_sections(
     station_names : list of str, optional
         Station identifiers (required if *station_coords* is given).
     color_values : numpy.ndarray, optional
-        Values used to colour events (e.g. time, magnitude).
+        Values used to color events (e.g. time, magnitude).
     magnitudes : numpy.ndarray, optional
         Magnitudes for sizing event markers.
     cmap : str
@@ -317,7 +317,7 @@ def plot_cross_sections(
         s=sizes,
         cmap=cmap,
         alpha=0.7,
-        edgecolors="grey",
+        edgecolors="gray",
         linewidths=0.3,
     )
     if station_coords is not None and station_names is not None:
@@ -337,7 +337,7 @@ def plot_cross_sections(
         s=sizes,
         cmap=cmap,
         alpha=0.7,
-        edgecolors="grey",
+        edgecolors="gray",
         linewidths=0.3,
     )
     ax_ns.set_xlabel("Depth (km)")
@@ -352,7 +352,7 @@ def plot_cross_sections(
         s=sizes,
         cmap=cmap,
         alpha=0.7,
-        edgecolors="grey",
+        edgecolors="gray",
         linewidths=0.3,
     )
     ax_ew.set_xlabel("Easting (km)")
@@ -380,7 +380,7 @@ def plot_detection_timeline(
     figsize: tuple[float, float] = (10, 8),
     title: str = "",
 ) -> Figure:
-    """Plot events coloured by time to show spatial migration.
+    """Plot events colored by time to show spatial migration.
 
     Parameters
     ----------
@@ -421,7 +421,7 @@ def plot_detection_timeline(
         s=sizes,
         cmap=cmap,
         alpha=0.7,
-        edgecolors="grey",
+        edgecolors="gray",
         linewidths=0.3,
         zorder=5,
     )

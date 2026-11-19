@@ -41,7 +41,7 @@ class FrequencyTimeSeriesResult(NamedTuple):
     Attributes
     ----------
     times : ndarray
-        Bin centre times as matplotlib date numbers.
+        Bin center times as matplotlib date numbers.
     median_frequency : ndarray
         Median instantaneous frequency (Hz) per bin.
     std_frequency : ndarray
@@ -107,7 +107,7 @@ def compute_frequency_time_series(
     """Compute binned instantaneous-frequency time series from arrivals.
 
     For each trace/pick pair, the instantaneous frequency is estimated
-    via the Hilbert transform in a window centred on the pick.  Results
+    via the Hilbert transform in a window centered on the pick.  Results
     are then binned by time into daily (or custom) intervals.
 
     Parameters
@@ -173,7 +173,7 @@ def compute_frequency_time_series(
         bin_edges = np.array([t_min, t_min + bin_width_days])
 
     n_bins = len(bin_edges) - 1
-    bin_centres = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+    bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
     medians = np.full(n_bins, np.nan)
     stds = np.full(n_bins, np.nan)
     counts = np.zeros(n_bins, dtype=np.int64)
@@ -195,7 +195,7 @@ def compute_frequency_time_series(
     )
 
     return FrequencyTimeSeriesResult(
-        times=bin_centres,
+        times=bin_centers,
         median_frequency=medians,
         std_frequency=stds,
         count_per_bin=counts,

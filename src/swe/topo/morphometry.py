@@ -65,7 +65,7 @@ def grid_spacing(grid: ElevationGrid) -> tuple[float, float]:
     :func:`grid_from_raster` returns.
 
     The CRS is checked with pyproj or rasterio when either is installed: a geographic CRS is
-    rejected, and a non-metre unit raises a warning (spacing and elevation must share a unit).
+    rejected, and a non-meter unit raises a warning (spacing and elevation must share a unit).
 
     Raises
     ------
@@ -136,7 +136,7 @@ def _crs_info(crs: str) -> tuple[bool, list[str]] | None:
         return None
 
 
-def _centred(z: np.ndarray) -> np.ndarray:
+def _centered(z: np.ndarray) -> np.ndarray:
     """*z* minus the median of its finite cells, so window sums cancel less against an offset.
 
     The median, unlike the mean, keeps the direct window sums of :func:`local_plane_fit` away
@@ -203,7 +203,7 @@ def slope_aspect(elevation: np.ndarray, *, dx: float, dy: float) -> tuple[np.nda
     slope = np.degrees(np.arctan(np.hypot(dzdx, dzdy)))
     aspect = _aspect(np.abs(z), dzdx, dzdy, dx, dy)
     bad = ~np.isfinite(z)
-    slope[bad] = aspect[bad] = np.nan  # the stencil skips the centre cell
+    slope[bad] = aspect[bad] = np.nan  # the stencil skips the center cell
     return slope, aspect
 
 
@@ -239,13 +239,13 @@ def local_plane_fit(elevation: np.ndarray, *, dx: float, dy: float, size: int) -
         raise ValueError(f"size must be an odd integer >= 3, got {size!r}")
     if size > min(z.shape):
         raise ValueError(f"size {size} is larger than the grid {z.shape}")
-    z = _centred(z)
+    z = _centered(z)
     h = int(size) // 2
     off = np.arange(-h, h + 1, dtype=float)
     ones = np.ones_like(off)
     n = off.size**2
 
-    # x and y offsets from the window centre are separable and sum to zero, so the normal
+    # x and y offsets from the window center are separable and sum to zero, so the normal
     # equations decouple: a = S_xz / S_xx, b = S_yz / S_yy, c = mean(z)
     sz, szz = _window_sum(z, ones, ones), _window_sum(z**2, ones, ones)
     sxz, syz = _window_sum(z, off * dx, ones), _window_sum(z, ones, off * dy)
@@ -274,7 +274,7 @@ def curvature(
     are NaN (the edge padding would fake curvature there) unless *mask_edges* is False, which
     is exact only where the surface is flat at the edges, such as a zero-padded
     :func:`faceted_template`. Without smoothing, edge cells take the second difference of their
-    inward neighbour.
+    inward neighbor.
 
     Raises
     ------
@@ -286,7 +286,7 @@ def curvature(
         raise ValueError(f"sigma must be finite and non-negative, got {sigma}")
     sig = (sigma / abs(dy), sigma / abs(dx))  # in cells (rows, columns)
     if sigma > 0:
-        # NaN spreads over the filter support (about 4 sigma). Renormalising over the valid cells
+        # NaN spreads over the filter support (about 4 sigma). Renormalizing over the valid cells
         # instead would bias the mean at hole edges and fake curvature there.
         z = gaussian_filter(z, sigma=sig, mode="nearest")
     d2col = np.pad(np.diff(z, 2, axis=1), ((0, 0), (1, 1)), mode="edge") / dx**2
@@ -311,7 +311,7 @@ def faceted_template(
 
     The base is a regular polygon. At ``rotation=0`` one edge faces row 0 (north on a north-up
     raster), so a square is aligned with the grid. Elevation falls linearly from ``height`` at
-    the centre to 0 at the base, and is 0 outside. Correlation is not rotation-invariant: to
+    the center to 0 at the base, and is 0 outside. Correlation is not rotation-invariant: to
     search for landforms of unknown orientation, take the maximum over a set of rotations.
 
     Parameters
@@ -335,7 +335,7 @@ def faceted_template(
     Returns
     -------
     ndarray
-        Template with odd dimensions, summit at the centre cell. For odd *n_sides* the polygon
+        Template with odd dimensions, summit at the center cell. For odd *n_sides* the polygon
         is not symmetric about the summit, so the side facing an edge carries extra zero rows.
 
     Raises
@@ -374,7 +374,7 @@ def template_correlation(field: np.ndarray, template: np.ndarray) -> np.ndarray:
     """Local normalized cross-correlation of *template* with *field* (``same`` shape).
 
     At each cell, the Pearson correlation between the template and the window of *field*
-    centred there. Cells whose window leaves the field, contains NaN, or is constant are NaN.
+    centered there. Cells whose window leaves the field, contains NaN, or is constant are NaN.
 
     The window mean and variance are direct local sums about the field median, so a window
     whose variance is below about ``64 * eps * (Kx + Ky)`` of its mean square about that median
@@ -418,7 +418,7 @@ def template_correlation(field: np.ndarray, template: np.ndarray) -> np.ndarray:
     bad = ~np.isfinite(f)
     # zero the NaN cells (their windows are masked below) and remove the median offset, which
     # the correlation ignores, so the window variance does not cancel against it
-    f = np.where(bad, 0.0, _centred(f))
+    f = np.where(bad, 0.0, _centered(f))
     n = t.size
 
     wy, wx = np.ones(t.shape[0]), np.ones(t.shape[1])

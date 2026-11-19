@@ -7,7 +7,7 @@ that are tedious to repeat on every CLI invocation.
 Configuration keys
 ------------------
 fdsn_client : str
-    Default FDSN data centre (e.g. ``"IRIS"``, ``"SCEDC"``).
+    Default FDSN data center (e.g. ``"IRIS"``, ``"SCEDC"``).
 output_dir : str
     Default base output directory.
 picker_backend : str

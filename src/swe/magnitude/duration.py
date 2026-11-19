@@ -154,7 +154,7 @@ def duration_magnitude(
     a2 : float
         Distance coefficient.
     distance_km : float
-        Epicentral distance in kilometres.
+        Epicentral distance in kilometers.
     noise_window : float
         Duration (seconds) of the pre-P noise window.
     snr_threshold : float

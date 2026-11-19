@@ -156,7 +156,7 @@ class TestCurvatureAndTemplate:
                 curvature(x, dx=DX, dy=DX, sigma=sigma)
 
     def test_smoothing_spreads_nodata_within_its_footprint_only(self):
-        """No renormalised (biased) values at a hole edge: NaN within ~4 sigma, exact beyond."""
+        """No renormalized (biased) values at a hole edge: NaN within ~4 sigma, exact beyond."""
         x, y = _grid()
         z = 0.1 * x + 0.2 * y  # a plane has zero curvature, so any finite value must be 0
         z[20, 20] = np.nan

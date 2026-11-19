@@ -62,7 +62,7 @@ def wood_anderson_amplitude(
 
     Removes the instrument response (if available) and applies the
     standard Wood-Anderson transfer function to obtain the displacement
-    amplitude in millimetres that a WA instrument would record.
+    amplitude in millimeters that a WA instrument would record.
 
     Parameters
     ----------
@@ -75,7 +75,7 @@ def wood_anderson_amplitude(
     Returns
     -------
     float
-        Peak Wood-Anderson amplitude in millimetres.  Returns ``NaN``
+        Peak Wood-Anderson amplitude in millimeters.  Returns ``NaN``
         if the response cannot be removed.
     """
     tr = trace.copy()
@@ -108,7 +108,7 @@ def wood_anderson_amplitude(
         )
         return float("nan")
 
-    # Peak amplitude in mm (ObsPy returns metres after displacement)
+    # Peak amplitude in mm (ObsPy returns meters after displacement)
     peak_amp = float(np.nanmax(np.abs(tr.data))) * 1000.0
     return peak_amp
 
@@ -130,7 +130,7 @@ def local_magnitude(
         ML = log10(A) + a * log10(r / 100) + b * (r - 100) + c + 3.0
 
     where *A* is the peak WA amplitude in mm and *r* is the
-    hypocentral distance in km.  The ``+ 3.0`` normalises to the
+    hypocentral distance in km.  The ``+ 3.0`` normalizes to the
     original Richter definition at 100 km.
 
     Parameters

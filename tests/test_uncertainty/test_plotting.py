@@ -1,4 +1,4 @@
-"""Tests for swe.uncertainty.plotting - uncertainty visualisation."""
+"""Tests for swe.uncertainty.plotting - uncertainty visualization."""
 
 from __future__ import annotations
 

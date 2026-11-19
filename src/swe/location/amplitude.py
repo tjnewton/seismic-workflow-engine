@@ -163,7 +163,7 @@ def _predicted_amplitude(
     source_amplitude : float or ndarray
         Source amplitude(s) A0.
     distance : ndarray
-        Distance(s) in metres.
+        Distance(s) in meters.
     attenuation_coeff : float
         Anelastic attenuation coefficient *B* (1/m).
     spreading_exponent : float
@@ -205,7 +205,7 @@ def locate_by_travel_time(
 
     For each candidate source position on a 3-D grid, compute predicted
     travel times to every station (straight-ray, constant velocity) and
-    minimise the L1 residual of differential times relative to a
+    minimize the L1 residual of differential times relative to a
     reference station.
 
     Parameters
@@ -214,7 +214,7 @@ def locate_by_travel_time(
         Observed arrival times (seconds) at each station.
     station_coords : ndarray, shape (n_stations, 3)
         Station coordinates ``[x, y, z]`` in the same units as the
-        grid (typically metres).
+        grid (typically meters).
     velocity_model : float or ndarray
         Constant velocity (m/s) for straight-ray approximation.  For
         3-D velocity models, use
@@ -222,9 +222,9 @@ def locate_by_travel_time(
         with a precomputed :class:`~swe.velocity.model.TravelTimeGrid`.
     grid_bounds : tuple of 3 (min, max) tuples
         ``((x_min, x_max), (y_min, y_max), (z_min, z_max))`` in
-        metres.
+        meters.
     grid_spacing : tuple of 3 floats
-        ``(dx, dy, dz)`` grid spacing in metres.
+        ``(dx, dy, dz)`` grid spacing in meters.
     reference_station_index : int
         Index of the reference station for differential times.
 
@@ -328,7 +328,7 @@ def amplocate(
     """Locate an event by amplitude-decay grid search.
 
     For each candidate source position, compute predicted amplitudes
-    using a point-source attenuation model and minimise the weighted
+    using a point-source attenuation model and minimize the weighted
     sum of squared amplitude residuals.
 
     Either provide ``distance_grids`` (pre-computed distance from every
@@ -342,7 +342,7 @@ def amplocate(
         Observed amplitudes at each station.  Stations with no pick
         should be set to zero and will be excluded.
     station_coords : ndarray, shape (n_stations, 3)
-        Station coordinates ``[x, y, z]`` in metres.
+        Station coordinates ``[x, y, z]`` in meters.
     source_amplitudes : ndarray, shape (n_A0,), optional
         Candidate source amplitudes to search over.  Defaults to
         ``np.logspace(-2, 2, 50)``.
@@ -451,7 +451,7 @@ def amplocate(
         n_stations,
     )
 
-    # Compute weights: favour closer stations (using max distance per
+    # Compute weights: favor closer stations (using max distance per
     # station across the grid as a proxy).
     max_dists = np.array([station_dists[ii].max() for ii in range(n_stations)])
     if weight_power == 0:
@@ -542,9 +542,9 @@ def synthetic_event(
     Parameters
     ----------
     true_location : tuple of 3 floats
-        Source coordinates ``(x, y, z)`` in metres.
+        Source coordinates ``(x, y, z)`` in meters.
     station_coords : ndarray, shape (n_stations, 3)
-        Station coordinates ``[x, y, z]`` in metres.
+        Station coordinates ``[x, y, z]`` in meters.
     source_amplitude : float
         Source amplitude *A0*.
     velocity : float
@@ -641,20 +641,20 @@ def locate_by_travel_time_with_uncertainty(
     observed_times : ndarray, shape (n_stations,)
         Observed arrival times (seconds).
     station_coords : ndarray, shape (n_stations, 3)
-        Station coordinates ``[x, y, z]`` in metres.
+        Station coordinates ``[x, y, z]`` in meters.
     velocity_model : float or ndarray
         Constant velocity (m/s).
     grid_bounds : tuple of 3 (min, max) tuples
-        Grid bounds in metres.
+        Grid bounds in meters.
     grid_spacing : tuple of 3 floats
-        Grid spacing in metres.
+        Grid spacing in meters.
     reference_station_index : int
         Index of the reference station for differential times.
     pick_time_uncertainties : ndarray, optional
         1-sigma pick-time uncertainties (seconds).  If provided,
         Monte Carlo uncertainty estimation is performed.
     n_monte_carlo : int
-        Number of Monte Carlo realisations.
+        Number of Monte Carlo realizations.
     random_state : int
         Random seed for reproducibility.
 
